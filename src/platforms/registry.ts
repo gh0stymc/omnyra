@@ -7,9 +7,12 @@ export interface PlatformUI {
   AnalyticsView?: ComponentType<{ accountId: string }>;
   UploadOptionsForm?: ComponentType<Record<string, unknown>>;
   PreviewCard?: ComponentType<Record<string, unknown>>;
+  /** Provider page where the user can review/revoke third-party access by hand. */
+  permissionsUrl?: string;
 }
 
 export const platformUIs: Record<string, PlatformUI> = {
+  youtube: { id: "youtube", permissionsUrl: "https://myaccount.google.com/connections" },
   mock: { id: "mock" },
 };
 

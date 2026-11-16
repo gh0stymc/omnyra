@@ -1,20 +1,44 @@
 mod commands;
+mod events;
 mod state;
 
-use omnyra_core::{clock::SystemClock, connectors::registry::Registry, db};
+use omnyra_core::{
+    auth::{AuthService, ClientCredentials, KeyringStore},
+    clock::{Clock, SystemClock},
+    connectors::{
+        http::default_http_client,
+        registry::{Credentials, Registry},
+    },
+    db,
+};
 use state::AppState;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use tauri::Manager;
-use tauri_specta::{collect_commands, Builder};
+use tauri_specta::{collect_commands, collect_events, Builder};
 
 fn specta_builder() -> Builder<tauri::Wry> {
-    Builder::<tauri::Wry>::new().commands(collect_commands![
-        commands::platforms::list_platforms,
-        commands::accounts::list_accounts,
-        commands::accounts::add_mock_account,
-        commands::accounts::sync_account,
-        commands::accounts::get_account_series,
-    ])
+    Builder::<tauri::Wry>::new()
+        .commands(collect_commands![
+            commands::platforms::list_platforms,
+            commands::accounts::list_accounts,
+            commands::accounts::add_mock_account,
+            commands::accounts::connect_account,
+            commands::accounts::cancel_connect,
+            commands::accounts::disconnect_account,
+            commands::accounts::sync_account,
+            commands::accounts::get_account_series,
+        ])
+        .events(collect_events![events::AccountChanged])
+}
+
+/// OAuth client IDs baked in at build time (`src-tauri/build.rs` reads `.env`).
+fn credentials() -> Credentials {
+    Credentials {
+        google: ClientCredentials::from_parts(
+            option_env!("OMNYRA_GOOGLE_CLIENT_ID"),
+            option_env!("OMNYRA_GOOGLE_CLIENT_SECRET"),
+        ),
+    }
 }
 
 #[cfg(any(debug_assertions, test))]
@@ -45,10 +69,18 @@ pub fn run() {
             let dir = app.path().app_data_dir()?;
             std::fs::create_dir_all(&dir)?;
             let conn = db::open(&dir.join("omnyra.db")).map_err(|e| e.to_string())?;
+            let clock: Arc<dyn Clock> = Arc::new(SystemClock);
+            let auth = Arc::new(AuthService::new(
+                Arc::new(KeyringStore::new()),
+                default_http_client(),
+                clock.clone(),
+            ));
             app.manage(AppState {
                 db: Mutex::new(conn),
-                registry: Registry::new(),
-                clock: SystemClock,
+                registry: Registry::new(credentials()),
+                clock,
+                auth,
+                connect_cancel: Mutex::new(None),
             });
             Ok(())
         })

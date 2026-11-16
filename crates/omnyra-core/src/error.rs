@@ -26,6 +26,33 @@ pub enum AppError {
     Database,
     #[error("internal error")]
     Internal,
+    /// The platform's OAuth client ID was not provided at build time (`.env`).
+    #[error("platform not configured")]
+    NotConfigured,
+    /// Another connection flow is already waiting for the browser.
+    #[error("authorization already in progress")]
+    AuthInProgress,
+    /// The user denied consent or cancelled the flow.
+    #[error("authorization cancelled")]
+    AuthCancelled,
+    #[error("authorization timed out")]
+    AuthTimeout,
+    /// The authorization server rejected the request (bad client, bad code...).
+    #[error("authorization failed")]
+    AuthFailed,
+    /// The user unticked scopes that the feature needs (Google granular consent).
+    #[error("required permissions were not granted")]
+    ScopesDenied,
+    /// No OS keyring (Secret Service / Credential Manager) is available. Tokens are never
+    /// stored anywhere else (decision D4).
+    #[error("system keyring unavailable")]
+    KeyringUnavailable,
+    /// The Google account has no YouTube channel.
+    #[error("no channel on this account")]
+    NoChannel,
+    /// The account is disconnected (or needs to be reconnected) and has no usable token.
+    #[error("account not connected")]
+    NotConnected,
 }
 
 impl From<rusqlite::Error> for AppError {

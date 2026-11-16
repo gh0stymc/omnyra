@@ -1,5 +1,7 @@
 {
-  "app": { "name": "Omnyra" },
+  "app": {
+    "name": "Omnyra"
+  },
   "nav": {
     "dashboard": "Global dashboard",
     "calendar": "Calendar",
@@ -18,17 +20,24 @@
     "sync": "Sync",
     "followers": "Followers",
     "views": "Views",
-    "noData": "No data yet. Press Sync."
+    "noData": "No data yet. Press Sync.",
+    "connectNetwork": "Go to Settings to connect a network"
   },
-  "platform": { "title": "{{name}} view", "capabilities": "Capabilities" },
+  "platform": {
+    "title": "{{name}} view",
+    "capabilities": "Capabilities"
+  },
   "settings": {
     "title": "Settings",
     "language": "Language",
     "theme": "Theme",
     "dark": "Dark",
-    "light": "Light"
+    "light": "Light",
+    "general": "General"
   },
-  "placeholder": { "soon": "This section will arrive in a later phase." },
+  "placeholder": {
+    "soon": "This section will arrive in a later phase."
+  },
   "errors": {
     "TOKEN_EXPIRED": "The session has expired. Reconnect the account.",
     "QUOTA_EXCEEDED": "The API quota is exhausted. Try again later.",
@@ -39,6 +48,44 @@
     "NOT_FOUND": "Not found.",
     "DATABASE": "Local database error.",
     "INTERNAL": "Internal error.",
+    "NOT_CONFIGURED": "This network is not configured in this build.",
+    "AUTH_IN_PROGRESS": "A connection is already in progress. Finish or cancel it first.",
+    "AUTH_CANCELLED": "Connection cancelled.",
+    "AUTH_TIMEOUT": "Timed out waiting for the browser sign-in.",
+    "AUTH_FAILED": "The platform rejected the connection. Try again.",
+    "SCOPES_DENIED": "Required permissions are missing. Reconnect and tick every box.",
+    "KEYRING_UNAVAILABLE": "No system keyring is available (Secret Service / Credential Manager). Omnyra never stores tokens anywhere else: enable GNOME Keyring or KWallet and restart the app.",
+    "NO_CHANNEL": "This Google account has no YouTube channel. Pick another account or create the channel.",
+    "NOT_CONNECTED": "The account is not connected. Reconnect it in Settings.",
     "unknown": "An unexpected error occurred."
+  },
+  "accounts": {
+    "title": "Connected accounts",
+    "connect": "Connect {{name}}",
+    "reconnect": "Reconnect",
+    "disconnect": "Disconnect",
+    "confirm": "Yes, disconnect",
+    "cancel": "Cancel",
+    "dismiss": "Close",
+    "confirmDisconnect": "Disconnect {{name}}? Omnyra will revoke its access and delete the tokens from the system keyring. Data already saved is kept.",
+    "waitingBrowser": "Finish signing in to {{name}} in the browser window that opened…",
+    "notConfigured": "This network's client ID is missing from the build's .env file.",
+    "empty": "Connect your first network to get started.",
+    "connectedAt": "Connected on {{date}}",
+    "permissions": "Granted permissions",
+    "needsReauthHint": "Access has expired or been revoked. Reconnect the account to keep syncing.",
+    "notRevoked": "The account was disconnected and its tokens were deleted from this computer, but the platform could not be notified (offline?). You can remove Omnyra's access manually.",
+    "openPermissions": "Open account permissions",
+    "status": {
+      "active": "Connected",
+      "needs_reauth": "Reconnection needed",
+      "disconnected": "Disconnected"
+    }
+  },
+  "scopes": {
+    "ytReadonly": "View your YouTube channel and videos",
+    "ytAnalytics": "View YouTube analytics",
+    "ytUpload": "Upload videos to YouTube",
+    "ytForceSsl": "Manage YouTube comments"
   }
 }

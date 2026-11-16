@@ -51,11 +51,13 @@ mod tests {
         let conn = open_in_memory().unwrap();
         let acc = accounts::upsert(
             &conn,
+            "acc-1",
             &accounts::NewAccount {
                 platform: "mock",
                 external_id: "1",
                 handle: None,
                 display_name: "M",
+                granted_scopes: &[],
             },
             "2026-11-16T00:00:00Z",
         )

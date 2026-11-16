@@ -35,6 +35,14 @@ FFmpeg:
 - Linux: install `ffmpeg` from your package manager. The `.deb` and the Arch package both depend on it.
 - Windows: FFmpeg is not bundled. Planned: the app downloads it on first use, verifies it by SHA-256, and lets you configure its path.
 
+### OAuth client IDs
+
+Copy `.env.example` to `.env` and fill in the IDs. `src-tauri/build.rs` reads `.env` at build time. If a variable is already set in the environment (for example, a CI secret), that value is used instead. Without a client ID, the network shows as "not configured".
+
+- Google (YouTube): in Google Cloud Console, enable the YouTube Data API v3 and the YouTube Analytics API. Then create an OAuth client of type **Desktop app**. Google documents the client secret of a Desktop app as non-confidential, so it is embedded in the build (`docs/ARCHITECTURE.md`, R3).
+
+Tokens are stored only in the OS keyring (Windows Credential Manager, or Secret Service on Linux via GNOME Keyring, KWallet or KeePassXC). If no keyring is available, accounts cannot be connected.
+
 ### Running
 
 ```sh
@@ -42,6 +50,7 @@ npm install
 npm run tauri dev      # run the app
 npm test               # frontend tests (Vitest)
 cargo test --workspace # Rust tests (also regenerates src/lib/bindings.ts)
+cargo test -p omnyra-core -- --ignored keyring  # real OS keyring round-trip (opt-in)
 npm run lint && npm run typecheck
 ```
 

@@ -1,5 +1,7 @@
 {
-  "app": { "name": "Omnyra" },
+  "app": {
+    "name": "Omnyra"
+  },
   "nav": {
     "dashboard": "Panel global",
     "calendar": "Calendario",
@@ -18,17 +20,24 @@
     "sync": "Sincronizar",
     "followers": "Seguidores",
     "views": "Visitas",
-    "noData": "Sin datos todavía. Pulsa Sincronizar."
+    "noData": "Sin datos todavía. Pulsa Sincronizar.",
+    "connectNetwork": "Ir a Ajustes para conectar una red"
   },
-  "platform": { "title": "Vista de {{name}}", "capabilities": "Capacidades" },
+  "platform": {
+    "title": "Vista de {{name}}",
+    "capabilities": "Capacidades"
+  },
   "settings": {
     "title": "Ajustes",
     "language": "Idioma",
     "theme": "Tema",
     "dark": "Oscuro",
-    "light": "Claro"
+    "light": "Claro",
+    "general": "General"
   },
-  "placeholder": { "soon": "Esta sección llegará en una fase posterior." },
+  "placeholder": {
+    "soon": "Esta sección llegará en una fase posterior."
+  },
   "errors": {
     "TOKEN_EXPIRED": "La sesión ha caducado. Vuelve a conectar la cuenta.",
     "QUOTA_EXCEEDED": "Se ha agotado la cuota de la API. Inténtalo más tarde.",
@@ -39,6 +48,44 @@
     "NOT_FOUND": "No encontrado.",
     "DATABASE": "Error en la base de datos local.",
     "INTERNAL": "Error interno.",
+    "NOT_CONFIGURED": "Esta red no está configurada en esta compilación.",
+    "AUTH_IN_PROGRESS": "Ya hay una conexión en curso. Termínala o cancélala.",
+    "AUTH_CANCELLED": "Conexión cancelada.",
+    "AUTH_TIMEOUT": "Se ha agotado el tiempo para completar el acceso en el navegador.",
+    "AUTH_FAILED": "La plataforma ha rechazado la conexión. Inténtalo de nuevo.",
+    "SCOPES_DENIED": "Faltan permisos necesarios. Vuelve a conectar y marca todas las casillas.",
+    "KEYRING_UNAVAILABLE": "No hay un llavero del sistema disponible (Secret Service / Administrador de credenciales). Omnyra no guarda tokens en ningún otro sitio: activa GNOME Keyring o KWallet y reinicia la app.",
+    "NO_CHANNEL": "Esta cuenta de Google no tiene un canal de YouTube. Elige otra cuenta o crea el canal.",
+    "NOT_CONNECTED": "La cuenta no está conectada. Vuelve a conectarla en Ajustes.",
     "unknown": "Ha ocurrido un error inesperado."
+  },
+  "accounts": {
+    "title": "Cuentas conectadas",
+    "connect": "Conectar {{name}}",
+    "reconnect": "Reconectar",
+    "disconnect": "Desconectar",
+    "confirm": "Sí, desconectar",
+    "cancel": "Cancelar",
+    "dismiss": "Cerrar",
+    "confirmDisconnect": "¿Desconectar {{name}}? Omnyra revocará su acceso y borrará los tokens del llavero del sistema. Los datos ya guardados se conservan.",
+    "waitingBrowser": "Completa el acceso a {{name}} en el navegador que se ha abierto…",
+    "notConfigured": "Falta el client ID de esta red en el archivo .env de la compilación.",
+    "empty": "Conecta tu primera red para empezar.",
+    "connectedAt": "Conectada el {{date}}",
+    "permissions": "Permisos concedidos",
+    "needsReauthHint": "El acceso ha caducado o se ha revocado. Vuelve a conectar la cuenta para seguir sincronizando.",
+    "notRevoked": "La cuenta se ha desconectado y los tokens se han borrado de este equipo, pero no se ha podido avisar a la plataforma (¿sin conexión?). Puedes retirar el acceso de Omnyra a mano.",
+    "openPermissions": "Abrir los permisos de la cuenta",
+    "status": {
+      "active": "Conectada",
+      "needs_reauth": "Reconexión necesaria",
+      "disconnected": "Desconectada"
+    }
+  },
+  "scopes": {
+    "ytReadonly": "Ver tu canal y tus vídeos de YouTube",
+    "ytAnalytics": "Ver las analíticas de YouTube",
+    "ytUpload": "Subir vídeos a YouTube",
+    "ytForceSsl": "Gestionar comentarios de YouTube"
   }
 }

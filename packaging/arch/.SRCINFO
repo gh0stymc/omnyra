@@ -19,6 +19,7 @@ pkgbase = omnyra
 	depends = gcc-libs
 	depends = glibc
 	depends = ffmpeg
+	optdepends = org.freedesktop.secrets: keyring to store account tokens (gnome-keyring, kwallet, keepassxc)
 	options = !lto
 	source = omnyra-0.1.0.tar.gz::https://github.com/OWNER/omnyra/archive/v0.1.0.tar.gz
 	sha256sums = SKIP

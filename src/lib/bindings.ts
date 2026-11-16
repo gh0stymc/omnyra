@@ -2,6 +2,7 @@
 
 import { invoke as __TAURI_INVOKE } from "@tauri-apps/api/core";
 import type { InvokeOptions } from "@tauri-apps/api/core";
+import * as __TAURI_EVENT from "@tauri-apps/api/event";
 
 /** Commands */
 export const commands = {
@@ -9,12 +10,41 @@ export const commands = {
 	listAccounts: (options?: InvokeOptions) => __TAURI_INVOKE<Account_Serialize[]>("list_accounts", undefined, options),
 	/**  Dev helper: connects the fake `mock` account (no OAuth involved). */
 	addMockAccount: (options?: InvokeOptions) => __TAURI_INVOKE<Account_Serialize>("add_mock_account", undefined, options),
+	/**
+	 *  Opens the system browser on the platform's consent screen and waits (up to 5 min) for
+	 *  the loopback redirect. Also used to reconnect an account that `needs_reauth`.
+	 */
+	connectAccount: (platform: string, options?: InvokeOptions) => __TAURI_INVOKE<Account_Serialize>("connect_account", { platform }, options),
+	/**  Aborts the flow started by `connect_account` (it then fails with `AUTH_CANCELLED`). */
+	cancelConnect: (options?: InvokeOptions) => __TAURI_INVOKE<void>("cancel_connect", undefined, options),
+	/**  Revokes the grant, deletes the tokens from the keyring and keeps the historical data. */
+	disconnectAccount: (accountId: string, options?: InvokeOptions) => __TAURI_INVOKE<DisconnectOutcome>("disconnect_account", { accountId }, options),
 	syncAccount: (accountId: string, options?: InvokeOptions) => __TAURI_INVOKE<null>("sync_account", { accountId }, options),
 	getAccountSeries: (accountId: string, metric: string, options?: InvokeOptions) => __TAURI_INVOKE<MetricPoint[]>("get_account_series", { accountId, metric }, options),
 };
 
+/** Events */
+export const events = {
+	accountChanged: makeEvent<AccountChanged, AccountChanged>("account-changed"),
+};
+
 /* Types */
 export type Account = Account_Serialize | Account_Deserialize;
+
+/**
+ *  An account was connected, disconnected or needs to be reconnected.
+ *  The frontend invalidates its account queries when it receives it.
+ */
+export type AccountChanged = {
+	accountId: string,
+	status: AccountStatus,
+};
+
+export type AccountStatus = "active" | 
+/**  The refresh token was rejected (expired, revoked from Google...): reconnect. */
+"needs_reauth" | 
+/**  Disconnected by the user. Tokens are gone; historical data is kept. */
+"disconnected";
 
 export type Account_Deserialize = {
 	id: string,
@@ -22,7 +52,9 @@ export type Account_Deserialize = {
 	externalId: string,
 	handle?: string | null,
 	displayName: string,
-	status: string,
+	/**  Only for display ("Connected accounts"). The tokens themselves are in the keyring. */
+	grantedScopes: string[],
+	status: AccountStatus,
 	connectedAt: string,
 	lastSyncAt?: string | null,
 };
@@ -33,7 +65,9 @@ export type Account_Serialize = {
 	externalId: string,
 	handle: string | null,
 	displayName: string,
-	status: string,
+	/**  Only for display ("Connected accounts"). The tokens themselves are in the keyring. */
+	grantedScopes: string[],
+	status: AccountStatus,
 	connectedAt: string,
 	lastSyncAt: string | null,
 };
@@ -46,7 +80,32 @@ export type AppError = { code: "TOKEN_EXPIRED" } | { code: "QUOTA_EXCEEDED" } | 
 	retry_after_s: number,
 } } | { code: "NETWORK" } | { code: "NOT_SUPPORTED" } | { code: "VALIDATION"; detail: {
 	field: string,
-} } | { code: "NOT_FOUND" } | { code: "DATABASE" } | { code: "INTERNAL" };
+} } | { code: "NOT_FOUND" } | { code: "DATABASE" } | { code: "INTERNAL" } | 
+/**  The platform's OAuth client ID was not provided at build time (`.env`). */
+{ code: "NOT_CONFIGURED" } | 
+/**  Another connection flow is already waiting for the browser. */
+{ code: "AUTH_IN_PROGRESS" } | 
+/**  The user denied consent or cancelled the flow. */
+{ code: "AUTH_CANCELLED" } | { code: "AUTH_TIMEOUT" } | 
+/**  The authorization server rejected the request (bad client, bad code...). */
+{ code: "AUTH_FAILED" } | 
+/**  The user unticked scopes that the feature needs (Google granular consent). */
+{ code: "SCOPES_DENIED" } | 
+/**
+ *  No OS keyring (Secret Service / Credential Manager) is available. Tokens are never
+ *  stored anywhere else (decision D4).
+ */
+{ code: "KEYRING_UNAVAILABLE" } | 
+/**  The Google account has no YouTube channel. */
+{ code: "NO_CHANNEL" } | 
+/**  The account is disconnected (or needs to be reconnected) and has no usable token. */
+{ code: "NOT_CONNECTED" };
+
+export type AuthKind = 
+/**  No login (mock). */
+"none" | 
+/**  OAuth 2.0 + PKCE with a loopback redirect. */
+"oauth";
 
 export type Capabilities = Capabilities_Serialize | Capabilities_Deserialize;
 
@@ -75,6 +134,14 @@ export type Capabilities_Serialize = {
 };
 
 export type CommentSupport = "none" | "read" | "readReply";
+
+export type DisconnectOutcome = {
+	/**
+	 *  False if the provider could not be reached to revoke the grant. The local tokens are
+	 *  deleted anyway; the UI then links to the provider's "third-party access" page.
+	 */
+	revoked: boolean,
+};
 
 export type MediaLimits = MediaLimits_Serialize | MediaLimits_Deserialize;
 
@@ -111,6 +178,9 @@ export type PlatformInfo_Deserialize = {
 	displayName: string,
 	brandColor: string,
 	capabilities: Capabilities_Deserialize,
+	auth: AuthKind,
+	/**  False when the platform needs a client ID that was not provided at build time. */
+	authConfigured: boolean,
 };
 
 export type PlatformInfo_Serialize = {
@@ -118,8 +188,37 @@ export type PlatformInfo_Serialize = {
 	displayName: string,
 	brandColor: string,
 	capabilities: Capabilities_Serialize,
+	auth: AuthKind,
+	/**  False when the platform needs a client ID that was not provided at build time. */
+	authConfigured: boolean,
 };
 
 export type ScheduleSupport = "none" | "native" | "localOnly";
 
 export type UploadSupport = "none" | "direct" | "draftOnly" | "privateOnlyUnaudited";
+
+/* Tauri Specta runtime */
+type EventEmit<T> = [T] extends [null] ? () => Promise<void> : (payload: T) => Promise<void>;
+
+type EventEmitTo<T> = [T] extends [null] ? (target: __TAURI_EVENT.EventTarget | string) => Promise<void> : (target: __TAURI_EVENT.EventTarget | string, payload: T) => Promise<void>;
+
+function makeEvent<TListen, TEmit = TListen>(name: string, serialize?: (payload: TEmit) => unknown, deserialize?: (payload: any) => TListen) {
+    const mapEvent = (cb: __TAURI_EVENT.EventCallback<TListen>) => (event: __TAURI_EVENT.Event<any>) => cb({ ...event, payload: deserialize ? deserialize(event.payload) : event.payload });
+    const mapPayload = (payload: TEmit) => serialize ? serialize(payload) : payload;
+
+    const base = {
+        listen: (cb: __TAURI_EVENT.EventCallback<TListen>) => __TAURI_EVENT.listen(name, mapEvent(cb)),
+        once: (cb: __TAURI_EVENT.EventCallback<TListen>) => __TAURI_EVENT.once(name, mapEvent(cb)),
+        emit: ((payload: TEmit) => __TAURI_EVENT.emit(name, mapPayload(payload)) as unknown) as EventEmit<TEmit>,
+        emitTo: ((to: __TAURI_EVENT.EventTarget | string, payload: TEmit) => __TAURI_EVENT.emitTo(to, name, mapPayload(payload)) as unknown) as EventEmitTo<TEmit>
+    };
+
+    const fn = (target: import("@tauri-apps/api/webview").Webview | import("@tauri-apps/api/window").Window) => ({
+        listen: (cb: __TAURI_EVENT.EventCallback<TListen>) => target.listen(name, mapEvent(cb)),
+        once: (cb: __TAURI_EVENT.EventCallback<TListen>) => target.once(name, mapEvent(cb)),
+        emit: ((payload: TEmit) => target.emit(name, mapPayload(payload)) as unknown) as EventEmit<TEmit>,
+        emitTo: ((to: __TAURI_EVENT.EventTarget | string, payload: TEmit) => target.emitTo(to, name, mapPayload(payload)) as unknown) as EventEmitTo<TEmit>
+    });
+
+    return Object.assign(fn, base);
+}

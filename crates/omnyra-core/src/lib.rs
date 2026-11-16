@@ -1,5 +1,7 @@
 //! Omnyra core: pure Rust logic (no Tauri/WebKit), so it can be tested fast.
 
+pub mod accounts;
+pub mod auth;
 pub mod clock;
 pub mod connectors;
 pub mod db;

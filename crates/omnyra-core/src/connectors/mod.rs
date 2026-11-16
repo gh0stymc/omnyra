@@ -1,27 +1,39 @@
 //! Connector system: every social network implements [`Connector`].
-//! Authentication is NOT part of the trait (generic `auth` module, step 1a).
+//! Authentication is NOT part of the trait: the generic `auth` module runs the flow from
+//! the connector's [`OAuthConfig`].
 
+pub mod http;
 pub mod mock;
 pub mod registry;
 pub mod types;
+pub mod youtube;
 
 pub use types::*;
 
+use crate::auth::OAuthConfig;
 use crate::{AppError, Result};
 use async_trait::async_trait;
+use http::ApiClient;
+use std::sync::Arc;
 
-/// Context handed to a connector for one account. Later (1a/1b) it will carry an
-/// authenticated HTTP client, the rate limiter and the quota ledger.
+/// Context handed to a connector for one account: an HTTP client that already carries
+/// (and refreshes) the account's token. Rate limiter and quota ledger arrive in 1b.
 /// A connector never touches the keyring.
 #[derive(Debug, Clone)]
 pub struct AccountCtx {
     pub account_id: String,
     pub external_id: String,
+    pub api: ApiClient,
 }
 
 #[async_trait]
 pub trait Connector: Send + Sync {
     fn info(&self) -> &PlatformInfo;
+
+    /// OAuth description, if the platform uses OAuth and its client ID was configured.
+    fn oauth(&self) -> Option<&Arc<OAuthConfig>> {
+        None
+    }
 
     async fn fetch_profile(&self, ctx: &AccountCtx) -> Result<Profile>;
     async fn fetch_channel_metrics(

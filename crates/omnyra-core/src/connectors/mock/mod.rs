@@ -30,6 +30,8 @@ impl MockConnector {
                         max_hashtags: Some(15),
                     },
                 },
+                auth: AuthKind::None,
+                auth_configured: true,
             },
         }
     }
@@ -142,6 +144,7 @@ mod tests {
         AccountCtx {
             account_id: "a".into(),
             external_id: "m1".into(),
+            api: http::ApiClient::unauthenticated(),
         }
     }
 

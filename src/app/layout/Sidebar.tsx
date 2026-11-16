@@ -56,16 +56,18 @@ export function Sidebar() {
       <div className="mt-4 px-3 text-xs uppercase tracking-wide text-[var(--muted)]">
         {t("nav.accounts")}
       </div>
-      {accounts.data?.map((a) => (
-        <NavLink
-          key={a.id}
-          to={`/platform/${a.platform}/${a.id}`}
-          className={({ isActive }) => `${link} ${isActive ? active : ""}`}
-        >
-          <span className="size-2 rounded-full" style={{ background: color(a.platform) }} />
-          {a.displayName}
-        </NavLink>
-      ))}
+      {accounts.data
+        ?.filter((a) => a.status !== "disconnected")
+        .map((a) => (
+          <NavLink
+            key={a.id}
+            to={`/platform/${a.platform}/${a.id}`}
+            className={({ isActive }) => `${link} ${isActive ? active : ""}`}
+          >
+            <span className="size-2 rounded-full" style={{ background: color(a.platform) }} />
+            {a.displayName}
+          </NavLink>
+        ))}
       <div className="mt-auto" />
       <NavLink to="/settings" className={({ isActive }) => `${link} ${isActive ? active : ""}`}>
         <Settings size={16} /> {t("nav.settings")}

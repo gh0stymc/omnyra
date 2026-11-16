@@ -52,6 +52,15 @@ pub struct Capabilities {
     pub limits: MediaLimits,
 }
 
+#[derive(Debug, Clone, Copy, Serialize, Type, PartialEq, Eq)]
+#[serde(rename_all = "lowercase")]
+pub enum AuthKind {
+    /// No login (mock).
+    None,
+    /// OAuth 2.0 + PKCE with a loopback redirect.
+    OAuth,
+}
+
 #[derive(Debug, Clone, Serialize, Type)]
 #[serde(rename_all = "camelCase")]
 pub struct PlatformInfo {
@@ -59,6 +68,9 @@ pub struct PlatformInfo {
     pub display_name: String,
     pub brand_color: String,
     pub capabilities: Capabilities,
+    pub auth: AuthKind,
+    /// False when the platform needs a client ID that was not provided at build time.
+    pub auth_configured: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Type)]

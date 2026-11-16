@@ -14,6 +14,7 @@ url="https://github.com/${_owner}/omnyra"
 license=('MIT')
 depends=('webkit2gtk-4.1' 'gtk3' 'glib2' 'cairo' 'gdk-pixbuf2' 'pango' 'libsoup3'
          'hicolor-icon-theme' 'gcc-libs' 'glibc' 'ffmpeg')
+optdepends=('org.freedesktop.secrets: keyring to store account tokens (gnome-keyring, kwallet, keepassxc)')
 makedepends=('cargo' 'nodejs' 'npm')
 options=('!lto')
 source=("${pkgname}-${pkgver}.tar.gz::${url}/archive/v${pkgver}.tar.gz")
