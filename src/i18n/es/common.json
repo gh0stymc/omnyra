@@ -1,0 +1,44 @@
+{
+  "app": { "name": "Omnyra" },
+  "nav": {
+    "dashboard": "Panel global",
+    "calendar": "Calendario",
+    "community": "Comunidad",
+    "creation": "Creación",
+    "sponsors": "Patrocinios",
+    "competitors": "Competencia",
+    "security": "Seguridad",
+    "settings": "Ajustes",
+    "accounts": "Cuentas"
+  },
+  "dashboard": {
+    "title": "Panel global",
+    "noAccounts": "Aún no hay cuentas conectadas.",
+    "addMock": "Añadir cuenta de prueba",
+    "sync": "Sincronizar",
+    "followers": "Seguidores",
+    "views": "Visitas",
+    "noData": "Sin datos todavía. Pulsa Sincronizar."
+  },
+  "platform": { "title": "Vista de {{name}}", "capabilities": "Capacidades" },
+  "settings": {
+    "title": "Ajustes",
+    "language": "Idioma",
+    "theme": "Tema",
+    "dark": "Oscuro",
+    "light": "Claro"
+  },
+  "placeholder": { "soon": "Esta sección llegará en una fase posterior." },
+  "errors": {
+    "TOKEN_EXPIRED": "La sesión ha caducado. Vuelve a conectar la cuenta.",
+    "QUOTA_EXCEEDED": "Se ha agotado la cuota de la API. Inténtalo más tarde.",
+    "RATE_LIMITED": "Demasiadas peticiones. Reintentando en {{seconds}} s.",
+    "NETWORK": "Error de red. Comprueba tu conexión.",
+    "NOT_SUPPORTED": "Esta red no admite esa función.",
+    "VALIDATION": "Campo no válido: {{field}}",
+    "NOT_FOUND": "No encontrado.",
+    "DATABASE": "Error en la base de datos local.",
+    "INTERNAL": "Error interno.",
+    "unknown": "Ha ocurrido un error inesperado."
+  }
+}

@@ -1,0 +1,18 @@
+[package]
+name = "omnyra-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+serde.workspace = true
+thiserror.workspace = true
+async-trait.workspace = true
+rusqlite.workspace = true
+rusqlite_migration.workspace = true
+uuid.workspace = true
+time.workspace = true
+specta.workspace = true
+
+[dev-dependencies]
+tokio.workspace = true

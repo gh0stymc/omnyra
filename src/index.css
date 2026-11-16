@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --bg: #f7f7f9;
+  --panel: #ffffff;
+  --border: #e4e4ec;
+  --text: #16161d;
+  --muted: #6b6b7b;
+  --accent: #7c3aed;
+}
+.dark {
+  --bg: #0e0e13;
+  --panel: #16161d;
+  --border: #272733;
+  --text: #ececf3;
+  --muted: #9a9aad;
+  --accent: #a78bfa;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, sans-serif;
+}

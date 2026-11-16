@@ -1,0 +1,44 @@
+{
+  "app": { "name": "Omnyra" },
+  "nav": {
+    "dashboard": "Global dashboard",
+    "calendar": "Calendar",
+    "community": "Community",
+    "creation": "Creation",
+    "sponsors": "Sponsorships",
+    "competitors": "Competitors",
+    "security": "Security",
+    "settings": "Settings",
+    "accounts": "Accounts"
+  },
+  "dashboard": {
+    "title": "Global dashboard",
+    "noAccounts": "No accounts connected yet.",
+    "addMock": "Add test account",
+    "sync": "Sync",
+    "followers": "Followers",
+    "views": "Views",
+    "noData": "No data yet. Press Sync."
+  },
+  "platform": { "title": "{{name}} view", "capabilities": "Capabilities" },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "theme": "Theme",
+    "dark": "Dark",
+    "light": "Light"
+  },
+  "placeholder": { "soon": "This section will arrive in a later phase." },
+  "errors": {
+    "TOKEN_EXPIRED": "The session has expired. Reconnect the account.",
+    "QUOTA_EXCEEDED": "The API quota is exhausted. Try again later.",
+    "RATE_LIMITED": "Too many requests. Retrying in {{seconds}} s.",
+    "NETWORK": "Network error. Check your connection.",
+    "NOT_SUPPORTED": "This network does not support that feature.",
+    "VALIDATION": "Invalid field: {{field}}",
+    "NOT_FOUND": "Not found.",
+    "DATABASE": "Local database error.",
+    "INTERNAL": "Internal error.",
+    "unknown": "An unexpected error occurred."
+  }
+}

@@ -1,0 +1,8 @@
+dist
+target
+src-tauri
+crates
+src/lib/bindings.ts
+package-lock.json
+docs
+OMNYRA_SPEC.md
