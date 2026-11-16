@@ -1,0 +1,57 @@
+# Maintainer: Omnyra developers
+# Builds Omnyra from a source tarball of a release tag.
+# CI (.github/workflows/ci.yml, job "arch") drops a `git archive` tarball with the
+# same name next to this file, so makepkg uses it instead of downloading.
+# TODO(7c): set _owner and replace SKIP with the real checksum before publishing to AUR.
+
+_owner=OWNER
+pkgname=omnyra
+pkgver=0.1.0
+pkgrel=1
+pkgdesc='Desktop app for content creators: unified analytics, calendar and publishing'
+arch=('x86_64')
+url="https://github.com/${_owner}/omnyra"
+license=('MIT')
+depends=('webkit2gtk-4.1' 'gtk3' 'glib2' 'cairo' 'gdk-pixbuf2' 'pango' 'libsoup3'
+         'hicolor-icon-theme' 'gcc-libs' 'glibc' 'ffmpeg')
+makedepends=('cargo' 'nodejs' 'npm')
+options=('!lto')
+source=("${pkgname}-${pkgver}.tar.gz::${url}/archive/v${pkgver}.tar.gz")
+sha256sums=('SKIP')
+
+prepare() {
+  cd "${pkgname}-${pkgver}"
+  export RUSTUP_TOOLCHAIN=stable
+  export CARGO_HOME="${srcdir}/cargo-home"
+  cargo fetch --locked --target "$(rustc -vV | sed -n 's/host: //p')"
+  npm ci --no-audit --no-fund --cache "${srcdir}/npm-cache"
+}
+
+build() {
+  cd "${pkgname}-${pkgver}"
+  export RUSTUP_TOOLCHAIN=stable
+  export CARGO_HOME="${srcdir}/cargo-home"
+  export CARGO_TARGET_DIR="${srcdir}/target"
+  export RUSTFLAGS="${RUSTFLAGS:-} --remap-path-prefix=${srcdir}=/build"
+  npm run tauri -- build --ci --no-bundle -- --frozen
+}
+
+check() {
+  cd "${pkgname}-${pkgver}"
+  export RUSTUP_TOOLCHAIN=stable
+  export CARGO_HOME="${srcdir}/cargo-home"
+  export CARGO_TARGET_DIR="${srcdir}/target"
+  cargo test --frozen -p omnyra-core
+}
+
+package() {
+  cd "${pkgname}-${pkgver}"
+  install -Dm755 "${srcdir}/target/release/omnyra" "${pkgdir}/usr/bin/omnyra"
+  install -Dm644 packaging/linux/omnyra.desktop "${pkgdir}/usr/share/applications/omnyra.desktop"
+  local size
+  for size in 32x32 64x64 128x128; do
+    install -Dm644 "src-tauri/icons/${size}.png" "${pkgdir}/usr/share/icons/hicolor/${size}/apps/omnyra.png"
+  done
+  install -Dm644 src-tauri/icons/128x128@2x.png "${pkgdir}/usr/share/icons/hicolor/256x256/apps/omnyra.png"
+  install -Dm644 src-tauri/icons/icon.png "${pkgdir}/usr/share/icons/hicolor/512x512/apps/omnyra.png"
+}

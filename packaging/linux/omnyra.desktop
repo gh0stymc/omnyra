@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Omnyra
+Comment=All your social networks in one place
+Comment[es]=Todas tus redes sociales en un solo sitio
+Exec=omnyra
+Icon=omnyra
+Terminal=false
+Categories=Network;AudioVideo;Video;
+StartupWMClass=omnyra

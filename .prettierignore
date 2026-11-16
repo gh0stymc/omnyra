@@ -6,3 +6,5 @@ src/lib/bindings.ts
 package-lock.json
 docs
 OMNYRA_SPEC.md
+artifacts
+packaging

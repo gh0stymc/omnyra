@@ -17,6 +17,7 @@ fn specta_builder() -> Builder<tauri::Wry> {
     ])
 }
 
+#[cfg(any(debug_assertions, test))]
 const BINDINGS_PATH: &str = "../src/lib/bindings.ts";
 
 pub fn run() {

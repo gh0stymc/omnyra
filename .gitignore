@@ -8,3 +8,8 @@ target/
 src-tauri/gen/
 src-tauri/target/
 .DS_Store
+artifacts/
+packaging/arch/*.tar.gz
+packaging/arch/src/
+packaging/arch/pkg/
+packaging/arch/*.pkg.tar.*
