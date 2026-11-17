@@ -31,6 +31,8 @@ const DEFAULT_BACKFILL_DAYS: i64 = 365;
 pub const EARLY_DAYS: u32 = 7;
 pub const EARLY_VIEWS_METRIC: &str = "views_7d";
 const EARLY_VIEWS_BATCH: usize = 10;
+/// Safety limit on listing pages per sync (50 × 200 = 10,000 contents).
+const MAX_PAGES: u32 = 200;
 /// Content IDs per details request (the connector may batch further).
 const DETAILS_BATCH: usize = 50;
 
@@ -254,6 +256,7 @@ async fn sync_contents(
     // Newest first: stop paging at the first page that reaches a known content.
     let mut new_ids = Vec::new();
     let mut page = None;
+    let mut pages = 1;
     loop {
         let p = connector.list_contents(ctx, page).await?;
         let mut reached_known = false;
@@ -264,10 +267,12 @@ async fn sync_contents(
                 new_ids.push(item.external_id);
             }
         }
+        let stop_early = reached_known && connector.lists_newest_first();
         match p.next {
-            Some(n) if !reached_known => page = Some(n),
+            Some(n) if !stop_early && pages < MAX_PAGES => page = Some(n),
             _ => break,
         }
+        pages += 1;
     }
     report.new_contents = new_ids.len() as u32;
 

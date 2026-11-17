@@ -421,6 +421,7 @@ mod tests {
                     published_at: Some(format!("{day}T10:00:00Z")),
                     duration_s: None,
                     visibility: None,
+                    extra: Default::default(),
                 },
                 "video",
                 true,

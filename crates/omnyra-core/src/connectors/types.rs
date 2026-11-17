@@ -59,6 +59,8 @@ pub enum AuthKind {
     None,
     /// OAuth 2.0 + PKCE with a loopback redirect.
     OAuth,
+    /// OAuth 2.0 device code flow: the user types a code on the provider's site.
+    DeviceCode,
 }
 
 #[derive(Debug, Clone, Serialize, Type)]
@@ -137,6 +139,19 @@ pub mod kind {
     pub const VIDEO: &str = "video";
     pub const SHORT: &str = "short";
     pub const STREAM: &str = "stream";
+    /// Recording of a past live stream (Twitch archive or highlight).
+    pub const VOD: &str = "vod";
+    pub const CLIP: &str = "clip";
+}
+
+/// A live stream in progress, as the platform reports it right now.
+#[derive(Debug, Clone, PartialEq)]
+pub struct LiveStatus {
+    pub stream_id: String,
+    pub started_at: String,
+    pub viewers: u32,
+    pub title: Option<String>,
+    pub category: Option<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -151,6 +166,8 @@ pub struct Content {
     pub published_at: Option<String>,
     pub duration_s: Option<u32>,
     pub visibility: Option<String>,
+    /// Platform fields kept in `contents.extra` (Twitch: the VOD's `stream_id`).
+    pub extra: serde_json::Map<String, serde_json::Value>,
 }
 
 #[derive(Debug, Clone)]

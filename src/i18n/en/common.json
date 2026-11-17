@@ -121,13 +121,16 @@
       "active": "Connected",
       "needs_reauth": "Reconnection needed",
       "disconnected": "Disconnected"
-    }
+    },
+    "deviceCode": "Confirm this code on the {{name}} page that opened in your browser:",
+    "openAgain": "Open the page again"
   },
   "scopes": {
     "ytReadonly": "View your YouTube channel and videos",
     "ytAnalytics": "View YouTube analytics",
     "ytUpload": "Upload videos to YouTube",
-    "ytForceSsl": "Manage YouTube comments"
+    "ytForceSsl": "Manage your YouTube account (playlists and comments)",
+    "twitchFollowers": "See your Twitch follower list"
   },
   "bestTime": {
     "title": "Best time to publish",
@@ -261,7 +264,9 @@
       "all": "All",
       "video": "Videos",
       "short": "Shorts",
-      "stream": "Streams"
+      "stream": "Streams",
+      "vod": "VODs",
+      "clip": "Clips"
     },
     "col": {
       "title": "Title",
@@ -271,6 +276,26 @@
       "views": "Views",
       "likes": "Likes",
       "comments": "Comm."
+    }
+  },
+  "twitch": {
+    "liveNow": "LIVE",
+    "followers": "Followers",
+    "streams": "Streams",
+    "hoursStreamed": "Hours streamed",
+    "viewers": "Average viewers",
+    "peak": "peak {{value}}",
+    "observedNote": "Viewers are only known for streams Omnyra saw while it was open ({{observed}} of {{streams}}): Twitch keeps no such history. Hours and stream count also include the VODs Twitch keeps.",
+    "followersNote": "History is computed from the date each current follower followed you; people who unfollowed no longer appear.",
+    "sessionsTitle": "Streams seen by Omnyra",
+    "noSessions": "None in this period. Omnyra records streams while it is open.",
+    "contentsTitle": "VODs and clips",
+    "col": {
+      "date": "Date",
+      "title": "Title",
+      "duration": "Length",
+      "avg": "Average",
+      "peak": "Peak"
     }
   }
 }

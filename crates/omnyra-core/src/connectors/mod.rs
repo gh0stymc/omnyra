@@ -5,6 +5,7 @@
 pub mod http;
 pub mod mock;
 pub mod registry;
+pub mod twitch;
 pub mod types;
 pub mod youtube;
 
@@ -58,6 +59,17 @@ pub trait Connector: Send + Sync {
         None
     }
 
+    /// Headers every API request needs (Twitch: `Client-Id`).
+    fn api_headers(&self) -> Vec<(String, String)> {
+        Vec::new()
+    }
+
+    /// False when `list_contents` is not ordered newest first (the sync then lists every
+    /// page instead of stopping at the first known content).
+    fn lists_newest_first(&self) -> bool {
+        true
+    }
+
     /// Identifies the account right after connecting.
     async fn fetch_profile(&self, ctx: &AccountCtx) -> Result<Profile>;
 
@@ -94,6 +106,12 @@ pub trait Connector: Send + Sync {
         _items: &[(String, String)],
         _days: u32,
     ) -> Result<Vec<(String, f64)>> {
+        Err(AppError::NotSupported)
+    }
+
+    /// The account's live stream right now, if any. Polled while the app runs (Twitch has
+    /// no viewer history, A2).
+    async fn live_status(&self, _ctx: &AccountCtx) -> Result<Option<LiveStatus>> {
         Err(AppError::NotSupported)
     }
 

@@ -1,5 +1,6 @@
 mod commands;
 mod events;
+mod live;
 mod state;
 mod sync;
 mod uploads;
@@ -44,12 +45,14 @@ fn specta_builder() -> Builder<tauri::Wry> {
             commands::dashboard::get_summary,
             commands::dashboard::get_combined_series,
             commands::dashboard::get_top_contents,
+            commands::live::get_live_overview,
         ])
         .events(collect_events![
             events::AccountChanged,
             events::SyncStatus,
             events::UploadProgress,
-            events::UploadChanged
+            events::UploadChanged,
+            events::DeviceCodeIssued
         ])
 }
 
@@ -60,6 +63,7 @@ fn credentials() -> Credentials {
             option_env!("OMNYRA_GOOGLE_CLIENT_ID"),
             option_env!("OMNYRA_GOOGLE_CLIENT_SECRET"),
         ),
+        twitch: ClientCredentials::from_parts(option_env!("OMNYRA_TWITCH_CLIENT_ID"), None),
     }
 }
 
@@ -118,6 +122,7 @@ pub fn run() {
             });
             sync::spawn_startup_sync(app.handle().clone());
             uploads::spawn_worker(app.handle().clone());
+            live::spawn_sampler(app.handle().clone());
             Ok(())
         })
         .run(tauri::generate_context!())

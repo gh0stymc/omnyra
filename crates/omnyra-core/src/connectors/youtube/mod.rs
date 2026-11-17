@@ -79,6 +79,8 @@ impl YouTubeConnector {
                     ("prompt".into(), "select_account consent".into()),
                     ("include_granted_scopes".into(), "true".into()),
                 ],
+                device_url: None,
+                revoke_with_client_id: false,
             })
         });
         Self {

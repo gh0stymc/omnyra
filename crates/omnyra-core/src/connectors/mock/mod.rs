@@ -158,6 +158,7 @@ impl Connector for MockConnector {
                             300 + n * 10
                         }),
                         visibility: Some("public".into()),
+                        extra: Default::default(),
                     },
                     kind_final: false,
                     stats: vec![

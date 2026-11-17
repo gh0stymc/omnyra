@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { openUrl } from "@tauri-apps/plugin-opener";
-import { commands, type Account, type PlatformInfo } from "../../lib/bindings";
+import { commands, events, type Account, type PlatformInfo } from "../../lib/bindings";
 import { errorMessage, isAppError } from "../../lib/ipc";
 import { queryKeys } from "../../lib/queryKeys";
 import { scopeLabels } from "../../lib/scopes";
@@ -33,6 +33,16 @@ export function AccountsSection() {
   });
   const [connecting, setConnecting] = useState<string | null>(null);
   const [notice, setNotice] = useState<{ platform: string } | null>(null);
+  // Device flow (Twitch): the code the user must confirm on the provider's site.
+  const [deviceCode, setDeviceCode] = useState<{ userCode: string; uri: string } | null>(null);
+  useEffect(() => {
+    const sub = events.deviceCodeIssued
+      .listen(({ payload }) =>
+        setDeviceCode({ userCode: payload.userCode, uri: payload.verificationUri }),
+      )
+      .catch(() => undefined);
+    return () => void sub.then((f) => f?.());
+  }, []);
 
   const connect = useMutation({
     mutationFn: (platform: string) => {
@@ -42,11 +52,12 @@ export function AccountsSection() {
     },
     onSettled: () => {
       setConnecting(null);
+      setDeviceCode(null);
       void qc.invalidateQueries({ queryKey: queryKeys.accounts });
     },
   });
 
-  const oauthPlatforms = platforms.data?.filter((p) => p.auth === "oauth") ?? [];
+  const oauthPlatforms = platforms.data?.filter((p) => p.auth !== "none") ?? [];
   const byId = (id: string) => platforms.data?.find((p) => p.id === id);
   const connectCancelled = isAppError(connect.error) && connect.error.code === "AUTH_CANCELLED";
 
@@ -75,7 +86,21 @@ export function AccountsSection() {
 
       {connect.isPending && connecting && (
         <div className="flex items-center gap-3 rounded-md border border-[var(--border)] p-3 text-sm">
-          <span>{t("accounts.waitingBrowser", { name: byId(connecting)?.displayName })}</span>
+          {deviceCode ? (
+            <span className="space-y-1">
+              <span className="block">
+                {t("accounts.deviceCode", { name: byId(connecting)?.displayName })}
+              </span>
+              <span className="block font-mono text-2xl tracking-widest">
+                {deviceCode.userCode}
+              </span>
+              <button className="text-xs underline" onClick={() => void openUrl(deviceCode.uri)}>
+                {t("accounts.openAgain")}
+              </button>
+            </span>
+          ) : (
+            <span>{t("accounts.waitingBrowser", { name: byId(connecting)?.displayName })}</span>
+          )}
           <button className={secondary} onClick={() => void commands.cancelConnect()}>
             {t("accounts.cancel")}
           </button>
@@ -131,7 +156,7 @@ function AccountRow({
     },
     onSettled: () => void qc.invalidateQueries({ queryKey: queryKeys.accounts }),
   });
-  const canReconnect = platform?.auth === "oauth" && platform.authConfigured;
+  const canReconnect = platform?.auth !== "none" && !!platform?.authConfigured;
   const scopes = scopeLabels(a.grantedScopes, t);
   const since = new Date(a.connectedAt);
 

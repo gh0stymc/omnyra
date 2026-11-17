@@ -8,6 +8,7 @@ pub mod connectors;
 pub mod dashboard;
 pub mod db;
 pub mod error;
+pub mod live;
 pub mod media;
 pub mod quota;
 pub mod sync;

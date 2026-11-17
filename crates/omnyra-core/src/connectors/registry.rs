@@ -1,7 +1,7 @@
 //! Registry of connectors. Adding a network = a new folder + one line here
 //! (and one line in `src/platforms/registry.ts` on the frontend).
 
-use super::{mock::MockConnector, youtube::YouTubeConnector, Connector};
+use super::{mock::MockConnector, twitch::TwitchConnector, youtube::YouTubeConnector, Connector};
 use crate::auth::ClientCredentials;
 use std::sync::Arc;
 
@@ -9,6 +9,7 @@ use std::sync::Arc;
 #[derive(Debug, Clone, Default)]
 pub struct Credentials {
     pub google: Option<ClientCredentials>,
+    pub twitch: Option<ClientCredentials>,
 }
 
 pub struct Registry {
@@ -19,6 +20,7 @@ impl Registry {
     pub fn new(creds: Credentials) -> Self {
         Self::from_connectors(vec![
             Arc::new(YouTubeConnector::new(creds.google)),
+            Arc::new(TwitchConnector::new(creds.twitch)),
             Arc::new(MockConnector::new()),
         ])
     }
@@ -54,6 +56,7 @@ mod tests {
         let r = Registry::default();
         assert!(r.get("mock").is_some());
         assert!(r.get("youtube").is_some());
+        assert!(r.get("twitch").is_some());
         assert!(r.get("nope").is_none());
     }
 }

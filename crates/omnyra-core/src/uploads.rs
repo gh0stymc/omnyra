@@ -548,6 +548,7 @@ pub async fn run(
                 published_at: Some(now_iso.clone()),
                 duration_s: None,
                 visibility: Some(loaded.req.draft.visibility.clone()),
+                extra: Default::default(),
             };
             let content_id =
                 contents::upsert(&tx, &account.id, &content, kind::VIDEO, false, &now_iso)?;

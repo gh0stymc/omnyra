@@ -6,6 +6,7 @@ const SCOPE_KEYS: Record<string, string> = {
   "https://www.googleapis.com/auth/yt-analytics.readonly": "scopes.ytAnalytics",
   "https://www.googleapis.com/auth/youtube.upload": "scopes.ytUpload",
   "https://www.googleapis.com/auth/youtube.force-ssl": "scopes.ytForceSsl",
+  "moderator:read:followers": "scopes.twitchFollowers",
 };
 
 /** Human-readable labels; identity scopes Google may add on its own are hidden. */

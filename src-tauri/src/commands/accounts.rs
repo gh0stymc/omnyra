@@ -1,7 +1,7 @@
-use crate::events::AccountChanged;
+use crate::events::{AccountChanged, DeviceCodeIssued};
 use crate::state::AppState;
 use omnyra_core::{
-    accounts::{self as account_service, DisconnectOutcome, CONNECT_TIMEOUT},
+    accounts::{self as account_service, AuthPrompt, DisconnectOutcome, CONNECT_TIMEOUT},
     best_time::{self, BestTime, BestTimeQuery},
     connectors::MetricPoint,
     db::repo::{
@@ -121,7 +121,23 @@ async fn run_connect(
         connector.as_ref(),
         extra_scopes,
         CONNECT_TIMEOUT,
-        |url| {
+        |prompt| {
+            let url = match prompt {
+                AuthPrompt::OpenUrl(url) => url,
+                AuthPrompt::DeviceCode {
+                    user_code,
+                    verification_uri,
+                } => {
+                    // The UI shows the code while the user confirms it on the provider's site.
+                    let _ = DeviceCodeIssued {
+                        platform: platform.to_owned(),
+                        user_code,
+                        verification_uri: verification_uri.clone(),
+                    }
+                    .emit(app);
+                    verification_uri
+                }
+            };
             // Only ever hand provider HTTPS URLs to the OS.
             if !url.starts_with("https://") {
                 return Err(AppError::Internal);

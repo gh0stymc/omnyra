@@ -1,13 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Link, useParams } from "react-router";
+import { useParams } from "react-router";
+import { AccountHeader } from "../../components/AccountHeader";
 import { BestTimeHeatmap } from "../../components/BestTimeHeatmap";
 import { ContentTable } from "../../components/ContentTable";
 import { MetricChart } from "../../components/MetricChart";
-import { RangePicker } from "../../components/RangePicker";
 import { StatCard, changeTone } from "../../components/StatCard";
-import { SyncButton } from "../../components/SyncButton";
 import { commands } from "../../lib/bindings";
 import { fmtDate, fmtDuration, fmtHours, fmtNumber, fmtSigned } from "../../lib/format";
 import { errorMessage } from "../../lib/ipc";
@@ -51,45 +50,11 @@ export function PlatformViewPage() {
   if (!a || !info) return <p className="text-[var(--muted)]">{t("platform.notFound")}</p>;
   if (Custom) return <Custom accountId={accountId} />;
 
-  const canUpload = info.capabilities.upload !== "none";
   const net = (a.subscribersGained ?? 0) - (a.subscribersLost ?? 0);
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold">{a.displayName}</h1>
-          <p className="text-xs text-[var(--muted)]">
-            {info.displayName}
-            {a.handle && ` · ${a.handle}`} ·{" "}
-            {t("dashboard.lastSync", {
-              when: a.lastSyncAt
-                ? new Date(a.lastSyncAt).toLocaleString(lang)
-                : t("dashboard.never"),
-            })}
-          </p>
-          {a.status === "needs_reauth" && (
-            <p className="text-sm text-amber-500">
-              {t("platform.needsReauth")}{" "}
-              <Link className="underline" to="/settings">
-                {t("nav.settings")}
-              </Link>
-            </p>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          <RangePicker />
-          {canUpload && (
-            <Link
-              to={`/uploads?account=${accountId}`}
-              className="rounded-md border border-[var(--border)] px-2 py-1 text-xs"
-            >
-              {t("dashboard.uploadVideo")}
-            </Link>
-          )}
-          <SyncButton accountIds={a.status === "active" ? [accountId] : []} />
-        </div>
-      </div>
+      <AccountHeader a={a} info={info} />
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard

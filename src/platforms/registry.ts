@@ -1,4 +1,5 @@
 import type { ComponentType } from "react";
+import { TwitchView } from "./twitch/TwitchView";
 
 /** Frontend side of a connector. One line here per network (plus the Rust registry). */
 export interface PlatformUI {
@@ -13,6 +14,11 @@ export interface PlatformUI {
 
 export const platformUIs: Record<string, PlatformUI> = {
   youtube: { id: "youtube", permissionsUrl: "https://myaccount.google.com/connections" },
+  twitch: {
+    id: "twitch",
+    AnalyticsView: TwitchView,
+    permissionsUrl: "https://www.twitch.tv/settings/connections",
+  },
   mock: { id: "mock" },
 };
 

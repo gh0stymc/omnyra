@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   cancelConnect: vi.fn(),
   disconnectAccount: vi.fn(),
   openUrl: vi.fn(),
+  deviceListener: null as null | ((e: { payload: unknown }) => void),
 }));
 
 vi.mock("../../lib/bindings", () => ({
@@ -20,6 +21,14 @@ vi.mock("../../lib/bindings", () => ({
     connectAccount: mocks.connectAccount,
     cancelConnect: mocks.cancelConnect,
     disconnectAccount: mocks.disconnectAccount,
+  },
+  events: {
+    deviceCodeIssued: {
+      listen: (cb: (e: { payload: unknown }) => void) => {
+        mocks.deviceListener = cb;
+        return Promise.resolve(() => undefined);
+      },
+    },
   },
 }));
 vi.mock("@tauri-apps/plugin-opener", () => ({ openUrl: mocks.openUrl }));
@@ -101,6 +110,28 @@ describe("AccountsSection", () => {
     await waitFor(() => expect(screen.queryByText(/navegador/)).toBeNull());
     // A user cancellation is not shown as an error.
     expect(screen.queryByRole("alert")).toBeNull();
+  });
+
+  it("shows the device code for Twitch while waiting", async () => {
+    mocks.listPlatforms.mockResolvedValue([
+      { ...platform("youtube"), id: "twitch", displayName: "Twitch", auth: "devicecode" },
+    ]);
+    mocks.connectAccount.mockReturnValue(new Promise(() => {}));
+    renderSection();
+    fireEvent.click(await screen.findByRole("button", { name: "Conectar Twitch" }));
+    await waitFor(() => expect(mocks.connectAccount).toHaveBeenCalledWith("twitch"));
+    mocks.deviceListener?.({
+      payload: {
+        platform: "twitch",
+        userCode: "ABCD1234",
+        verificationUri: "https://www.twitch.tv/activate?device-code=ABCD1234",
+      },
+    });
+    expect(await screen.findByText("ABCD1234")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Abrir la página otra vez" }));
+    expect(mocks.openUrl).toHaveBeenCalledWith(
+      "https://www.twitch.tv/activate?device-code=ABCD1234",
+    );
   });
 
   it("shows backend errors translated", async () => {

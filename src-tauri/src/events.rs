@@ -45,3 +45,13 @@ pub struct UploadChanged {
     pub publication_id: String,
     pub status: String,
 }
+
+/// Device flow (Twitch): show this code; the user confirms it at `verification_uri`
+/// (already opened in the browser).
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type, tauri_specta::Event)]
+#[serde(rename_all = "camelCase")]
+pub struct DeviceCodeIssued {
+    pub platform: String,
+    pub user_code: String,
+    pub verification_uri: String,
+}

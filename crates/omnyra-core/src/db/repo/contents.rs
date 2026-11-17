@@ -44,11 +44,10 @@ pub fn upsert(
     now_iso: &str,
 ) -> Result<String> {
     let new_id = uuid::Uuid::now_v7().to_string();
-    let extra = serde_json::json!({
-        "kind_checked": kind_checked,
-        "thumbnail_url": c.thumbnail_url,
-    })
-    .to_string();
+    let mut extra = c.extra.clone();
+    extra.insert("kind_checked".into(), kind_checked.into());
+    extra.insert("thumbnail_url".into(), c.thumbnail_url.clone().into());
+    let extra = serde_json::Value::Object(extra).to_string();
     conn.execute(
         "INSERT INTO contents (id, account_id, external_id, kind, title, description, url,
                                published_at, duration_s, visibility, extra,
@@ -232,6 +231,7 @@ mod tests {
             published_at: Some("2026-11-01T00:00:00Z".into()),
             duration_s: Some(30),
             visibility: None,
+            extra: Default::default(),
         }
     }
 

@@ -2,7 +2,7 @@
 
 > Estado del proyecto para cualquier sesión nueva (tras `/clear`). Ver `OMNYRA_SPEC.md` sección 9.
 
-**Paso actual:** 2a — Conector de Twitch. La Fase 1 (MVP con YouTube) está terminada y revisada por el usuario.
+**Paso actual:** 2b — Calendario y tablero de ideas (`claude-sonnet-5-5`). El 2a está hecho y probado con gh0stymc_ (Twitch).
 
 ## Pasos
 
@@ -15,7 +15,7 @@
 - [x] 1c — Mejor hora para publicar
 - [x] 1d — Subida de vídeos a YouTube
 - [x] 1e — Pantallas del MVP
-- [ ] 2a — Conector de Twitch
+- [x] 2a — Conector de Twitch
 - [ ] 2b — Calendario y tablero de ideas
 - [ ] 2c — Segundo plano y notificaciones
 - [ ] 3a — Estrategia de autenticación Meta y TikTok
@@ -82,6 +82,14 @@
 - 2026-11-17 (1e): Panel global = tarjetas (suscriptores y su cambio, visualizaciones, horas vistas, publicaciones), gráfica combinada, top 5 del periodo y lista de cuentas con su última sincronización; "Sincronizar todo". Vista de cuenta (`/platform/:platform/:id`) = tarjetas detalladas, gráfica, mejor hora y tabla de contenidos con filtro por tipo y orden. Subidas en `/uploads`. Sin miniaturas remotas en la tabla (la CSP no las permite; se descargarán a caché local más adelante).
 - 2026-11-17 (1e): interfaz funcional y sin pulir a propósito (ver preferencia del usuario).
 
+- 2026-11-17 (2a): Twitch como **cliente público** con **device code flow** (RFC 8628): es el único flujo que Twitch permite sin client secret (dev.twitch.tv/docs/authentication/getting-tokens-oauth, consultado 2026-11-17). Sin secreto en el binario. Refresh tokens de un solo uso que caducan a los 30 días sin uso (cada refresco guarda el nuevo). `OAuthConfig.device_url` activa el flujo; `AuthKind::DeviceCode`; la UI muestra el código (evento `device-code-issued`) y abre twitch.tv/activate. `scope` como array y errores `{status,message}` de Twitch normalizados en `oauth.rs`.
+- 2026-11-17 (2a): permiso pedido: `moderator:read:followers` (solo lectura). Todas las llamadas Helix llevan `Client-Id` (`Connector::api_headers`). Sin cuota diaria (solo límite por minuto): no se apunta en `quota_ledger`.
+- 2026-11-17 (2a): datos: seguidores (total diario + histórico a partir de `followed_at` de los seguidores actuales, como `subscribers_gained` diario → la reconstrucción de seguidores existente), VODs (`vod`; los `upload` son `video`) y clips (`clip`) con sus vistas, `stream_id` del VOD en `contents.extra`. Twitch no lista en orden cronológico (clips por vistas): `Connector::lists_newest_first() = false` y la sincronización recorre todas las páginas (tope 200).
+- 2026-11-17 (2a): espectadores medios y pico (A2): muestreo cada 2 min de `/helix/streams` mientras la app está abierta → `live_sessions`/`live_samples` (migración 0003). Horas emitidas y nº de directos = VODs de tipo archive del periodo + sesiones observadas sin VOD (emparejadas por `stream_id`). Sin EventSub de momento (la bandeja y el segundo plano son del 2c).
+- 2026-11-17 (2a): vista propia de Twitch (`src/platforms/twitch/TwitchView.tsx`, registrada como `AnalyticsView`): seguidores, directos, horas, espectadores medios/pico (observados), gráfica de seguidores, tabla de directos vistos y tabla de VODs/clips. Sin botón de subida (`upload: none`). Cabecera de cuenta extraída a `AccountHeader`.
+
+- 2026-11-17 (2a): la API de Twitch solo expone los VODs que Twitch aún guarda (7/14/60 días según el tipo de cuenta, y solo con "Almacenar emisiones anteriores" activado). Omnyra conserva en `contents` los VODs que ha visto aunque Twitch los borre, así que el historial de directos se completa desde que se usa la app; lo anterior no es recuperable.
+
 ## Problemas pendientes
 
 - R1: la CI no se ha ejecutado nunca: la cuenta de GitHub sigue suspendida y el repo no tiene remoto. Revisar la primera ejecución al subirlo (no se pudo pasar `actionlint` en local).
@@ -105,6 +113,8 @@
 - [ ] Flujo OAuth real en Windows
 - [x] Sincronización real de gh0stymc (1b): 100 contenidos (94 vídeos, 6 Shorts, todos clasificados), seguidores reconstruidos desde 2020-03-30, 9 unidades de cuota en el día (2026-11-17)
 - [x] Subida real a gh0stymc (1d): permiso incremental, vídeo corto con miniatura, cancelar a mitad, reanudar tras cerrar la app
+- [x] Twitch real (2a): conexión con código y sincronización (1 VOD, 41 clips) (2026-11-17)
+- [ ] Twitch: abrir la app durante un directo y ver la sesión con espectadores
 - [ ] Llavero (Credential Manager) en Windows
 - [ ] Rutas de `app_data_dir` en Windows
 - [ ] Instalar y abrir el `.msi`/`.exe` en Windows (VM)

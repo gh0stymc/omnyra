@@ -21,6 +21,12 @@ pub struct OAuthConfig {
     pub base_scopes: Vec<String>,
     /// Extra query parameters for the authorization URL (`access_type=offline`...).
     pub extra_auth_params: Vec<(String, String)>,
+    /// Device authorization endpoint (RFC 8628). When set, connecting uses the device
+    /// flow (the user types a code on the provider's site) instead of the loopback
+    /// redirect: Twitch public clients only allow that flow.
+    pub device_url: Option<String>,
+    /// Twitch wants `client_id` in revocation requests; Google does not.
+    pub revoke_with_client_id: bool,
 }
 
 impl std::fmt::Debug for OAuthConfig {
@@ -62,17 +68,55 @@ pub fn authorization_url(
     url.into()
 }
 
+/// Google sends scopes as one space-separated string, Twitch as an array.
+#[derive(Deserialize)]
+#[serde(untagged)]
+enum Scope {
+    Joined(String),
+    List(Vec<String>),
+}
+
+impl Scope {
+    fn into_vec(self) -> Vec<String> {
+        match self {
+            Scope::Joined(s) => parse_scopes(&s),
+            Scope::List(v) => parse_scopes(&v.join(" ")),
+        }
+    }
+}
+
 #[derive(Deserialize)]
 struct TokenResponse {
     access_token: String,
     expires_in: Option<i64>,
     refresh_token: Option<String>,
-    scope: Option<String>,
+    scope: Option<Scope>,
 }
 
+/// RFC 6749 errors (`{"error": "invalid_grant"}`) and Twitch's
+/// (`{"status": 400, "message": "Invalid refresh token"}`).
 #[derive(Deserialize)]
 struct ErrorResponse {
-    error: String,
+    error: Option<String>,
+    message: Option<String>,
+}
+
+impl ErrorResponse {
+    /// Normalised error code (`invalid_grant`, `authorization_pending`...).
+    fn code(&self) -> String {
+        let raw = self
+            .error
+            .as_deref()
+            .or(self.message.as_deref())
+            .unwrap_or_default()
+            .to_lowercase();
+        match raw.as_str() {
+            "invalid refresh token" => "invalid_grant".into(),
+            "invalid token" => "invalid_token".into(),
+            "invalid device code" => "expired_token".into(),
+            _ => raw.replace(' ', "_"),
+        }
+    }
 }
 
 /// Default lifetime when the server omits `expires_in`.
@@ -118,9 +162,21 @@ async fn token_request(
     if status.is_server_error() {
         return Err(TokenError::Other(AppError::Network));
     }
-    match resp.json::<ErrorResponse>().await {
-        Ok(e) if e.error == "invalid_grant" => Err(TokenError::InvalidGrant),
-        _ => Err(TokenError::Other(AppError::AuthFailed)),
+    let code = resp
+        .json::<ErrorResponse>()
+        .await
+        .map(|e| e.code())
+        .unwrap_or_default();
+    match code.as_str() {
+        "invalid_grant" => Err(TokenError::InvalidGrant),
+        "authorization_pending" => Err(TokenError::Pending),
+        "slow_down" => Err(TokenError::SlowDown),
+        "access_denied" => Err(TokenError::Other(AppError::AuthCancelled)),
+        "expired_token" => Err(TokenError::Other(AppError::AuthTimeout)),
+        _ => {
+            tracing::warn!(%status, code, "token request rejected");
+            Err(TokenError::Other(AppError::AuthFailed))
+        }
     }
 }
 
@@ -136,7 +192,35 @@ pub(crate) fn retry_after(resp: &reqwest::Response) -> Option<u32> {
 enum TokenError {
     /// Code or refresh token rejected (revoked, expired, already used...).
     InvalidGrant,
+    /// Device flow: the user has not finished yet.
+    Pending,
+    /// Device flow: poll less often.
+    SlowDown,
     Other(AppError),
+}
+
+impl TokenError {
+    fn into_app(self, invalid_grant: AppError) -> AppError {
+        match self {
+            TokenError::InvalidGrant => invalid_grant,
+            TokenError::Pending | TokenError::SlowDown => AppError::AuthFailed,
+            TokenError::Other(e) => e,
+        }
+    }
+}
+
+fn token_set(
+    r: TokenResponse,
+    now: i64,
+    fallback_scopes: Vec<String>,
+    old_refresh: Option<String>,
+) -> TokenSet {
+    TokenSet {
+        access_token: r.access_token,
+        refresh_token: r.refresh_token.or(old_refresh),
+        expires_at: now + r.expires_in.unwrap_or(DEFAULT_EXPIRES_IN),
+        scopes: r.scope.map(Scope::into_vec).unwrap_or(fallback_scopes),
+    }
 }
 
 /// Exchanges an authorization code. `now` is a Unix timestamp (seconds).
@@ -160,20 +244,13 @@ pub async fn exchange_code(
         ],
     )
     .await
-    .map_err(|e| match e {
-        TokenError::InvalidGrant => AppError::AuthFailed,
-        TokenError::Other(e) => e,
-    })?;
-    Ok(TokenSet {
-        access_token: r.access_token,
-        refresh_token: r.refresh_token,
-        expires_at: now + r.expires_in.unwrap_or(DEFAULT_EXPIRES_IN),
-        scopes: r
-            .scope
-            .as_deref()
-            .map(parse_scopes)
-            .unwrap_or_else(|| parse_scopes(&requested_scopes.join(" "))),
-    })
+    .map_err(|e| e.into_app(AppError::AuthFailed))?;
+    Ok(token_set(
+        r,
+        now,
+        parse_scopes(&requested_scopes.join(" ")),
+        None,
+    ))
 }
 
 /// Refreshes `current`. Keeps the old refresh token and scopes when the server omits them.
@@ -193,20 +270,96 @@ pub async fn refresh(
         &[("grant_type", "refresh_token"), ("refresh_token", rt)],
     )
     .await
-    .map_err(|e| match e {
-        TokenError::InvalidGrant => AppError::TokenExpired,
-        TokenError::Other(e) => e,
-    })?;
-    Ok(TokenSet {
-        access_token: r.access_token,
-        refresh_token: r.refresh_token.or_else(|| current.refresh_token.clone()),
-        expires_at: now + r.expires_in.unwrap_or(DEFAULT_EXPIRES_IN),
-        scopes: r
-            .scope
-            .as_deref()
-            .map(parse_scopes)
-            .unwrap_or_else(|| current.scopes.clone()),
-    })
+    .map_err(|e| e.into_app(AppError::TokenExpired))?;
+    // Twitch public clients get a new, single-use refresh token every time.
+    Ok(token_set(
+        r,
+        now,
+        current.scopes.clone(),
+        current.refresh_token.clone(),
+    ))
+}
+
+/// Device authorization (RFC 8628) as returned to the UI: the user opens
+/// `verification_uri` and confirms `user_code`.
+#[derive(Debug, Clone, Deserialize)]
+pub struct DeviceCode {
+    pub device_code: String,
+    pub user_code: String,
+    pub verification_uri: String,
+    pub expires_in: u64,
+    #[serde(default = "default_interval")]
+    pub interval: u64,
+}
+
+fn default_interval() -> u64 {
+    5
+}
+
+pub async fn start_device(
+    http: &reqwest::Client,
+    cfg: &OAuthConfig,
+    scopes: &[String],
+) -> Result<DeviceCode> {
+    let url = cfg.device_url.as_deref().ok_or(AppError::NotSupported)?;
+    let joined = scopes.join(" ");
+    let resp = http
+        .post(url)
+        .header("Accept", "application/json")
+        // Twitch names it `scopes`; RFC 8628 says `scope`. Send both.
+        .form(&[
+            ("client_id", cfg.client_id.as_str()),
+            ("scopes", &joined),
+            ("scope", &joined),
+        ])
+        .send()
+        .await
+        .map_err(|_| AppError::Network)?;
+    if resp.status().is_server_error() {
+        return Err(AppError::Network);
+    }
+    if !resp.status().is_success() {
+        tracing::warn!(status = %resp.status(), "device authorization rejected");
+        return Err(AppError::AuthFailed);
+    }
+    resp.json().await.map_err(|_| AppError::AuthFailed)
+}
+
+/// Polls the token endpoint until the user approves, denies or the code expires.
+/// `now` gives the Unix time for `expires_at`; `sleep` is injectable for tests.
+pub async fn poll_device(
+    http: &reqwest::Client,
+    cfg: &OAuthConfig,
+    dc: &DeviceCode,
+    scopes: &[String],
+    now: impl Fn() -> i64,
+    poll_unit: std::time::Duration,
+) -> Result<TokenSet> {
+    let joined = scopes.join(" ");
+    let mut interval = dc.interval.max(1);
+    let deadline = now() + dc.expires_in as i64;
+    loop {
+        tokio::time::sleep(poll_unit * interval as u32).await;
+        if now() > deadline {
+            return Err(AppError::AuthTimeout);
+        }
+        let r = token_request(
+            http,
+            cfg,
+            &[
+                ("grant_type", "urn:ietf:params:oauth:grant-type:device_code"),
+                ("device_code", &dc.device_code),
+                ("scopes", &joined),
+            ],
+        )
+        .await;
+        match r {
+            Ok(r) => return Ok(token_set(r, now(), parse_scopes(&joined), None)),
+            Err(TokenError::Pending) => {}
+            Err(TokenError::SlowDown) => interval += 5,
+            Err(e) => return Err(e.into_app(AppError::AuthFailed)),
+        }
+    }
 }
 
 /// Revokes a token (Google: revoking the refresh token revokes the whole grant).
@@ -215,22 +368,21 @@ pub async fn revoke(http: &reqwest::Client, cfg: &OAuthConfig, token: &str) -> R
     let Some(url) = &cfg.revoke_url else {
         return Err(AppError::NotSupported);
     };
-    let resp = http
-        .post(url)
-        .form(&[("token", token)])
-        .send()
-        .await
-        .map_err(|e| {
-            // reqwest errors carry the URL but never the form body, so no token leaks here.
-            tracing::warn!(error = %e, "token revocation request failed");
-            AppError::Network
-        })?;
+    let mut form = vec![("token", token)];
+    if cfg.revoke_with_client_id {
+        form.push(("client_id", &cfg.client_id));
+    }
+    let resp = http.post(url).form(&form).send().await.map_err(|e| {
+        // reqwest errors carry the URL but never the form body, so no token leaks here.
+        tracing::warn!(error = %e, "token revocation request failed");
+        AppError::Network
+    })?;
     let status = resp.status();
     if status.is_success() {
         return Ok(());
     }
     if status.as_u16() == 400 {
-        let code = resp.json::<ErrorResponse>().await.map(|e| e.error).ok();
+        let code = resp.json::<ErrorResponse>().await.map(|e| e.code()).ok();
         if code.as_deref() == Some("invalid_token") {
             return Ok(());
         }
@@ -251,6 +403,8 @@ pub(crate) fn test_config(server_url: &str) -> OAuthConfig {
         client_secret: Some("csecret".into()),
         base_scopes: vec!["scope.read".into(), "scope.analytics".into()],
         extra_auth_params: vec![("access_type".into(), "offline".into())],
+        device_url: None,
+        revoke_with_client_id: false,
     }
 }
 
@@ -440,5 +594,132 @@ mod tests {
         let cfg = test_config("http://127.0.0.1:9");
         let r = revoke(&reqwest::Client::new(), &cfg, "t").await;
         assert!(matches!(r, Err(AppError::Network)));
+    }
+
+    fn device_config(server_url: &str) -> OAuthConfig {
+        OAuthConfig {
+            client_secret: None,
+            device_url: Some(format!("{server_url}/device")),
+            revoke_with_client_id: true,
+            ..test_config(server_url)
+        }
+    }
+
+    #[tokio::test]
+    async fn device_flow_polls_until_approved_and_reads_array_scopes() {
+        let mut srv = mockito::Server::new_async().await;
+        srv.mock("POST", "/device")
+            .match_body(Matcher::UrlEncoded("scopes".into(), "a:b".into()))
+            .with_body(r#"{"device_code":"dc","user_code":"ABCD1234","verification_uri":"https://www.twitch.tv/activate?device-code=ABCD1234","expires_in":1800,"interval":1}"#)
+            .create_async()
+            .await;
+        let pending = srv
+            .mock("POST", "/token")
+            .match_body(Matcher::UrlEncoded("device_code".into(), "dc".into()))
+            .with_status(400)
+            .with_body(r#"{"status":400,"message":"authorization_pending"}"#)
+            .expect(2)
+            .create_async()
+            .await;
+        srv.mock("POST", "/token")
+            .with_body(r#"{"access_token":"at","refresh_token":"rt","expires_in":14400,"scope":["a:b"],"token_type":"bearer"}"#)
+            .create_async()
+            .await;
+        let cfg = device_config(&srv.url());
+        let http = reqwest::Client::new();
+        let scopes = vec!["a:b".to_string()];
+        let dc = start_device(&http, &cfg, &scopes).await.unwrap();
+        assert_eq!(dc.user_code, "ABCD1234");
+        let t = poll_device(
+            &http,
+            &cfg,
+            &dc,
+            &scopes,
+            || 100,
+            std::time::Duration::from_millis(1),
+        )
+        .await
+        .unwrap();
+        pending.assert_async().await;
+        assert_eq!(t.refresh_token.as_deref(), Some("rt"));
+        assert_eq!(t.expires_at, 100 + 14400);
+        assert_eq!(t.scopes, vec!["a:b"]);
+    }
+
+    #[tokio::test]
+    async fn device_flow_denied_and_expired() {
+        let mut srv = mockito::Server::new_async().await;
+        srv.mock("POST", "/token")
+            .with_status(400)
+            .with_body(r#"{"status":400,"message":"access_denied"}"#)
+            .create_async()
+            .await;
+        let cfg = device_config(&srv.url());
+        let dc = DeviceCode {
+            device_code: "dc".into(),
+            user_code: "u".into(),
+            verification_uri: "v".into(),
+            expires_in: 60,
+            interval: 1,
+        };
+        let http = reqwest::Client::new();
+        let r = poll_device(
+            &http,
+            &cfg,
+            &dc,
+            &[],
+            || 0,
+            std::time::Duration::from_millis(1),
+        )
+        .await;
+        assert!(matches!(r, Err(AppError::AuthCancelled)));
+        // Past the deadline before the first poll.
+        let t = std::sync::atomic::AtomicI64::new(0);
+        let r = poll_device(
+            &http,
+            &cfg,
+            &dc,
+            &[],
+            || t.fetch_add(100, std::sync::atomic::Ordering::SeqCst) + 100,
+            std::time::Duration::from_millis(1),
+        )
+        .await;
+        assert!(matches!(r, Err(AppError::AuthTimeout)));
+    }
+
+    #[tokio::test]
+    async fn twitch_style_refresh_rejection_means_reconnect() {
+        let mut srv = mockito::Server::new_async().await;
+        srv.mock("POST", "/token")
+            .with_status(400)
+            .with_body(r#"{"status":400,"message":"Invalid refresh token"}"#)
+            .create_async()
+            .await;
+        let cfg = device_config(&srv.url());
+        let cur = TokenSet {
+            access_token: "a".into(),
+            refresh_token: Some("r".into()),
+            expires_at: 0,
+            scopes: vec![],
+        };
+        let r = refresh(&reqwest::Client::new(), &cfg, &cur, 0).await;
+        assert!(matches!(r, Err(AppError::TokenExpired)));
+    }
+
+    #[tokio::test]
+    async fn revoke_sends_client_id_when_required() {
+        let mut srv = mockito::Server::new_async().await;
+        let m = srv
+            .mock("POST", "/revoke")
+            .match_body(Matcher::AllOf(vec![
+                Matcher::UrlEncoded("client_id".into(), "cid.apps.googleusercontent.com".into()),
+                Matcher::UrlEncoded("token".into(), "t".into()),
+            ]))
+            .create_async()
+            .await;
+        revoke(&reqwest::Client::new(), &device_config(&srv.url()), "t")
+            .await
+            .unwrap();
+        m.assert_async().await;
     }
 }

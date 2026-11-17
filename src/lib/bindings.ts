@@ -52,11 +52,14 @@ export const commands = {
 	getCombinedSeries: (metric: string, from: string | null, options?: InvokeOptions) => __TAURI_INVOKE<MetricPoint[]>("get_combined_series", { metric, from }, options),
 	/**  Most viewed contents published in the period, across accounts. */
 	getTopContents: (from: string | null, limit: number, options?: InvokeOptions) => __TAURI_INVOKE<TopContent_Serialize[]>("get_top_contents", { from, limit }, options),
+	/**  Streams in the period (VODs plus what Omnyra observed live) for one account. */
+	getLiveOverview: (accountId: string, from: string | null, options?: InvokeOptions) => __TAURI_INVOKE<LiveOverview_Serialize>("get_live_overview", { accountId, from }, options),
 };
 
 /** Events */
 export const events = {
 	accountChanged: makeEvent<AccountChanged, AccountChanged>("account-changed"),
+	deviceCodeIssued: makeEvent<DeviceCodeIssued, DeviceCodeIssued>("device-code-issued"),
 	syncStatus: makeEvent<SyncStatus_Serialize, SyncStatus_Deserialize>("sync-status"),
 	uploadChanged: makeEvent<UploadChanged, UploadChanged>("upload-changed"),
 	uploadProgress: makeEvent<UploadProgress, UploadProgress>("upload-progress"),
@@ -197,7 +200,9 @@ export type AuthKind =
 /**  No login (mock). */
 "none" | 
 /**  OAuth 2.0 + PKCE with a loopback redirect. */
-"oauth";
+"oauth" | 
+/**  OAuth 2.0 device code flow: the user types a code on the provider's site. */
+"devicecode";
 
 export type BestTime = {
 	format: Format,
@@ -301,6 +306,16 @@ export type ContentRow_Serialize = {
 	comments: number | null,
 };
 
+/**
+ *  Device flow (Twitch): show this code; the user confirms it at `verification_uri`
+ *  (already opened in the browser).
+ */
+export type DeviceCodeIssued = {
+	platform: string,
+	userCode: string,
+	verificationUri: string,
+};
+
 export type DisconnectOutcome = {
 	/**
 	 *  False if the provider could not be reached to revoke the grant. The local tokens are
@@ -337,6 +352,72 @@ export type Issue_Serialize = {
 	code: string,
 	severity: Severity,
 	limit: number | null,
+};
+
+export type LiveOverview = LiveOverview_Serialize | LiveOverview_Deserialize;
+
+export type LiveOverview_Deserialize = {
+	stats: LiveStats_Deserialize,
+	sessions: LiveSession_Deserialize[],
+};
+
+export type LiveOverview_Serialize = {
+	stats: LiveStats_Serialize,
+	sessions: LiveSession_Serialize[],
+};
+
+export type LiveSession = LiveSession_Serialize | LiveSession_Deserialize;
+
+export type LiveSession_Deserialize = {
+	id: string,
+	title?: string | null,
+	category?: string | null,
+	startedAt: string,
+	endedAt?: string | null,
+	/**  Up to the last sample (or now, if still live). */
+	durationS: number | null,
+	peakViewers?: number | null,
+	avgViewers?: number | null,
+	samples: number,
+};
+
+export type LiveSession_Serialize = {
+	id: string,
+	title: string | null,
+	category: string | null,
+	startedAt: string,
+	endedAt: string | null,
+	/**  Up to the last sample (or now, if still live). */
+	durationS: number | null,
+	peakViewers: number | null,
+	avgViewers: number | null,
+	samples: number,
+};
+
+export type LiveStats = LiveStats_Serialize | LiveStats_Deserialize;
+
+export type LiveStats_Deserialize = {
+	/**  Streams in the period: archived VODs plus observed sessions without a VOD. */
+	streams: number,
+	hoursStreamed: number | null,
+	/**  How many of those streams Omnyra sampled (the viewer figures come only from them). */
+	observed: number,
+	/**  Time-weighted average of the observed sessions. */
+	avgViewers?: number | null,
+	peakViewers?: number | null,
+	liveNow: boolean,
+};
+
+export type LiveStats_Serialize = {
+	/**  Streams in the period: archived VODs plus observed sessions without a VOD. */
+	streams: number,
+	hoursStreamed: number | null,
+	/**  How many of those streams Omnyra sampled (the viewer figures come only from them). */
+	observed: number,
+	/**  Time-weighted average of the observed sessions. */
+	avgViewers: number | null,
+	peakViewers: number | null,
+	liveNow: boolean,
 };
 
 export type MediaInfo = MediaInfo_Serialize | MediaInfo_Deserialize;

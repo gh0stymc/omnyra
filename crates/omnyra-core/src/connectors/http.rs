@@ -80,6 +80,8 @@ pub struct ApiClient {
     http: reqwest::Client,
     tokens: Arc<dyn TokenSource>,
     retry_base: std::time::Duration,
+    /// Sent with every request (Twitch requires `Client-Id`).
+    headers: Vec<(String, String)>,
 }
 
 impl std::fmt::Debug for ApiClient {
@@ -94,7 +96,20 @@ impl ApiClient {
             http,
             tokens,
             retry_base: std::time::Duration::from_millis(500),
+            headers: Vec::new(),
         }
+    }
+
+    pub fn with_headers(mut self, headers: Vec<(String, String)>) -> Self {
+        self.headers = headers;
+        self
+    }
+
+    fn decorate(&self, mut req: reqwest::RequestBuilder) -> reqwest::RequestBuilder {
+        for (k, v) in &self.headers {
+            req = req.header(k, v);
+        }
+        req
     }
 
     pub fn unauthenticated() -> Self {
@@ -126,8 +141,7 @@ impl ApiClient {
         let mut retries = 0;
         loop {
             let sent = self
-                .http
-                .get(url)
+                .decorate(self.http.get(url))
                 .query(query)
                 .bearer_auth(&token)
                 .send()
@@ -181,7 +195,8 @@ impl ApiClient {
         let mut token = self.tokens.token().await?;
         let mut refreshed = false;
         loop {
-            let resp = build(&self.http)
+            let resp = self
+                .decorate(build(&self.http))
                 .bearer_auth(&token)
                 .send()
                 .await

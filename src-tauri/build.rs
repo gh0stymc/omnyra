@@ -2,7 +2,11 @@
 //! Variables already present in the environment (e.g. CI secrets) take precedence.
 //! Values are never printed except as cargo directives.
 
-const KEYS: &[&str] = &["OMNYRA_GOOGLE_CLIENT_ID", "OMNYRA_GOOGLE_CLIENT_SECRET"];
+const KEYS: &[&str] = &[
+    "OMNYRA_GOOGLE_CLIENT_ID",
+    "OMNYRA_GOOGLE_CLIENT_SECRET",
+    "OMNYRA_TWITCH_CLIENT_ID",
+];
 
 fn main() {
     println!("cargo:rerun-if-changed=../.env");

@@ -20,14 +20,32 @@ use std::time::Duration;
 /// How long we wait for the user to finish in the browser.
 pub const CONNECT_TIMEOUT: Duration = Duration::from_secs(5 * 60);
 
+/// Device flow polling: `interval` seconds as given by the provider.
+#[cfg(not(test))]
+const DEVICE_POLL_UNIT: Duration = Duration::from_secs(1);
+#[cfg(test)]
+const DEVICE_POLL_UNIT: Duration = Duration::from_millis(1);
+
 fn lock(db: &Mutex<Connection>) -> Result<std::sync::MutexGuard<'_, Connection>> {
     db.lock().map_err(|_| AppError::Internal)
 }
 
+/// What the user has to do to authorize Omnyra.
+#[derive(Debug, Clone, PartialEq)]
+pub enum AuthPrompt {
+    /// Open this URL in the browser (loopback redirect flow).
+    OpenUrl(String),
+    /// Device flow: show `user_code` and open `verification_uri`, where the user confirms.
+    DeviceCode {
+        user_code: String,
+        verification_uri: String,
+    },
+}
+
 /// Runs the whole OAuth flow for `connector` and returns the connected account.
 ///
-/// `open_browser` receives the authorization URL. Dropping the returned future cancels the
-/// flow (the loopback port is closed). Requests `base_scopes` plus `extra_scopes`
+/// `prompt` tells the UI what the user must do (open a URL, or type a code). Dropping the
+/// returned future cancels the flow. Requests `base_scopes` plus `extra_scopes`
 /// (incremental authorization, e.g. `youtube.upload` in 1d).
 pub async fn connect(
     db: &Mutex<Connection>,
@@ -36,7 +54,7 @@ pub async fn connect(
     connector: &dyn Connector,
     extra_scopes: &[String],
     timeout: Duration,
-    open_browser: impl FnOnce(&str) -> Result<()> + Send,
+    prompt: impl FnOnce(AuthPrompt) -> Result<()> + Send,
 ) -> Result<Account> {
     let cfg = connector.oauth().ok_or(AppError::NotConfigured)?.clone();
     let platform = connector.info().id.clone();
@@ -48,24 +66,42 @@ pub async fn connect(
         }
     }
 
-    let server = LoopbackServer::bind().await?;
-    let redirect_uri = server.redirect_uri();
-    let pkce = pkce::Pkce::new();
-    let state = pkce::random_token();
-    let url = oauth::authorization_url(&cfg, &redirect_uri, &scopes, &state, &pkce.challenge);
-    open_browser(&url)?;
-
-    let code = server.wait_for_code(&state, timeout).await?;
-    let mut tokens = oauth::exchange_code(
-        auth.http(),
-        &cfg,
-        &code,
-        &pkce.verifier,
-        &redirect_uri,
-        &scopes,
-        auth.now(),
-    )
-    .await?;
+    let mut tokens = if cfg.device_url.is_some() {
+        let dc = oauth::start_device(auth.http(), &cfg, &scopes).await?;
+        prompt(AuthPrompt::DeviceCode {
+            user_code: dc.user_code.clone(),
+            verification_uri: dc.verification_uri.clone(),
+        })?;
+        let poll = oauth::poll_device(
+            auth.http(),
+            &cfg,
+            &dc,
+            &scopes,
+            || auth.now(),
+            DEVICE_POLL_UNIT,
+        );
+        tokio::time::timeout(timeout, poll)
+            .await
+            .map_err(|_| AppError::AuthTimeout)??
+    } else {
+        let server = LoopbackServer::bind().await?;
+        let redirect_uri = server.redirect_uri();
+        let pkce = pkce::Pkce::new();
+        let state = pkce::random_token();
+        let url = oauth::authorization_url(&cfg, &redirect_uri, &scopes, &state, &pkce.challenge);
+        prompt(AuthPrompt::OpenUrl(url))?;
+        let code = server.wait_for_code(&state, timeout).await?;
+        oauth::exchange_code(
+            auth.http(),
+            &cfg,
+            &code,
+            &pkce.verifier,
+            &redirect_uri,
+            &scopes,
+            auth.now(),
+        )
+        .await?
+    };
 
     // Google lets the user untick scopes on the consent screen.
     if !scopes.iter().all(|s| tokens.scopes.contains(s)) {
@@ -78,7 +114,8 @@ pub async fn connect(
         ApiClient::new(
             auth.http().clone(),
             Arc::new(StaticToken(tokens.access_token.clone())),
-        ),
+        )
+        .with_headers(connector.api_headers()),
     );
     let profile = match connector.fetch_profile(&ctx).await {
         Ok(p) => p,
@@ -200,7 +237,8 @@ pub fn account_ctx(
             }),
         ),
         None => ApiClient::new(auth.http().clone(), Arc::new(NoToken)),
-    };
+    }
+    .with_headers(connector.api_headers());
     AccountCtx {
         account_id: account.id.clone(),
         external_id: account.external_id.clone(),
@@ -254,9 +292,12 @@ mod tests {
     }
 
     /// Plays the browser: follows the authorization URL's redirect_uri with a code.
-    fn browser(query: &'static str) -> impl FnOnce(&str) -> Result<()> + Send {
-        move |url: &str| {
-            let u = url::Url::parse(url).unwrap();
+    fn browser(query: &'static str) -> impl FnOnce(AuthPrompt) -> Result<()> + Send {
+        move |p: AuthPrompt| {
+            let AuthPrompt::OpenUrl(url) = p else {
+                panic!("expected a URL")
+            };
+            let u = url::Url::parse(&url).unwrap();
             let q: std::collections::HashMap<_, _> = u.query_pairs().into_owned().collect();
             let target = format!(
                 "{}?state={}&{query}",
@@ -459,7 +500,7 @@ mod tests {
             &yt,
             &[],
             Duration::from_secs(1),
-            |_: &str| Ok(()),
+            |_: AuthPrompt| Ok(()),
         )
         .await;
         assert!(matches!(r, Err(AppError::NotConfigured)));

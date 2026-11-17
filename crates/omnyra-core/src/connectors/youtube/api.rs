@@ -286,6 +286,7 @@ fn details_of(v: Video) -> ContentDetails {
                 .and_then(|c| c.duration)
                 .and_then(|d| parse_iso8601(&d)),
             visibility: v.status.and_then(|s| s.privacy_status),
+            extra: Default::default(),
         },
         kind_final: is_stream,
         stats,

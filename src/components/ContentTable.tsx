@@ -4,13 +4,23 @@ import { useTranslation } from "react-i18next";
 import type { ContentRow } from "../lib/bindings";
 import { fmtDate, fmtDuration, fmtNumber } from "../lib/format";
 
-const KINDS = ["all", "video", "short", "stream"] as const;
+const YOUTUBE_KINDS = ["all", "video", "short", "stream"];
 type Sort = "date" | "views";
 
 /** Contents of an account, with kind filter and sorting. */
-export function ContentTable({ rows, from }: { rows: ContentRow[]; from: string | null }) {
+export function ContentTable({
+  rows,
+  from,
+  kinds = YOUTUBE_KINDS,
+}: {
+  rows: ContentRow[];
+  from: string | null;
+  /** Filter buttons; "all" first. */
+  kinds?: string[];
+}) {
   const { t, i18n } = useTranslation();
-  const [kind, setKind] = useState<(typeof KINDS)[number]>("all");
+  const [kind, setKind] = useState<string>("all");
+  const KINDS = kinds;
   const [sort, setSort] = useState<Sort>("date");
   const lang = i18n.language;
   const visible = rows

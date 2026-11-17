@@ -121,13 +121,16 @@
       "active": "Conectada",
       "needs_reauth": "Reconexión necesaria",
       "disconnected": "Desconectada"
-    }
+    },
+    "deviceCode": "Confirma este código en la página de {{name}} que se ha abierto en el navegador:",
+    "openAgain": "Abrir la página otra vez"
   },
   "scopes": {
     "ytReadonly": "Ver tu canal y tus vídeos de YouTube",
     "ytAnalytics": "Ver las analíticas de YouTube",
     "ytUpload": "Subir vídeos a YouTube",
-    "ytForceSsl": "Gestionar comentarios de YouTube"
+    "ytForceSsl": "Gestionar tu cuenta de YouTube (listas y comentarios)",
+    "twitchFollowers": "Ver la lista de tus seguidores de Twitch"
   },
   "bestTime": {
     "title": "Mejor hora para publicar",
@@ -261,7 +264,9 @@
       "all": "Todos",
       "video": "Vídeos",
       "short": "Shorts",
-      "stream": "Directos"
+      "stream": "Directos",
+      "vod": "VODs",
+      "clip": "Clips"
     },
     "col": {
       "title": "Título",
@@ -271,6 +276,26 @@
       "views": "Vistas",
       "likes": "Me gusta",
       "comments": "Coment."
+    }
+  },
+  "twitch": {
+    "liveNow": "EN DIRECTO",
+    "followers": "Seguidores",
+    "streams": "Directos",
+    "hoursStreamed": "Horas emitidas",
+    "viewers": "Espectadores medios",
+    "peak": "pico {{value}}",
+    "observedNote": "Los espectadores solo se conocen de los directos que Omnyra ha visto mientras estaba abierta ({{observed}} de {{streams}}): Twitch no guarda ese histórico. Las horas y el número de directos incluyen además los VODs que Twitch conserva.",
+    "followersNote": "El histórico se calcula con la fecha en que te siguió cada seguidor actual; quien dejó de seguirte ya no aparece.",
+    "sessionsTitle": "Directos vistos por Omnyra",
+    "noSessions": "Ninguno en este periodo. Omnyra registra los directos mientras está abierta.",
+    "contentsTitle": "VODs y clips",
+    "col": {
+      "date": "Fecha",
+      "title": "Título",
+      "duration": "Duración",
+      "avg": "Media",
+      "peak": "Pico"
     }
   }
 }
