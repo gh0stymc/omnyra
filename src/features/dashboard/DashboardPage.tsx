@@ -4,7 +4,7 @@ import { Link } from "react-router";
 import { commands } from "../../lib/bindings";
 import { errorMessage } from "../../lib/ipc";
 import { queryKeys } from "../../lib/queryKeys";
-import { MetricChart } from "../../components/MetricChart";
+import { AccountPanel } from "../../components/AccountPanel";
 
 export function DashboardPage() {
   const { t } = useTranslation();
@@ -42,13 +42,7 @@ export function DashboardPage() {
       )}
       {addMock.isError && <p className="text-red-500">{errorMessage(addMock.error, t)}</p>}
       {visible?.map((a) => (
-        <section
-          key={a.id}
-          className="rounded-lg border border-[var(--border)] bg-[var(--panel)] p-4"
-        >
-          <h2 className="mb-3 font-medium">{a.displayName}</h2>
-          <MetricChart accountId={a.id} />
-        </section>
+        <AccountPanel key={a.id} account={a} />
       ))}
     </div>
   );

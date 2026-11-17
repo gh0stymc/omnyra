@@ -13,10 +13,20 @@ const queryClient = new QueryClient({
 /** Backend events → query invalidation. */
 function useBackendEvents() {
   useEffect(() => {
-    const unlisten = events.accountChanged
-      .listen(() => void queryClient.invalidateQueries({ queryKey: queryKeys.accounts }))
-      .catch(() => undefined); // not running inside Tauri (tests, plain browser)
-    return () => void unlisten.then((f) => f?.());
+    const subs = [
+      events.accountChanged.listen(
+        () => void queryClient.invalidateQueries({ queryKey: queryKeys.accounts }),
+      ),
+      events.syncStatus.listen(({ payload }) => {
+        void queryClient.invalidateQueries({ queryKey: queryKeys.accounts });
+        if (payload.state === "done") {
+          void queryClient.invalidateQueries({ queryKey: ["series", payload.accountId] });
+          void queryClient.invalidateQueries({ queryKey: queryKeys.contents(payload.accountId) });
+          void queryClient.invalidateQueries({ queryKey: queryKeys.quota });
+        }
+      }),
+    ].map((p) => p.catch(() => undefined)); // not running inside Tauri (tests, plain browser)
+    return () => subs.forEach((p) => void p.then((f) => f?.()));
   }, []);
 }
 

@@ -8,6 +8,7 @@ use crate::connectors::http::{AccountTokens, ApiClient, NoToken, StaticToken};
 use crate::connectors::{AccountCtx, Connector};
 use crate::db::repo::accounts::{self, Account, AccountStatus, NewAccount};
 use crate::db::repo::audit_log;
+use crate::quota::QuotaGate;
 use crate::{AppError, Result};
 use rusqlite::Connection;
 use serde::Serialize;
@@ -71,14 +72,14 @@ pub async fn connect(
         return Err(AppError::ScopesDenied);
     }
 
-    let ctx = AccountCtx {
-        account_id: String::new(),
-        external_id: String::new(),
-        api: ApiClient::new(
+    let ctx = AccountCtx::unmetered(
+        "",
+        "",
+        ApiClient::new(
             auth.http().clone(),
             Arc::new(StaticToken(tokens.access_token.clone())),
         ),
-    };
+    );
     let profile = match connector.fetch_profile(&ctx).await {
         Ok(p) => p,
         Err(AppError::NoChannel) => {
@@ -182,11 +183,12 @@ pub async fn disconnect(
     Ok(DisconnectOutcome { revoked })
 }
 
-/// Context for API calls on behalf of a stored account.
+/// Context for API calls on behalf of a stored account, charging metered calls to `quota`.
 pub fn account_ctx(
     auth: &Arc<AuthService>,
     connector: &dyn Connector,
     account: &Account,
+    quota: Arc<dyn QuotaGate>,
 ) -> AccountCtx {
     let api = match connector.oauth() {
         Some(cfg) => ApiClient::new(
@@ -203,6 +205,7 @@ pub fn account_ctx(
         account_id: account.id.clone(),
         external_id: account.external_id.clone(),
         api,
+        quota,
     }
 }
 

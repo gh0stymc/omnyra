@@ -131,6 +131,28 @@ pub fn set_status(conn: &Connection, id: &str, status: AccountStatus) -> Result<
     Ok(n > 0)
 }
 
+pub fn set_last_sync(conn: &Connection, id: &str, now_iso: &str) -> Result<()> {
+    conn.execute(
+        "UPDATE accounts SET last_sync_at = ?2 WHERE id = ?1",
+        params![id, now_iso],
+    )?;
+    Ok(())
+}
+
+/// Keeps the name and handle in sync with the platform (they can be renamed).
+pub fn update_profile(
+    conn: &Connection,
+    id: &str,
+    handle: Option<&str>,
+    display_name: &str,
+) -> Result<()> {
+    conn.execute(
+        "UPDATE accounts SET handle = ?2, display_name = ?3 WHERE id = ?1",
+        params![id, handle, display_name],
+    )?;
+    Ok(())
+}
+
 fn row_to_account(r: &rusqlite::Row) -> rusqlite::Result<Account> {
     let scopes: String = r.get(5)?;
     let status: String = r.get(6)?;

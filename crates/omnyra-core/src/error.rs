@@ -53,6 +53,9 @@ pub enum AppError {
     /// The account is disconnected (or needs to be reconnected) and has no usable token.
     #[error("account not connected")]
     NotConnected,
+    /// This account is already being synchronised.
+    #[error("sync already in progress")]
+    SyncInProgress,
 }
 
 impl From<rusqlite::Error> for AppError {

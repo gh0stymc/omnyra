@@ -19,13 +19,19 @@ export const commands = {
 	cancelConnect: (options?: InvokeOptions) => __TAURI_INVOKE<void>("cancel_connect", undefined, options),
 	/**  Revokes the grant, deletes the tokens from the keyring and keeps the historical data. */
 	disconnectAccount: (accountId: string, options?: InvokeOptions) => __TAURI_INVOKE<DisconnectOutcome>("disconnect_account", { accountId }, options),
-	syncAccount: (accountId: string, options?: InvokeOptions) => __TAURI_INVOKE<null>("sync_account", { accountId }, options),
+	/**  Syncs the account now. Progress is also reported through the `SyncStatus` event. */
+	syncAccount: (accountId: string, options?: InvokeOptions) => __TAURI_INVOKE<SyncReport>("sync_account", { accountId }, options),
 	getAccountSeries: (accountId: string, metric: string, options?: InvokeOptions) => __TAURI_INVOKE<MetricPoint[]>("get_account_series", { accountId, metric }, options),
+	/**  Contents of an account (newest first) with their latest stats. */
+	listContents: (accountId: string, options?: InvokeOptions) => __TAURI_INVOKE<ContentRow_Serialize[]>("list_contents", { accountId }, options),
+	/**  Today's API quota usage. */
+	getQuotaUsage: (options?: InvokeOptions) => __TAURI_INVOKE<QuotaUsage[]>("get_quota_usage", undefined, options),
 };
 
 /** Events */
 export const events = {
 	accountChanged: makeEvent<AccountChanged, AccountChanged>("account-changed"),
+	syncStatus: makeEvent<SyncStatus_Serialize, SyncStatus_Deserialize>("sync-status"),
 };
 
 /* Types */
@@ -99,7 +105,9 @@ export type AppError = { code: "TOKEN_EXPIRED" } | { code: "QUOTA_EXCEEDED" } | 
 /**  The Google account has no YouTube channel. */
 { code: "NO_CHANNEL" } | 
 /**  The account is disconnected (or needs to be reconnected) and has no usable token. */
-{ code: "NOT_CONNECTED" };
+{ code: "NOT_CONNECTED" } | 
+/**  This account is already being synchronised. */
+{ code: "SYNC_IN_PROGRESS" };
 
 export type AuthKind = 
 /**  No login (mock). */
@@ -134,6 +142,40 @@ export type Capabilities_Serialize = {
 };
 
 export type CommentSupport = "none" | "read" | "readReply";
+
+export type ContentRow = ContentRow_Serialize | ContentRow_Deserialize;
+
+export type ContentRow_Deserialize = {
+	id: string,
+	externalId: string,
+	kind: string,
+	title?: string | null,
+	url?: string | null,
+	thumbnailUrl?: string | null,
+	publishedAt?: string | null,
+	durationS?: number | null,
+	visibility?: string | null,
+	/**  Latest snapshot values. */
+	views?: number | null,
+	likes?: number | null,
+	comments?: number | null,
+};
+
+export type ContentRow_Serialize = {
+	id: string,
+	externalId: string,
+	kind: string,
+	title: string | null,
+	url: string | null,
+	thumbnailUrl: string | null,
+	publishedAt: string | null,
+	durationS: number | null,
+	visibility: string | null,
+	/**  Latest snapshot values. */
+	views: number | null,
+	likes: number | null,
+	comments: number | null,
+};
 
 export type DisconnectOutcome = {
 	/**
@@ -193,7 +235,51 @@ export type PlatformInfo_Serialize = {
 	authConfigured: boolean,
 };
 
+export type QuotaUsage = {
+	platform: string,
+	/**  Quota day (`YYYY-MM-DD`, Pacific time). */
+	day: string,
+	used: number,
+	dailyLimit: number,
+	syncBudget: number,
+};
+
 export type ScheduleSupport = "none" | "native" | "localOnly";
+
+export type SyncReport = {
+	newContents: number,
+	refreshedContents: number,
+	/**  Contents whose kind (Short or video) could not be settled yet. */
+	unclassified: number,
+	historicDays: number,
+	/**  Data API units spent by this sync. */
+	quotaUsed: number,
+	/**  The sync budget ran out: some steps were skipped (they resume on the next sync). */
+	quotaLimited: boolean,
+};
+
+export type SyncState = "running" | "done" | "error";
+
+/**  Progress of an account sync (manual or automatic at startup). */
+export type SyncStatus = SyncStatus_Serialize | SyncStatus_Deserialize;
+
+/**  Progress of an account sync (manual or automatic at startup). */
+export type SyncStatus_Deserialize = {
+	accountId: string,
+	state: SyncState,
+	lastSyncAt?: string | null,
+	/**  `AppError` code when `state` is `error`. */
+	errorCode?: string | null,
+};
+
+/**  Progress of an account sync (manual or automatic at startup). */
+export type SyncStatus_Serialize = {
+	accountId: string,
+	state: SyncState,
+	lastSyncAt: string | null,
+	/**  `AppError` code when `state` is `error`. */
+	errorCode: string | null,
+};
 
 export type UploadSupport = "none" | "direct" | "draftOnly" | "privateOnlyUnaudited";
 

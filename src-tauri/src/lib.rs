@@ -1,6 +1,7 @@
 mod commands;
 mod events;
 mod state;
+mod sync;
 
 use omnyra_core::{
     auth::{AuthService, ClientCredentials, KeyringStore},
@@ -27,8 +28,10 @@ fn specta_builder() -> Builder<tauri::Wry> {
             commands::accounts::disconnect_account,
             commands::accounts::sync_account,
             commands::accounts::get_account_series,
+            commands::accounts::list_contents,
+            commands::accounts::get_quota_usage,
         ])
-        .events(collect_events![events::AccountChanged])
+        .events(collect_events![events::AccountChanged, events::SyncStatus])
 }
 
 /// OAuth client IDs baked in at build time (`src-tauri/build.rs` reads `.env`).
@@ -85,12 +88,14 @@ pub fn run() {
                 clock.clone(),
             ));
             app.manage(AppState {
-                db: Mutex::new(conn),
+                db: Arc::new(Mutex::new(conn)),
                 registry: Registry::new(credentials()),
                 clock,
                 auth,
                 connect_cancel: Mutex::new(None),
+                sync_locks: Default::default(),
             });
+            sync::spawn_startup_sync(app.handle().clone());
             Ok(())
         })
         .run(tauri::generate_context!())

@@ -31,7 +31,11 @@ export function PlatformViewPage() {
       <p className="text-sm text-[var(--muted)]">
         {t("platform.capabilities")}: {flags.join(" · ")}
       </p>
-      {Custom ? <Custom accountId={accountId} /> : <MetricChart accountId={accountId} />}
+      {Custom ? (
+        <Custom accountId={accountId} />
+      ) : (
+        <MetricChart accountId={accountId} metric="followers" />
+      )}
       {/* Without upload capability the UI shows "Prepare and download" instead of "Publish" (step 1d/3c). */}
     </div>
   );

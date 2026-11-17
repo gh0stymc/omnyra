@@ -9,6 +9,7 @@
   --text: #16161d;
   --muted: #6b6b7b;
   --accent: #7c3aed;
+  color-scheme: light;
 }
 .dark {
   --bg: #0e0e13;
@@ -17,10 +18,29 @@
   --text: #ececf3;
   --muted: #9a9aad;
   --accent: #a78bfa;
+  color-scheme: dark;
 }
 
 body {
   background: var(--bg);
   color: var(--text);
   font-family: system-ui, sans-serif;
+}
+
+/* WebKitGTK draws native <select>s with the GTK theme (white, ignoring our background),
+   which made them unreadable in dark mode. Draw them ourselves. */
+@layer base {
+  select {
+    appearance: none;
+    background-color: var(--panel);
+    color: var(--text);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%239a9aad' stroke-width='1.5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.6rem center;
+    padding-right: 2rem;
+  }
+  option {
+    background-color: var(--panel);
+    color: var(--text);
+  }
 }

@@ -6,6 +6,8 @@ pub mod clock;
 pub mod connectors;
 pub mod db;
 pub mod error;
+pub mod quota;
+pub mod sync;
 
 pub use error::{AppError, Result};
 

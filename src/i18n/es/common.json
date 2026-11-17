@@ -18,10 +18,26 @@
     "noAccounts": "Aún no hay cuentas conectadas.",
     "addMock": "Añadir cuenta de prueba",
     "sync": "Sincronizar",
-    "followers": "Seguidores",
-    "views": "Visitas",
     "noData": "Sin datos todavía. Pulsa Sincronizar.",
-    "connectNetwork": "Ir a Ajustes para conectar una red"
+    "connectNetwork": "Ir a Ajustes para conectar una red",
+    "syncing": "Sincronizando…",
+    "never": "nunca",
+    "lastSync": "Última sincronización: {{when}}",
+    "contentCounts": "{{video}} vídeos, {{short}} Shorts, {{stream}} directos",
+    "quotaLimited": "Se ha alcanzado el presupuesto diario de cuota de YouTube para sincronizar. Algunos datos se actualizarán mañana.",
+    "metric": {
+      "followers": "Suscriptores",
+      "views": "Visualizaciones diarias",
+      "watch_time_s": "Horas de visualización diarias"
+    },
+    "metricLabel": "Métrica",
+    "rangeLabel": "Periodo",
+    "range": {
+      "30d": "30 días",
+      "1y": "1 año",
+      "5y": "5 años",
+      "all": "Todo"
+    }
   },
   "platform": {
     "title": "Vista de {{name}}",
@@ -57,7 +73,8 @@
     "KEYRING_UNAVAILABLE": "No hay un llavero del sistema disponible (Secret Service / Administrador de credenciales). Omnyra no guarda tokens en ningún otro sitio: activa GNOME Keyring o KWallet y reinicia la app.",
     "NO_CHANNEL": "Esta cuenta de Google no tiene un canal de YouTube. Elige otra cuenta o crea el canal.",
     "NOT_CONNECTED": "La cuenta no está conectada. Vuelve a conectarla en Ajustes.",
-    "unknown": "Ha ocurrido un error inesperado."
+    "unknown": "Ha ocurrido un error inesperado.",
+    "SYNC_IN_PROGRESS": "Esta cuenta ya se está sincronizando."
   },
   "accounts": {
     "title": "Cuentas conectadas",

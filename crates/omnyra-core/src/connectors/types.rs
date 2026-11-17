@@ -99,15 +99,68 @@ pub struct DateRange {
     pub to: String,
 }
 
-#[derive(Debug, Clone, Serialize, Type)]
-#[serde(rename_all = "camelCase")]
+/// A metric value without a day (current totals, per-content stats).
+#[derive(Debug, Clone, PartialEq)]
+pub struct MetricValue {
+    pub metric: String,
+    pub value: f64,
+}
+
+impl MetricValue {
+    pub fn new(metric: &str, value: f64) -> Self {
+        Self {
+            metric: metric.into(),
+            value,
+        }
+    }
+}
+
+/// Current state of the channel: profile plus cumulative totals (`followers`,
+/// `views_total`, `contents_total`). One cheap call; taken on every sync.
+#[derive(Debug, Clone)]
+pub struct ChannelSnapshot {
+    pub profile: Profile,
+    pub totals: Vec<MetricValue>,
+    /// When the channel was created (ISO-8601): where the history backfill starts.
+    pub created_at: Option<String>,
+}
+
+/// One entry of the content listing (newest first). Details come from
+/// [`super::Connector::fetch_content_details`].
+#[derive(Debug, Clone, PartialEq)]
+pub struct ContentRef {
+    pub external_id: String,
+}
+
+/// Content kinds stored in `contents.kind`.
+pub mod kind {
+    pub const VIDEO: &str = "video";
+    pub const SHORT: &str = "short";
+    pub const STREAM: &str = "stream";
+}
+
+#[derive(Debug, Clone)]
 pub struct Content {
     pub external_id: String,
+    /// See [`kind`]. Provisional unless `kind_final` is set (see [`ContentDetails`]).
     pub kind: String,
     pub title: Option<String>,
+    pub description: Option<String>,
     pub url: Option<String>,
+    pub thumbnail_url: Option<String>,
     pub published_at: Option<String>,
     pub duration_s: Option<u32>,
+    pub visibility: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct ContentDetails {
+    pub content: Content,
+    /// True when the API alone settles the kind (e.g. a live stream). Otherwise the
+    /// connector's `classify` may refine it once (YouTube: Short or regular video).
+    pub kind_final: bool,
+    /// Current cumulative stats (`views`, `likes`, `comments`).
+    pub stats: Vec<MetricValue>,
 }
 
 #[derive(Debug, Clone, Serialize, Type)]

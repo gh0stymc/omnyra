@@ -2,7 +2,7 @@
 
 > Estado del proyecto para cualquier sesión nueva (tras `/clear`). Ver `OMNYRA_SPEC.md` sección 9.
 
-**Paso actual:** 1b — Conector de YouTube y snapshots (`opusplan`). El 1a está hecho y probado con Google en Linux.
+**Paso actual:** 1c — Mejor hora para publicar (`claude-opus-5-5`). El 1b está hecho y probado con gh0stymc.
 
 ## Pasos
 
@@ -11,7 +11,7 @@
 - [x] 0b — Base del proyecto
 - [x] 0c — CI multiplataforma
 - [x] 1a — OAuth de Google y almacenamiento seguro
-- [ ] 1b — Conector de YouTube y snapshots
+- [x] 1b — Conector de YouTube y snapshots
 - [ ] 1c — Mejor hora para publicar
 - [ ] 1d — Subida de vídeos a YouTube
 - [ ] 1e — Pantallas del MVP
@@ -55,6 +55,13 @@
 - 2026-11-17: logging con `tracing` (core) + `tracing-subscriber` a stderr en la app; filtro con `RUST_LOG` (por defecto `warn`). Nunca se registran tokens.
 - 2026-11-16 (1a): el `audit_log` (cadena de hashes SHA-256) empieza a usarse ya: `account.connect` y `account.disconnect`.
 
+- 2026-11-17 (1b): sincronización = `channels.list` (perfil y totales) → `playlistItems` de la lista "uploads" (`UC…` → `UU…`, sin `search.list`) con parada en el primer vídeo ya conocido → `videos.list` en lotes de 50 (refresca las estadísticas de todos) → detección de Shorts → Analytics API (`dimensions=day`, tramos de 365 días; la primera vez desde la creación del canal y luego desde el último día histórico − 3) → reconstrucción de `followers` hacia atrás desde el total real. Lógica en `omnyra-core/src/sync.rs`; cada fase en su transacción.
+- 2026-11-17 (1b): métricas diarias (`historic`): `views`, `watch_time_s`, `avg_view_duration_s`, `subscribers_gained`, `subscribers_lost`, `likes`, `comments`, `shares`. Totales (`current`): `followers`, `views_total`, `contents_total`. Por contenido: `views`, `likes`, `comments`.
+- 2026-11-17 (1b): Shorts = `HEAD https://www.youtube.com/shorts/<id>` sin token y con la única cookie `SOCS=CAI` ("rechazar todo" del aviso de cookies de la UE; sin ella, desde España todo redirige a consent.youtube.com y no se clasificaba nada): 200 → `short`, 303 a `/watch` → `video`, otra cosa → sin clasificar (se reintenta). Una vez por vídeo (`extra.kind_checked`). Elegido por el usuario; no es API oficial. `stream` si tiene `liveStreamingDetails`.
+- 2026-11-17 (1b): cuota en `quota_ledger` por día del Pacífico (regla DST de EE. UU. a mano). La sincronización puede gastar el 60 % (6.000 unidades); sin presupuesto se salta la Data API y se sigue con Analytics (cuota aparte). Reintentos con backoff y jitter (máx. 3) en 429/5xx/red; `Retry-After` > 60 s no se espera.
+- 2026-11-17 (1b): sin caché ETag por ahora: el listado incremental y la clasificación única ya evitan lo repetido, y no está claro que un 304 no gaste cuota. `api_cache` queda sin usar.
+- 2026-11-17 (1b): sincronización automática al arrancar para las cuentas activas con `last_sync_at` de hace más de 6 h, en serie. `SyncLocks` impide dos a la vez sobre la misma cuenta (`SYNC_IN_PROGRESS`). Evento `sync-status`. Sin cola `jobs` hasta el 2c.
+
 ## Problemas pendientes
 
 - R1: la CI no se ha ejecutado nunca: la cuenta de GitHub sigue suspendida y el repo no tiene remoto. Revisar la primera ejecución al subirlo (no se pudo pasar `actionlint` en local).
@@ -65,7 +72,10 @@
 - YouTube: `fetch_channel_metrics` y `list_contents` devuelven `NOT_SUPPORTED` hasta el 1b.
 - Si el `keyring` falla al iniciarse (Secret Service caído al arrancar), el error se mantiene hasta reiniciar la app (el crate inicializa el almacén una sola vez).
 - Revocación (2026-11-17): el primer intento real de desconexión devolvió `revoked: false` (aviso de "¿sin conexión?") con la red funcionando; los dos siguientes, incluido conectar → reiniciar → desconectar, fueron bien. No se sabe la causa: ahora `oauth::revoke` registra el estado HTTP y el código de error (`RUST_LOG=omnyra_core=debug`). Si se repite, mirar ese log.
-- Ajustes: los `<select>` de Idioma y Tema salen con fondo blanco y texto casi ilegible en el tema oscuro.
+- [VERIFICAR] `subscriberCount` con `mine=true`: ¿viene redondeado (3 cifras significativas)? Afecta al ancla de la reconstrucción de seguidores.
+- 2026-11-17 (1b): las gráficas tienen selector de periodo (30 días por defecto, 1 año, 5 años, todo); el filtro es en el frontend, el histórico completo sigue en la base de datos.
+- [VERIFICAR] los estrenos (premieres) también tienen `liveStreamingDetails` y ahora cuentan como `stream`.
+- [VERIFICAR] Shorts privados u ocultos: la comprobación sin cookies puede dar 404 y quedarse sin clasificar.
 - Falta `rustup`/toolchain fijada: se usa el Rust del sistema (1.100).
 
 ## Checklist manual (pruebas reales por sistema)
@@ -73,6 +83,7 @@
 - [x] Llavero (Secret Service) en Linux — `cargo test -p omnyra-core -- --ignored keyring` pasa con gnome-keyring (2026-11-16)
 - [x] Flujo OAuth real con Google en Linux (conectar gh0stymc, reiniciar la app, desconectar y comprobar que desaparece de myaccount.google.com/connections) (2026-11-17)
 - [ ] Flujo OAuth real en Windows
+- [x] Sincronización real de gh0stymc (1b): 100 contenidos (94 vídeos, 6 Shorts, todos clasificados), seguidores reconstruidos desde 2020-03-30, 9 unidades de cuota en el día (2026-11-17)
 - [ ] Llavero (Credential Manager) en Windows
 - [ ] Rutas de `app_data_dir` en Windows
 - [ ] Instalar y abrir el `.msi`/`.exe` en Windows (VM)

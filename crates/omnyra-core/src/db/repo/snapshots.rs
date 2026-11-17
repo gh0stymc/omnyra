@@ -22,6 +22,56 @@ pub fn upsert_account_snapshot(
     Ok(())
 }
 
+pub fn upsert_content_snapshot(
+    conn: &Connection,
+    content_id: &str,
+    day: &str,
+    metric: &str,
+    value: f64,
+    source: &str,
+    captured_at: &str,
+) -> Result<()> {
+    conn.execute(
+        "INSERT INTO content_snapshots (content_id, day, metric, value, source, captured_at)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6)
+         ON CONFLICT (content_id, metric, day) DO UPDATE SET
+           value = excluded.value, source = excluded.source, captured_at = excluded.captured_at",
+        params![content_id, day, metric, value, source, captured_at],
+    )?;
+    Ok(())
+}
+
+/// Latest day with a value of `metric` from `source`.
+pub fn last_day(
+    conn: &Connection,
+    account_id: &str,
+    metric: &str,
+    source: &str,
+) -> Result<Option<String>> {
+    Ok(conn.query_row(
+        "SELECT MAX(day) FROM account_snapshots
+         WHERE account_id = ?1 AND metric = ?2 AND source = ?3",
+        params![account_id, metric, source],
+        |r| r.get(0),
+    )?)
+}
+
+/// `(day, value, source)` of a metric, oldest first.
+pub fn account_points(
+    conn: &Connection,
+    account_id: &str,
+    metric: &str,
+) -> Result<Vec<(String, f64, String)>> {
+    let mut stmt = conn.prepare(
+        "SELECT day, value, source FROM account_snapshots
+         WHERE account_id = ?1 AND metric = ?2 ORDER BY day",
+    )?;
+    let rows = stmt.query_map(params![account_id, metric], |r| {
+        Ok((r.get(0)?, r.get(1)?, r.get(2)?))
+    })?;
+    Ok(rows.collect::<std::result::Result<_, _>>()?)
+}
+
 pub fn account_series(
     conn: &Connection,
     account_id: &str,

@@ -2,6 +2,8 @@
 
 use super::*;
 
+const MOCK_CONTENTS: u32 = 10;
+
 pub struct MockConnector {
     info: PlatformInfo,
 }
@@ -76,26 +78,41 @@ impl Connector for MockConnector {
         })
     }
 
+    async fn fetch_channel_snapshot(&self, ctx: &AccountCtx) -> Result<ChannelSnapshot> {
+        Ok(ChannelSnapshot {
+            profile: self.fetch_profile(ctx).await?,
+            totals: vec![
+                MetricValue::new("followers", 1250.0),
+                MetricValue::new("views_total", 98_000.0),
+                MetricValue::new("contents_total", MOCK_CONTENTS as f64),
+            ],
+            created_at: Some("2026-08-01T00:00:00Z".into()),
+        })
+    }
+
     async fn fetch_channel_metrics(
         &self,
         _ctx: &AccountCtx,
         range: DateRange,
     ) -> Result<Vec<MetricPoint>> {
         let days = days_between(&range.from, &range.to)?;
-        let mut out = Vec::with_capacity(days.len() * 2);
+        let mut out = Vec::with_capacity(days.len() * 4);
         for (i, day) in days.into_iter().enumerate() {
             let i = i as f64;
-            out.push(MetricPoint {
-                day: day.clone(),
-                metric: "followers".into(),
-                value: 1000.0 + i * 7.0,
-            });
             // deterministic wobble, no RNG
-            out.push(MetricPoint {
-                day,
-                metric: "views".into(),
-                value: 500.0 + (i * 1.7).sin().abs() * 300.0,
-            });
+            let views = (500.0 + (i * 1.7).sin().abs() * 300.0).round();
+            for (metric, value) in [
+                ("views", views),
+                ("watch_time_s", views * 95.0),
+                ("subscribers_gained", 3.0 + (i % 5.0)),
+                ("subscribers_lost", 1.0),
+            ] {
+                out.push(MetricPoint {
+                    day: day.clone(),
+                    metric: metric.into(),
+                    value,
+                });
+            }
         }
         Ok(out)
     }
@@ -104,24 +121,67 @@ impl Connector for MockConnector {
         &self,
         _ctx: &AccountCtx,
         page: Option<String>,
-    ) -> Result<Page<Content>> {
+    ) -> Result<Page<ContentRef>> {
         let start: u32 = page.as_deref().and_then(|p| p.parse().ok()).unwrap_or(0);
-        let items = (start..start.saturating_add(5).min(10))
-            .map(|n| Content {
-                external_id: format!("mock-video-{n}"),
-                kind: "video".into(),
-                title: Some(format!("Mock video #{n}")),
-                url: None,
-                published_at: Some(format!("2026-10-{:02}T18:00:00Z", n + 1)),
-                duration_s: Some(300 + n * 10),
+        let end = start.saturating_add(5).min(MOCK_CONTENTS);
+        // Newest first, like real platforms.
+        let items = (start..end)
+            .map(|n| ContentRef {
+                external_id: format!("mock-video-{}", MOCK_CONTENTS - 1 - n),
             })
             .collect::<Vec<_>>();
-        let next = if start + 5 < 10 {
-            Some((start + 5).to_string())
-        } else {
-            None
-        };
+        let next = (end < MOCK_CONTENTS).then(|| end.to_string());
         Ok(Page { items, next })
+    }
+
+    async fn fetch_content_details(
+        &self,
+        _ctx: &AccountCtx,
+        ids: &[String],
+    ) -> Result<Vec<ContentDetails>> {
+        Ok(ids
+            .iter()
+            .filter_map(|id| {
+                let n: u32 = id.strip_prefix("mock-video-")?.parse().ok()?;
+                Some(ContentDetails {
+                    content: Content {
+                        external_id: id.clone(),
+                        kind: kind::VIDEO.into(),
+                        title: Some(format!("Mock video #{n}")),
+                        description: None,
+                        url: None,
+                        thumbnail_url: None,
+                        published_at: Some(format!("2026-10-{:02}T18:00:00Z", n + 1)),
+                        duration_s: Some(if n.is_multiple_of(3) {
+                            40
+                        } else {
+                            300 + n * 10
+                        }),
+                        visibility: Some("public".into()),
+                    },
+                    kind_final: false,
+                    stats: vec![
+                        MetricValue::new("views", 1000.0 + n as f64 * 150.0),
+                        MetricValue::new("likes", 50.0 + n as f64),
+                    ],
+                })
+            })
+            .collect())
+    }
+
+    /// Every third mock video is a Short.
+    async fn classify(&self, _ctx: &AccountCtx, ids: &[String]) -> Vec<(String, String)> {
+        ids.iter()
+            .filter_map(|id| {
+                let n: u32 = id.strip_prefix("mock-video-")?.parse().ok()?;
+                let k = if n.is_multiple_of(3) {
+                    kind::SHORT
+                } else {
+                    kind::VIDEO
+                };
+                Some((id.clone(), k.to_owned()))
+            })
+            .collect()
     }
 
     async fn upload(&self, _ctx: &AccountCtx, req: UploadRequest) -> Result<UploadOutcome> {
@@ -141,11 +201,7 @@ mod tests {
     use super::*;
 
     fn ctx() -> AccountCtx {
-        AccountCtx {
-            account_id: "a".into(),
-            external_id: "m1".into(),
-            api: http::ApiClient::unauthenticated(),
-        }
+        AccountCtx::unmetered("a", "m1", http::ApiClient::unauthenticated())
     }
 
     #[tokio::test]
@@ -161,7 +217,7 @@ mod tests {
             )
             .await
             .unwrap();
-        assert_eq!(pts.len(), 20); // 10 days x 2 metrics
+        assert_eq!(pts.len(), 40); // 10 days x 4 metrics
     }
 
     #[tokio::test]

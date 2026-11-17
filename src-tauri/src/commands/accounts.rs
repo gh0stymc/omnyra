@@ -2,11 +2,14 @@ use crate::events::AccountChanged;
 use crate::state::AppState;
 use omnyra_core::{
     accounts::{self as account_service, DisconnectOutcome, CONNECT_TIMEOUT},
-    connectors::{DateRange, MetricPoint},
+    connectors::MetricPoint,
     db::repo::{
         accounts::{self, Account, AccountStatus, NewAccount},
+        contents::{self, ContentRow},
         snapshots,
     },
+    quota::{self, QuotaUsage},
+    sync::SyncReport,
     AppError,
 };
 use tauri::{AppHandle, State};
@@ -138,54 +141,28 @@ pub async fn disconnect_account(
     Ok(out)
 }
 
+/// Syncs the account now. Progress is also reported through the `SyncStatus` event.
 #[tauri::command]
 #[specta::specta]
-pub async fn sync_account(
-    app: AppHandle,
+pub async fn sync_account(app: AppHandle, account_id: String) -> Result<SyncReport, AppError> {
+    crate::sync::run(&app, &account_id).await
+}
+
+/// Contents of an account (newest first) with their latest stats.
+#[tauri::command]
+#[specta::specta]
+pub fn list_contents(
     state: State<'_, AppState>,
     account_id: String,
-) -> Result<(), AppError> {
-    let account = accounts::get(&*lock_db(&state)?, &account_id)?;
-    if account.status != AccountStatus::Active {
-        return Err(AppError::NotConnected);
-    }
-    let connector = state
-        .registry
-        .get(&account.platform)
-        .ok_or(AppError::NotSupported)?;
-    let ctx = account_service::account_ctx(&state.auth, connector.as_ref(), &account);
-    let today = state.clock.today();
-    let from = {
-        // last 30 days
-        let now = state.clock.now() - omnyra_core::time_days(30);
-        omnyra_core::format_day(now)
-    };
-    let points = match connector
-        .fetch_channel_metrics(&ctx, DateRange { from, to: today })
-        .await
-    {
-        Ok(p) => p,
-        Err(e) => {
-            if account_service::handle_auth_error(&state.db, &account.id, &e) {
-                notify(&app, &account.id, AccountStatus::NeedsReauth);
-            }
-            return Err(e);
-        }
-    };
-    let now_iso = state.clock.now_iso();
-    let conn = lock_db(&state)?;
-    for p in points {
-        snapshots::upsert_account_snapshot(
-            &conn,
-            &account.id,
-            &p.day,
-            &p.metric,
-            p.value,
-            "current",
-            &now_iso,
-        )?;
-    }
-    Ok(())
+) -> Result<Vec<ContentRow>, AppError> {
+    contents::list_with_stats(&*lock_db(&state)?, &account_id)
+}
+
+/// Today's API quota usage.
+#[tauri::command]
+#[specta::specta]
+pub fn get_quota_usage(state: State<'_, AppState>) -> Result<Vec<QuotaUsage>, AppError> {
+    quota::usage(&*lock_db(&state)?, state.clock.now())
 }
 
 #[tauri::command]

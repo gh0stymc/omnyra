@@ -70,10 +70,16 @@ impl TokenSource for AccountTokens {
     }
 }
 
+/// Retries for transient failures (network, 429, 5xx) on idempotent GETs.
+const MAX_RETRIES: u32 = 3;
+/// Longest wait we accept from `Retry-After` before giving up and reporting `RATE_LIMITED`.
+const MAX_RETRY_AFTER_S: u32 = 60;
+
 #[derive(Clone)]
 pub struct ApiClient {
     http: reqwest::Client,
     tokens: Arc<dyn TokenSource>,
+    retry_base: std::time::Duration,
 }
 
 impl std::fmt::Debug for ApiClient {
@@ -84,39 +90,83 @@ impl std::fmt::Debug for ApiClient {
 
 impl ApiClient {
     pub fn new(http: reqwest::Client, tokens: Arc<dyn TokenSource>) -> Self {
-        Self { http, tokens }
+        Self {
+            http,
+            tokens,
+            retry_base: std::time::Duration::from_millis(500),
+        }
     }
 
     pub fn unauthenticated() -> Self {
         Self::new(reqwest::Client::new(), Arc::new(NoToken))
     }
 
+    /// Base delay of the exponential backoff (tests use a tiny one).
+    pub fn with_retry_base(mut self, base: std::time::Duration) -> Self {
+        self.retry_base = base;
+        self
+    }
+
+    /// Exponential backoff with full jitter: random in [base·2^n / 2, base·2^n].
+    fn backoff(&self, retry: u32) -> std::time::Duration {
+        let max = self.retry_base * 2u32.pow(retry);
+        let jitter: f64 = rand::random();
+        max.mul_f64(0.5 + jitter / 2.0)
+    }
+
+    /// GET with bearer token. A 401 refreshes the token once; network errors, 429 and 5xx
+    /// are retried up to [`MAX_RETRIES`] times with backoff (honouring `Retry-After`).
     pub async fn get_json<T: DeserializeOwned>(
         &self,
         url: &str,
         query: &[(&str, &str)],
     ) -> Result<T> {
         let mut token = self.tokens.token().await?;
-        for attempt in 0..2 {
-            let resp = self
+        let mut refreshed = false;
+        let mut retries = 0;
+        loop {
+            let sent = self
                 .http
                 .get(url)
                 .query(query)
                 .bearer_auth(&token)
                 .send()
-                .await
-                .map_err(|_| AppError::Network)?;
+                .await;
+            let resp = match sent {
+                Ok(r) => r,
+                Err(e) if retries < MAX_RETRIES => {
+                    tracing::debug!(error = %e, retries, "GET failed, retrying");
+                    tokio::time::sleep(self.backoff(retries)).await;
+                    retries += 1;
+                    continue;
+                }
+                Err(_) => return Err(AppError::Network),
+            };
             let status = resp.status().as_u16();
-            if status == 401 && attempt == 0 {
+            if status == 401 && !refreshed {
+                refreshed = true;
                 token = self.tokens.refreshed(&token).await?;
                 continue;
             }
             if resp.status().is_success() {
-                return resp.json().await.map_err(|_| AppError::Internal);
+                return resp.json().await.map_err(|e| {
+                    tracing::warn!(error = %e, "unexpected response body");
+                    AppError::Internal
+                });
+            }
+            if (status == 429 || status >= 500) && retries < MAX_RETRIES {
+                let wait = match crate::auth::oauth::retry_after(&resp) {
+                    Some(s) if s > MAX_RETRY_AFTER_S => return Err(map_status(resp).await),
+                    Some(s) => std::time::Duration::from_secs(s.into()),
+                    None => self.backoff(retries),
+                };
+                tracing::debug!(status, retries, ?wait, "transient API error, retrying");
+                tokio::time::sleep(wait).await;
+                retries += 1;
+                continue;
             }
             return Err(map_status(resp).await);
         }
-        Err(AppError::TokenExpired)
     }
 }
 
@@ -207,6 +257,70 @@ mod tests {
         assert!(matches!(q, Err(AppError::QuotaExceeded)));
         let s: Result<serde_json::Value> = api.get_json(&format!("{}/s", srv.url()), &[]).await;
         assert!(matches!(s, Err(AppError::ScopesDenied)));
+    }
+
+    #[tokio::test]
+    async fn retries_transient_errors() {
+        let mut srv = mockito::Server::new_async().await;
+        let failing = srv
+            .mock("GET", "/r")
+            .with_status(503)
+            .expect(2)
+            .create_async()
+            .await;
+        // Once the failing mock has had its 2 hits, mockito moves on to this one.
+        let ok = srv
+            .mock("GET", "/r")
+            .with_body(r#"{"ok":true}"#)
+            .create_async()
+            .await;
+        let api = ApiClient::new(reqwest::Client::new(), Arc::new(StaticToken("t".into())))
+            .with_retry_base(std::time::Duration::from_millis(1));
+        let v: serde_json::Value = api
+            .get_json(&format!("{}/r", srv.url()), &[])
+            .await
+            .unwrap();
+        failing.assert_async().await;
+        ok.assert_async().await;
+        assert_eq!(v["ok"], true);
+    }
+
+    #[tokio::test]
+    async fn gives_up_after_max_retries_and_honours_retry_after() {
+        let mut srv = mockito::Server::new_async().await;
+        let m = srv
+            .mock("GET", "/r")
+            .with_status(429)
+            .with_header("retry-after", "0")
+            .expect(1 + MAX_RETRIES as usize)
+            .create_async()
+            .await;
+        let api = ApiClient::new(reqwest::Client::new(), Arc::new(StaticToken("t".into())))
+            .with_retry_base(std::time::Duration::from_millis(1));
+        let r: Result<serde_json::Value> = api.get_json(&format!("{}/r", srv.url()), &[]).await;
+        m.assert_async().await;
+        assert!(matches!(r, Err(AppError::RateLimited { .. })));
+    }
+
+    #[tokio::test]
+    async fn long_retry_after_is_not_waited() {
+        let mut srv = mockito::Server::new_async().await;
+        let m = srv
+            .mock("GET", "/r")
+            .with_status(429)
+            .with_header("retry-after", "3600")
+            .expect(1)
+            .create_async()
+            .await;
+        let api = ApiClient::new(reqwest::Client::new(), Arc::new(StaticToken("t".into())));
+        let r: Result<serde_json::Value> = api.get_json(&format!("{}/r", srv.url()), &[]).await;
+        m.assert_async().await;
+        assert!(matches!(
+            r,
+            Err(AppError::RateLimited {
+                retry_after_s: 3600
+            })
+        ));
     }
 
     #[tokio::test]

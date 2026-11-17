@@ -18,10 +18,26 @@
     "noAccounts": "No accounts connected yet.",
     "addMock": "Add test account",
     "sync": "Sync",
-    "followers": "Followers",
-    "views": "Views",
     "noData": "No data yet. Press Sync.",
-    "connectNetwork": "Go to Settings to connect a network"
+    "connectNetwork": "Go to Settings to connect a network",
+    "syncing": "Syncing…",
+    "never": "never",
+    "lastSync": "Last sync: {{when}}",
+    "contentCounts": "{{video}} videos, {{short}} Shorts, {{stream}} streams",
+    "quotaLimited": "The daily YouTube quota budget for syncing has been reached. Some data will update tomorrow.",
+    "metric": {
+      "followers": "Subscribers",
+      "views": "Daily views",
+      "watch_time_s": "Daily watch hours"
+    },
+    "metricLabel": "Metric",
+    "rangeLabel": "Period",
+    "range": {
+      "30d": "30 days",
+      "1y": "1 year",
+      "5y": "5 years",
+      "all": "All"
+    }
   },
   "platform": {
     "title": "{{name}} view",
@@ -57,7 +73,8 @@
     "KEYRING_UNAVAILABLE": "No system keyring is available (Secret Service / Credential Manager). Omnyra never stores tokens anywhere else: enable GNOME Keyring or KWallet and restart the app.",
     "NO_CHANNEL": "This Google account has no YouTube channel. Pick another account or create the channel.",
     "NOT_CONNECTED": "The account is not connected. Reconnect it in Settings.",
-    "unknown": "An unexpected error occurred."
+    "unknown": "An unexpected error occurred.",
+    "SYNC_IN_PROGRESS": "This account is already syncing."
   },
   "accounts": {
     "title": "Connected accounts",
