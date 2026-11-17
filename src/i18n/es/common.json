@@ -39,11 +39,31 @@
       "5y": "5 años",
       "all": "Todo"
     },
-    "uploadVideo": "Subir vídeo"
+    "uploadVideo": "Subir vídeo",
+    "syncAll": "Sincronizar todo",
+    "card": {
+      "followers": "Suscriptores",
+      "change": "{{value}} en el periodo",
+      "views": "Visualizaciones",
+      "watchHours": "Horas vistas",
+      "published": "Publicaciones"
+    },
+    "dataUntil": "Las analíticas de YouTube llevan 2–3 días de retraso: datos diarios hasta el {{day}}.",
+    "combinedNote": "Suma de todas las cuentas.",
+    "topContents": "Más vistos del periodo",
+    "noTopContents": "Nada publicado en este periodo."
   },
   "platform": {
     "title": "Vista de {{name}}",
-    "capabilities": "Capacidades"
+    "capabilities": "Capacidades",
+    "notFound": "No se encuentra esta cuenta.",
+    "needsReauth": "Hay que volver a conectar esta cuenta.",
+    "avgDuration": "duración media vista {{value}}",
+    "netSubscribers": "Suscriptores netos",
+    "gainedLost": "+{{gained}} / −{{lost}}",
+    "likes": "Me gusta",
+    "comments": "Comentarios",
+    "shares": "Compartidos"
   },
   "settings": {
     "title": "Ajustes",
@@ -224,6 +244,33 @@
       "platform": {
         "upload_not_supported": "Esta red no admite subidas desde Omnyra."
       }
+    }
+  },
+  "common": {
+    "loading": "Cargando…"
+  },
+  "contents": {
+    "title": "Contenidos",
+    "empty": "No hay contenidos con estos filtros.",
+    "sortBy": "Ordenar por",
+    "sort": {
+      "date": "fecha",
+      "views": "visualizaciones"
+    },
+    "kind": {
+      "all": "Todos",
+      "video": "Vídeos",
+      "short": "Shorts",
+      "stream": "Directos"
+    },
+    "col": {
+      "title": "Título",
+      "kind": "Tipo",
+      "published": "Publicado",
+      "duration": "Duración",
+      "views": "Vistas",
+      "likes": "Me gusta",
+      "comments": "Coment."
     }
   }
 }

@@ -46,6 +46,12 @@ export const commands = {
 	retryUpload: (id: string, options?: InvokeOptions) => __TAURI_INVOKE<null>("retry_upload", { id }, options),
 	/**  Removes a finished, failed or cancelled upload from the list (the file is not touched). */
 	removeUpload: (id: string, options?: InvokeOptions) => __TAURI_INVOKE<null>("remove_upload", { id }, options),
+	/**  Per-account and global figures for the period starting at `from` (`None` = all time). */
+	getSummary: (from: string | null, options?: InvokeOptions) => __TAURI_INVOKE<Summary_Serialize>("get_summary", { from }, options),
+	/**  `metric` summed across accounts, day by day. */
+	getCombinedSeries: (metric: string, from: string | null, options?: InvokeOptions) => __TAURI_INVOKE<MetricPoint[]>("get_combined_series", { metric, from }, options),
+	/**  Most viewed contents published in the period, across accounts. */
+	getTopContents: (from: string | null, limit: number, options?: InvokeOptions) => __TAURI_INVOKE<TopContent_Serialize[]>("get_top_contents", { from, limit }, options),
 };
 
 /** Events */
@@ -73,6 +79,58 @@ export type AccountStatus = "active" |
 "needs_reauth" | 
 /**  Disconnected by the user. Tokens are gone; historical data is kept. */
 "disconnected";
+
+export type AccountSummary = AccountSummary_Serialize | AccountSummary_Deserialize;
+
+export type AccountSummary_Deserialize = {
+	accountId: string,
+	platform: string,
+	displayName: string,
+	handle?: string | null,
+	status: AccountStatus,
+	lastSyncAt?: string | null,
+	/**  Latest follower count. */
+	followers?: number | null,
+	/**  Change since the start of the period (None without data on both ends). */
+	followersChange?: number | null,
+	views: number | null,
+	watchTimeS: number | null,
+	likes: number | null,
+	comments: number | null,
+	shares: number | null,
+	subscribersGained: number | null,
+	subscribersLost: number | null,
+	/**  Views-weighted average over the period. */
+	avgViewDurationS?: number | null,
+	contentsPublished: number,
+	/**  Last day with daily (historic) data: analytics lag a few days behind. */
+	dataUntil?: string | null,
+};
+
+export type AccountSummary_Serialize = {
+	accountId: string,
+	platform: string,
+	displayName: string,
+	handle: string | null,
+	status: AccountStatus,
+	lastSyncAt: string | null,
+	/**  Latest follower count. */
+	followers: number | null,
+	/**  Change since the start of the period (None without data on both ends). */
+	followersChange: number | null,
+	views: number | null,
+	watchTimeS: number | null,
+	likes: number | null,
+	comments: number | null,
+	shares: number | null,
+	subscribersGained: number | null,
+	subscribersLost: number | null,
+	/**  Views-weighted average over the period. */
+	avgViewDurationS: number | null,
+	contentsPublished: number,
+	/**  Last day with daily (historic) data: analytics lag a few days behind. */
+	dataUntil: string | null,
+};
 
 export type Account_Deserialize = {
 	id: string,
@@ -373,6 +431,24 @@ export type ScheduleSupport = "none" | "native" | "localOnly";
 
 export type Severity = "error" | "warning";
 
+export type Summary = Summary_Serialize | Summary_Deserialize;
+
+export type Summary_Deserialize = {
+	/**  First day of the period (`None` = all time). */
+	from?: string | null,
+	to: string,
+	accounts: AccountSummary_Deserialize[],
+	totals: Totals_Deserialize,
+};
+
+export type Summary_Serialize = {
+	/**  First day of the period (`None` = all time). */
+	from: string | null,
+	to: string,
+	accounts: AccountSummary_Serialize[],
+	totals: Totals_Serialize,
+};
+
 export type SyncReport = {
 	newContents: number,
 	refreshedContents: number,
@@ -408,6 +484,40 @@ export type SyncStatus_Serialize = {
 	lastSyncAt: string | null,
 	/**  `AppError` code when `state` is `error`. */
 	errorCode: string | null,
+};
+
+export type TopContent = TopContent_Serialize | TopContent_Deserialize;
+
+export type TopContent_Deserialize = {
+	accountId: string,
+	accountName: string,
+	platform: string,
+	content: ContentRow_Deserialize,
+};
+
+export type TopContent_Serialize = {
+	accountId: string,
+	accountName: string,
+	platform: string,
+	content: ContentRow_Serialize,
+};
+
+export type Totals = Totals_Serialize | Totals_Deserialize;
+
+export type Totals_Deserialize = {
+	followers?: number | null,
+	followersChange?: number | null,
+	views: number | null,
+	watchTimeS: number | null,
+	contentsPublished: number,
+};
+
+export type Totals_Serialize = {
+	followers: number | null,
+	followersChange: number | null,
+	views: number | null,
+	watchTimeS: number | null,
+	contentsPublished: number,
 };
 
 /**  An upload changed status (`queued`, `uploading`, `published`, `failed`, `cancelled`). */

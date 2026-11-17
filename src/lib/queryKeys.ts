@@ -5,6 +5,9 @@ export const queryKeys = {
   contents: (accountId: string) => ["contents", accountId] as const,
   quota: ["quota"] as const,
   uploads: ["uploads"] as const,
+  summary: (from: string | null) => ["summary", from] as const,
+  combined: (metric: string, from: string | null) => ["combined", metric, from] as const,
+  top: (from: string | null) => ["top", from] as const,
   bestTime: (accountId: string, format: string, includeUnlisted: boolean, tz: string) =>
     ["bestTime", accountId, format, includeUnlisted, tz] as const,
 };

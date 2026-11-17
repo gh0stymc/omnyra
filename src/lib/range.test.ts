@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { rangeStart } from "./MetricChart";
+import { rangeStart } from "./range";
 
 describe("rangeStart", () => {
   const now = new Date("2026-11-17T12:00:00Z");

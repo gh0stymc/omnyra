@@ -2,7 +2,7 @@
 
 > Estado del proyecto para cualquier sesión nueva (tras `/clear`). Ver `OMNYRA_SPEC.md` sección 9.
 
-**Paso actual:** 1e — Pantallas del MVP (`claude-sonnet-5-5`). El 1d está hecho y probado con gh0stymc.
+**Paso actual:** 2a — Conector de Twitch. La Fase 1 (MVP con YouTube) está terminada y revisada por el usuario.
 
 ## Pasos
 
@@ -14,7 +14,7 @@
 - [x] 1b — Conector de YouTube y snapshots
 - [x] 1c — Mejor hora para publicar
 - [x] 1d — Subida de vídeos a YouTube
-- [ ] 1e — Pantallas del MVP
+- [x] 1e — Pantallas del MVP
 - [ ] 2a — Conector de Twitch
 - [ ] 2b — Calendario y tablero de ideas
 - [ ] 2c — Segundo plano y notificaciones
@@ -77,6 +77,10 @@
 - 2026-11-17 (1d): validación = metadatos del archivo + ffprobe (`media/probe.rs`, ruta con `OMNYRA_FFPROBE`) + reglas de YouTube (formatos, 256 GB, 12 h y aviso de 15 min sin verificar, título 100 caracteres, descripción 5.000 bytes, sin `<>`, etiquetas 500, >60 hashtags, miniatura JPG/PNG ≤ 2 MB). Sin ffprobe se avisa y se deja subir. La miniatura o la lista que fallen son avisos, no errores (las miniaturas personalizadas exigen canal verificado por teléfono).
 - 2026-11-17 (1d): **cambio sobre H9**: la descarga verificada de FFmpeg en Windows NO se ha hecho en el 1d; sin ffprobe la subida funciona con un aviso. Se hará cuando haga falta FFmpeg de verdad (renderizados del 3c) o en el 7c.
 - 2026-11-17 (1d): «hecho para niños» es obligatorio en el formulario (sin valor por defecto). Categoría por defecto: Juegos (20) si existe.
+
+- 2026-11-17 (1e): lecturas para pantallas en `omnyra-core/src/dashboard.rs` (resumen por cuenta y global de un periodo, series combinadas entre cuentas con arrastre del último valor para `followers`, top contenidos). El periodo (30 días por defecto, 1 año, 5 años, todo) es común a todas las pantallas y se recuerda (`localStorage`, solo comodidad).
+- 2026-11-17 (1e): Panel global = tarjetas (suscriptores y su cambio, visualizaciones, horas vistas, publicaciones), gráfica combinada, top 5 del periodo y lista de cuentas con su última sincronización; "Sincronizar todo". Vista de cuenta (`/platform/:platform/:id`) = tarjetas detalladas, gráfica, mejor hora y tabla de contenidos con filtro por tipo y orden. Subidas en `/uploads`. Sin miniaturas remotas en la tabla (la CSP no las permite; se descargarán a caché local más adelante).
+- 2026-11-17 (1e): interfaz funcional y sin pulir a propósito (ver preferencia del usuario).
 
 ## Problemas pendientes
 

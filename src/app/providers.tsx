@@ -24,12 +24,17 @@ function useBackendEvents() {
           void queryClient.invalidateQueries({ queryKey: queryKeys.contents(payload.accountId) });
           void queryClient.invalidateQueries({ queryKey: queryKeys.quota });
           void queryClient.invalidateQueries({ queryKey: ["bestTime", payload.accountId] });
+          for (const k of ["summary", "combined", "top"]) {
+            void queryClient.invalidateQueries({ queryKey: [k] });
+          }
         }
       }),
       events.uploadChanged.listen(({ payload }) => {
         void queryClient.invalidateQueries({ queryKey: queryKeys.uploads });
         if (payload.status === "published") {
           void queryClient.invalidateQueries({ queryKey: ["contents"] });
+          void queryClient.invalidateQueries({ queryKey: ["summary"] });
+          void queryClient.invalidateQueries({ queryKey: ["top"] });
         }
       }),
     ].map((p) => p.catch(() => undefined)); // not running inside Tauri (tests, plain browser)

@@ -41,6 +41,9 @@ fn specta_builder() -> Builder<tauri::Wry> {
             commands::uploads::cancel_upload,
             commands::uploads::retry_upload,
             commands::uploads::remove_upload,
+            commands::dashboard::get_summary,
+            commands::dashboard::get_combined_series,
+            commands::dashboard::get_top_contents,
         ])
         .events(collect_events![
             events::AccountChanged,

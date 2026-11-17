@@ -39,11 +39,31 @@
       "5y": "5 years",
       "all": "All"
     },
-    "uploadVideo": "Upload video"
+    "uploadVideo": "Upload video",
+    "syncAll": "Sync all",
+    "card": {
+      "followers": "Subscribers",
+      "change": "{{value}} in the period",
+      "views": "Views",
+      "watchHours": "Watch hours",
+      "published": "Published"
+    },
+    "dataUntil": "YouTube analytics lag 2–3 days behind: daily data up to {{day}}.",
+    "combinedNote": "Sum of all accounts.",
+    "topContents": "Most viewed in the period",
+    "noTopContents": "Nothing published in this period."
   },
   "platform": {
     "title": "{{name}} view",
-    "capabilities": "Capabilities"
+    "capabilities": "Capabilities",
+    "notFound": "Account not found.",
+    "needsReauth": "This account needs to be reconnected.",
+    "avgDuration": "average view duration {{value}}",
+    "netSubscribers": "Net subscribers",
+    "gainedLost": "+{{gained}} / −{{lost}}",
+    "likes": "Likes",
+    "comments": "Comments",
+    "shares": "Shares"
   },
   "settings": {
     "title": "Settings",
@@ -224,6 +244,33 @@
       "platform": {
         "upload_not_supported": "This network does not support uploads from Omnyra."
       }
+    }
+  },
+  "common": {
+    "loading": "Loading…"
+  },
+  "contents": {
+    "title": "Contents",
+    "empty": "No contents match these filters.",
+    "sortBy": "Sort by",
+    "sort": {
+      "date": "date",
+      "views": "views"
+    },
+    "kind": {
+      "all": "All",
+      "video": "Videos",
+      "short": "Shorts",
+      "stream": "Streams"
+    },
+    "col": {
+      "title": "Title",
+      "kind": "Type",
+      "published": "Published",
+      "duration": "Length",
+      "views": "Views",
+      "likes": "Likes",
+      "comments": "Comm."
     }
   }
 }
