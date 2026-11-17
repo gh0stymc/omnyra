@@ -2,7 +2,7 @@
 
 > Estado del proyecto para cualquier sesión nueva (tras `/clear`). Ver `OMNYRA_SPEC.md` sección 9.
 
-**Paso actual:** 1b — Conector de YouTube y snapshots (`opusplan`). El 1a está hecho; falta la prueba manual del flujo real con Google (ver checklist).
+**Paso actual:** 1b — Conector de YouTube y snapshots (`opusplan`). El 1a está hecho y probado con Google en Linux.
 
 ## Pasos
 
@@ -52,6 +52,7 @@
 - 2026-11-16 (1a): tras un fallo después del intercambio, los tokens se descartan en memoria; solo se revoca el grant si la cuenta no tiene canal (`NO_CHANNEL`), para no romper una cuenta ya conectada con el mismo grant.
 - 2026-11-16 (1a): desconectar = revocar (best effort) → borrar del llavero → `status = disconnected` (los datos se conservan). Si no se puede revocar (sin red), se borra igualmente en local y la UI enlaza a `myaccount.google.com/connections`.
 - 2026-11-16 (1a): refresco 60 s antes de caducar, serializado por cuenta; un 401 refresca una vez y reintenta. `invalid_grant` → `TOKEN_EXPIRED` → la cuenta pasa a `needs_reauth` y se emite el evento `account-changed`.
+- 2026-11-17: logging con `tracing` (core) + `tracing-subscriber` a stderr en la app; filtro con `RUST_LOG` (por defecto `warn`). Nunca se registran tokens.
 - 2026-11-16 (1a): el `audit_log` (cadena de hashes SHA-256) empieza a usarse ya: `account.connect` y `account.disconnect`.
 
 ## Problemas pendientes
@@ -63,12 +64,14 @@
 - `reqwest` 0.13 usa rustls con `aws-lc-rs`: en la primera ejecución de la CI en Windows, comprobar que `aws-lc-sys` compila sin NASM/CMake (si no, pasar a `ring`).
 - YouTube: `fetch_channel_metrics` y `list_contents` devuelven `NOT_SUPPORTED` hasta el 1b.
 - Si el `keyring` falla al iniciarse (Secret Service caído al arrancar), el error se mantiene hasta reiniciar la app (el crate inicializa el almacén una sola vez).
+- Revocación (2026-11-17): el primer intento real de desconexión devolvió `revoked: false` (aviso de "¿sin conexión?") con la red funcionando; los dos siguientes, incluido conectar → reiniciar → desconectar, fueron bien. No se sabe la causa: ahora `oauth::revoke` registra el estado HTTP y el código de error (`RUST_LOG=omnyra_core=debug`). Si se repite, mirar ese log.
+- Ajustes: los `<select>` de Idioma y Tema salen con fondo blanco y texto casi ilegible en el tema oscuro.
 - Falta `rustup`/toolchain fijada: se usa el Rust del sistema (1.100).
 
 ## Checklist manual (pruebas reales por sistema)
 
 - [x] Llavero (Secret Service) en Linux — `cargo test -p omnyra-core -- --ignored keyring` pasa con gnome-keyring (2026-11-16)
-- [ ] Flujo OAuth real con Google en Linux (conectar gh0stymc, reiniciar la app, desconectar y comprobar que desaparece de myaccount.google.com/connections)
+- [x] Flujo OAuth real con Google en Linux (conectar gh0stymc, reiniciar la app, desconectar y comprobar que desaparece de myaccount.google.com/connections) (2026-11-17)
 - [ ] Flujo OAuth real en Windows
 - [ ] Llavero (Credential Manager) en Windows
 - [ ] Rutas de `app_data_dir` en Windows

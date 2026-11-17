@@ -45,6 +45,15 @@ fn credentials() -> Credentials {
 const BINDINGS_PATH: &str = "../src/lib/bindings.ts";
 
 pub fn run() {
+    // Logs to stderr; filter with RUST_LOG (default: warnings and above).
+    let _ = tracing_subscriber::fmt()
+        .with_env_filter(
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("warn")),
+        )
+        .with_writer(std::io::stderr)
+        .try_init();
+
     let builder = specta_builder();
 
     // Regenerate TS bindings on every dev run (src/lib/bindings.ts is committed).

@@ -220,19 +220,24 @@ pub async fn revoke(http: &reqwest::Client, cfg: &OAuthConfig, token: &str) -> R
         .form(&[("token", token)])
         .send()
         .await
-        .map_err(|_| AppError::Network)?;
+        .map_err(|e| {
+            // reqwest errors carry the URL but never the form body, so no token leaks here.
+            tracing::warn!(error = %e, "token revocation request failed");
+            AppError::Network
+        })?;
     let status = resp.status();
     if status.is_success() {
         return Ok(());
     }
     if status.as_u16() == 400 {
-        if let Ok(e) = resp.json::<ErrorResponse>().await {
-            if e.error == "invalid_token" {
-                return Ok(());
-            }
+        let code = resp.json::<ErrorResponse>().await.map(|e| e.error).ok();
+        if code.as_deref() == Some("invalid_token") {
+            return Ok(());
         }
+        tracing::warn!(%status, error = ?code, "token revocation rejected");
         return Err(AppError::AuthFailed);
     }
+    tracing::warn!(%status, "token revocation returned an unexpected status");
     Err(AppError::Network)
 }
 
