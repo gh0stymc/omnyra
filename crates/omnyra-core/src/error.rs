@@ -56,6 +56,12 @@ pub enum AppError {
     /// This account is already being synchronised.
     #[error("sync already in progress")]
     SyncInProgress,
+    /// The resumable upload session expired or is unknown: start a new one.
+    #[error("upload session expired")]
+    UploadSessionExpired,
+    /// The file changed or disappeared since it was queued.
+    #[error("file not available")]
+    FileUnavailable,
 }
 
 impl From<rusqlite::Error> for AppError {

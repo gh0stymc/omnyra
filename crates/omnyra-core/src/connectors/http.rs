@@ -170,16 +170,81 @@ impl ApiClient {
     }
 }
 
+impl ApiClient {
+    /// Sends a request built by `build` with the bearer token, refreshing it once on 401.
+    /// No other retries (uploads handle their own resume logic); any other status is
+    /// returned to the caller, who can map errors with [`error_from`].
+    pub async fn send(
+        &self,
+        build: impl Fn(&reqwest::Client) -> reqwest::RequestBuilder,
+    ) -> Result<reqwest::Response> {
+        let mut token = self.tokens.token().await?;
+        let mut refreshed = false;
+        loop {
+            let resp = build(&self.http)
+                .bearer_auth(&token)
+                .send()
+                .await
+                .map_err(|e| {
+                    tracing::debug!(error = %e, "request failed");
+                    AppError::Network
+                })?;
+            if resp.status().as_u16() == 401 && !refreshed {
+                refreshed = true;
+                token = self.tokens.refreshed(&token).await?;
+                continue;
+            }
+            return Ok(resp);
+        }
+    }
+}
+
+/// Maps an error response to an [`AppError`] without leaking its body.
+pub async fn error_from(resp: reqwest::Response) -> AppError {
+    map_status(resp).await
+}
+
 /// Maps an error response to an [`AppError`] without leaking its body.
 async fn map_status(resp: reqwest::Response) -> AppError {
     let status = resp.status().as_u16();
     let retry_after = crate::auth::oauth::retry_after(&resp);
     let body = resp.text().await.unwrap_or_default();
+    // Google's machine-readable reason (`quotaExceeded`, `invalidTitle`...): safe to log.
+    let reason = serde_json::from_str::<serde_json::Value>(&body)
+        .ok()
+        .and_then(|v| {
+            v["error"]["errors"][0]["reason"]
+                .as_str()
+                .map(str::to_owned)
+        });
+    tracing::debug!(status, ?reason, "API error");
     match status {
         401 => AppError::TokenExpired,
-        403 if body.contains("quotaExceeded") || body.contains("dailyLimitExceeded") => {
+        400 | 403
+            if body.contains("quotaExceeded")
+                || body.contains("dailyLimitExceeded")
+                || body.contains("uploadLimitExceeded") =>
+        {
             AppError::QuotaExceeded
         }
+        400 => match reason.as_deref() {
+            Some("invalidTitle") => AppError::Validation {
+                field: "title".into(),
+            },
+            Some("invalidDescription") => AppError::Validation {
+                field: "description".into(),
+            },
+            Some("invalidTags") => AppError::Validation {
+                field: "tags".into(),
+            },
+            Some("invalidCategoryId") => AppError::Validation {
+                field: "category".into(),
+            },
+            _ => {
+                tracing::warn!(?reason, "bad request");
+                AppError::Internal
+            }
+        },
         403 if body.contains("insufficientPermissions")
             || body.contains("ACCESS_TOKEN_SCOPE_INSUFFICIENT") =>
         {

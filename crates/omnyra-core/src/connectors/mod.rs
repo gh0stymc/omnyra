@@ -104,7 +104,30 @@ pub trait Connector: Send + Sync {
     }
 
     // Optional capabilities: default is NotSupported.
-    async fn upload(&self, _ctx: &AccountCtx, _req: UploadRequest) -> Result<UploadOutcome> {
+    /// OAuth scopes an upload needs (requested incrementally the first time).
+    fn upload_scopes(&self, _with_playlist: bool) -> Vec<String> {
+        Vec::new()
+    }
+
+    /// Platform rules for an upload (title length, formats, thumbnail...).
+    fn check_upload(&self, _draft: &UploadDraft, _facts: &FileFacts) -> Vec<Issue> {
+        vec![Issue::error("platform", "upload_not_supported")]
+    }
+
+    /// Categories, playlists... for the upload form.
+    async fn upload_options(&self, _ctx: &AccountCtx, _lang: &str) -> Result<UploadOptions> {
+        Err(AppError::NotSupported)
+    }
+
+    /// Uploads `req.draft.file_path`, resuming `resume` (a session URI from a previous
+    /// attempt) when given. Must report a new session through `sink` before sending data.
+    async fn upload(
+        &self,
+        _ctx: &AccountCtx,
+        _req: &UploadRequest,
+        _resume: Option<String>,
+        _sink: &dyn UploadSink,
+    ) -> Result<UploadOutcome> {
         Err(AppError::NotSupported)
     }
     async fn list_comments(

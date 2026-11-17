@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router";
 import { commands, type Account } from "../lib/bindings";
 import { errorMessage } from "../lib/ipc";
 import { queryKeys } from "../lib/queryKeys";
@@ -43,13 +44,21 @@ export function AccountPanel({ account }: { account: Account }) {
             )}
           </p>
         </div>
-        <button
-          className="rounded-md border border-[var(--border)] px-2 py-1 text-xs disabled:opacity-50"
-          onClick={() => sync.mutate()}
-          disabled={sync.isPending}
-        >
-          {sync.isPending ? t("dashboard.syncing") : t("dashboard.sync")}
-        </button>
+        <div className="flex gap-1">
+          <Link
+            to={`/uploads?account=${account.id}`}
+            className="rounded-md border border-[var(--border)] px-2 py-1 text-xs"
+          >
+            {t("dashboard.uploadVideo")}
+          </Link>
+          <button
+            className="rounded-md border border-[var(--border)] px-2 py-1 text-xs disabled:opacity-50"
+            onClick={() => sync.mutate()}
+            disabled={sync.isPending}
+          >
+            {sync.isPending ? t("dashboard.syncing") : t("dashboard.sync")}
+          </button>
+        </div>
       </div>
       {sync.isError && <p className="text-sm text-red-500">{errorMessage(sync.error, t)}</p>}
       {sync.data?.quotaLimited && (

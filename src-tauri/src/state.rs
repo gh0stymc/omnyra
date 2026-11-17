@@ -13,4 +13,8 @@ pub struct AppState {
     /// Cancels the OAuth flow currently waiting for the browser (only one at a time).
     pub connect_cancel: Mutex<Option<oneshot::Sender<()>>>,
     pub sync_locks: SyncLocks,
+    /// Wakes the upload worker when something is queued or retried.
+    pub upload_wake: tokio::sync::Notify,
+    /// The upload being sent, and how to abort it.
+    pub upload_cancel: Mutex<Option<(String, oneshot::Sender<()>)>>,
 }

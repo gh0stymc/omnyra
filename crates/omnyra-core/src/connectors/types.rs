@@ -178,16 +178,112 @@ pub struct Comment {
     pub text: String,
 }
 
-#[derive(Debug, Clone, Deserialize, Type)]
+/// What the user wants to publish, as entered in the upload form.
+#[derive(Debug, Clone, Serialize, Deserialize, Type, PartialEq)]
 #[serde(rename_all = "camelCase")]
-pub struct UploadRequest {
+pub struct UploadDraft {
     pub file_path: String,
     pub title: String,
-    pub description: Option<String>,
+    pub description: String,
+    pub tags: Vec<String>,
+    /// `private` | `unlisted` | `public`.
+    pub visibility: String,
+    pub category_id: Option<String>,
+    pub playlist_id: Option<String>,
+    pub thumbnail_path: Option<String>,
+    /// Required by YouTube (COPPA): is the video made for kids?
+    pub made_for_kids: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Type)]
+#[derive(Debug, Clone, Copy, Serialize, Type, PartialEq, Eq)]
+#[serde(rename_all = "lowercase")]
+pub enum Severity {
+    Error,
+    Warning,
+}
+
+/// A validation finding. `code` is stable and translated by the frontend
+/// (`upload.issue.<code>`); `limit` carries the number it refers to, if any.
+#[derive(Debug, Clone, Serialize, Type, PartialEq)]
 #[serde(rename_all = "camelCase")]
+pub struct Issue {
+    pub field: String,
+    pub code: String,
+    pub severity: Severity,
+    pub limit: Option<f64>,
+}
+
+impl Issue {
+    pub fn error(field: &str, code: &str) -> Self {
+        Self {
+            field: field.into(),
+            code: code.into(),
+            severity: Severity::Error,
+            limit: None,
+        }
+    }
+    pub fn warning(field: &str, code: &str) -> Self {
+        Self {
+            severity: Severity::Warning,
+            ..Self::error(field, code)
+        }
+    }
+    pub fn with_limit(mut self, limit: f64) -> Self {
+        self.limit = Some(limit);
+        self
+    }
+}
+
+/// Facts about the local files, gathered before the connector checks its own rules.
+#[derive(Debug, Clone, PartialEq)]
+pub struct FileFacts {
+    pub size_bytes: u64,
+    /// Lower-case, without the dot.
+    pub extension: String,
+    /// `None` when ffprobe is not available.
+    pub media: Option<crate::media::MediaInfo>,
+    pub thumbnail: Option<ThumbnailFacts>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct ThumbnailFacts {
+    pub size_bytes: u64,
+    pub extension: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct UploadRequest {
+    pub draft: UploadDraft,
+    pub size_bytes: u64,
+    pub mime: String,
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct UploadOutcome {
     pub external_id: String,
+    /// Non-fatal problems (`thumbnail_failed`, `playlist_failed`...).
+    pub warnings: Vec<String>,
+}
+
+/// Receives upload progress, and the resumable session URI as soon as it exists so the
+/// caller can keep it (in the keyring, H6) and resume after a restart.
+#[async_trait::async_trait]
+pub trait UploadSink: Send + Sync {
+    async fn session_started(&self, session_uri: &str) -> crate::Result<()>;
+    fn progress(&self, sent: u64, total: u64);
+}
+
+#[derive(Debug, Clone, Serialize, Type, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct NamedOption {
+    pub id: String,
+    pub title: String,
+}
+
+/// Choices for the upload form that come from the platform.
+#[derive(Debug, Clone, Serialize, Type, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct UploadOptions {
+    pub categories: Vec<NamedOption>,
+    pub playlists: Vec<NamedOption>,
 }

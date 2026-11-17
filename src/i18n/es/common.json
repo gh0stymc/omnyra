@@ -11,7 +11,8 @@
     "competitors": "Competencia",
     "security": "Seguridad",
     "settings": "Ajustes",
-    "accounts": "Cuentas"
+    "accounts": "Cuentas",
+    "uploads": "Subidas"
   },
   "dashboard": {
     "title": "Panel global",
@@ -37,7 +38,8 @@
       "1y": "1 año",
       "5y": "5 años",
       "all": "Todo"
-    }
+    },
+    "uploadVideo": "Subir vídeo"
   },
   "platform": {
     "title": "Vista de {{name}}",
@@ -74,7 +76,9 @@
     "NO_CHANNEL": "Esta cuenta de Google no tiene un canal de YouTube. Elige otra cuenta o crea el canal.",
     "NOT_CONNECTED": "La cuenta no está conectada. Vuelve a conectarla en Ajustes.",
     "unknown": "Ha ocurrido un error inesperado.",
-    "SYNC_IN_PROGRESS": "Esta cuenta ya se está sincronizando."
+    "SYNC_IN_PROGRESS": "Esta cuenta ya se está sincronizando.",
+    "UPLOAD_SESSION_EXPIRED": "La sesión de subida caducó; se empezará de nuevo.",
+    "FILE_UNAVAILABLE": "El archivo ya no está disponible o ha cambiado."
   },
   "accounts": {
     "title": "Cuentas conectadas",
@@ -125,5 +129,101 @@
     "hoverHint": "Pasa el ratón por una casilla para ver el detalle.",
     "legendNoData": "pocos datos",
     "footnote": "Visitas en la primera semana comparadas con lo habitual del canal; {{sample}} {{format}}, los recientes cuentan más. Hora de {{tz}}."
+  },
+  "upload": {
+    "pageTitle": "Subidas",
+    "newTitle": "Subir un vídeo",
+    "noAccounts": "No hay ninguna cuenta conectada que admita subidas.",
+    "account": "Cuenta",
+    "auditWarning": "Google bloquea como privados los vídeos subidos desde apps que no han pasado su auditoría (como esta, de momento). Podrás publicarlo después desde YouTube Studio. Si eliges «Público» u «Oculto», se subirá igualmente como privado.",
+    "needsScope": "Omnyra necesita permiso para subir vídeos a este canal. Se abrirá Google para que lo autorices; elige el mismo canal.",
+    "needsPlaylistScope": "Para añadir el vídeo a una lista, Omnyra necesita además permiso para gestionar tu cuenta de YouTube. Se abrirá Google; elige el mismo canal.",
+    "authorize": "Dar permiso",
+    "pickVideo": "Elegir vídeo",
+    "videoFiles": "Vídeos",
+    "imageFiles": "Imágenes",
+    "title": "Título",
+    "description": "Descripción",
+    "tags": "Etiquetas",
+    "tagsPlaceholder": "separadas por comas",
+    "visibility": "Visibilidad",
+    "visibilityOption": {
+      "private": "Privado",
+      "unlisted": "Oculto (no listado)",
+      "public": "Público"
+    },
+    "category": "Categoría",
+    "playlist": "Lista de reproducción",
+    "noPlaylist": "Ninguna",
+    "pickThumbnail": "Elegir miniatura",
+    "removeThumbnail": "quitar",
+    "thumbnailOptional": "Opcional (JPG o PNG, máx. 2 MB)",
+    "madeForKids": "¿Está hecho para niños? (obligatorio por ley, COPPA)",
+    "kidsNo": "No",
+    "kidsYes": "Sí",
+    "enqueue": "Añadir a la cola",
+    "checking": "Comprobando…",
+    "queueTitle": "Cola de subidas",
+    "queueEmpty": "No hay subidas.",
+    "untitled": "(sin título)",
+    "status": {
+      "queued": "En cola",
+      "uploading": "Subiendo",
+      "published": "Subido",
+      "failed": "Error",
+      "cancelled": "Cancelado"
+    },
+    "retryAt": "Se reintentará a las {{at}} ({{reason}}).",
+    "open": "Abrir en YouTube",
+    "cancel": "Cancelar",
+    "retry": "Reintentar",
+    "remove": "Quitar de la lista",
+    "warning": {
+      "thumbnail_not_allowed": "No se pudo poner la miniatura: YouTube solo permite miniaturas personalizadas en canales verificados por teléfono.",
+      "thumbnail_quota": "No se pudo poner la miniatura: cuota agotada.",
+      "thumbnail_failed": "No se pudo poner la miniatura.",
+      "playlist_scope": "No se añadió a la lista: falta el permiso.",
+      "playlist_quota": "No se añadió a la lista: cuota agotada.",
+      "playlist_failed": "No se pudo añadir a la lista."
+    },
+    "issue": {
+      "file": {
+        "missing": "No se encuentra el archivo.",
+        "unreadable": "El archivo no es un vídeo válido.",
+        "format": "Formato no admitido por YouTube.",
+        "empty": "El archivo está vacío.",
+        "too_big": "El archivo supera el máximo de {{limit}}.",
+        "no_video": "El archivo no tiene pista de vídeo.",
+        "too_long": "El vídeo supera la duración máxima de {{limit}}.",
+        "needs_verification": "Dura más de {{limit}}: tu canal debe estar verificado por teléfono.",
+        "probe_unavailable": "FFmpeg no está instalado: no se puede comprobar la duración ni el contenido del archivo."
+      },
+      "title": {
+        "required": "El título es obligatorio.",
+        "too_long": "El título admite como máximo {{limit}} caracteres.",
+        "invalid_chars": "El título no puede contener < ni >."
+      },
+      "description": {
+        "too_long": "La descripción admite como máximo {{limit}} bytes.",
+        "invalid_chars": "La descripción no puede contener < ni >.",
+        "too_many_hashtags": "Con más de {{limit}} hashtags, YouTube los ignora todos."
+      },
+      "tags": {
+        "too_long": "Las etiquetas suman más de {{limit}} caracteres.",
+        "invalid_chars": "Hay una etiqueta vacía o con < o >."
+      },
+      "visibility": {
+        "invalid": "Visibilidad no válida.",
+        "private_until_audit": "Se subirá como privado (ver aviso de arriba)."
+      },
+      "thumbnail": {
+        "missing": "No se encuentra la miniatura.",
+        "format": "La miniatura debe ser JPG o PNG.",
+        "too_big": "La miniatura supera {{limit}}."
+      },
+      "platform": {
+        "upload_not_supported": "Esta red no admite subidas desde Omnyra."
+      }
+    }
   }
 }

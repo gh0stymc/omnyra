@@ -2,6 +2,7 @@ mod commands;
 mod events;
 mod state;
 mod sync;
+mod uploads;
 
 use omnyra_core::{
     auth::{AuthService, ClientCredentials, KeyringStore},
@@ -31,8 +32,22 @@ fn specta_builder() -> Builder<tauri::Wry> {
             commands::accounts::list_contents,
             commands::accounts::get_quota_usage,
             commands::accounts::get_best_time,
+            commands::accounts::authorize_upload,
+            commands::uploads::validate_upload,
+            commands::uploads::enqueue_upload,
+            commands::uploads::get_upload_options,
+            commands::uploads::upload_scopes,
+            commands::uploads::list_uploads,
+            commands::uploads::cancel_upload,
+            commands::uploads::retry_upload,
+            commands::uploads::remove_upload,
         ])
-        .events(collect_events![events::AccountChanged, events::SyncStatus])
+        .events(collect_events![
+            events::AccountChanged,
+            events::SyncStatus,
+            events::UploadProgress,
+            events::UploadChanged
+        ])
 }
 
 /// OAuth client IDs baked in at build time (`src-tauri/build.rs` reads `.env`).
@@ -95,8 +110,11 @@ pub fn run() {
                 auth,
                 connect_cancel: Mutex::new(None),
                 sync_locks: Default::default(),
+                upload_wake: Default::default(),
+                upload_cancel: Mutex::new(None),
             });
             sync::spawn_startup_sync(app.handle().clone());
+            uploads::spawn_worker(app.handle().clone());
             Ok(())
         })
         .run(tauri::generate_context!())

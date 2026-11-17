@@ -40,6 +40,13 @@ pub trait TokenStore: Send + Sync {
     fn set(&self, account_id: &str, tokens: &TokenSet) -> Result<()>;
     /// Idempotent: deleting a missing entry is not an error.
     fn delete(&self, account_id: &str) -> Result<()>;
+
+    /// Other secrets that must never reach SQLite, such as resumable upload session URIs
+    /// (H6). `key` is namespaced by the caller (`upload/<publication_id>`).
+    fn get_secret(&self, key: &str) -> Result<Option<String>>;
+    fn set_secret(&self, key: &str, value: &str) -> Result<()>;
+    /// Idempotent.
+    fn delete_secret(&self, key: &str) -> Result<()>;
 }
 
 /// The real store, backed by the OS keyring.
@@ -104,12 +111,31 @@ impl TokenStore for KeyringStore {
             Err(e) => Err(map_keyring_err(e)),
         }
     }
+
+    fn get_secret(&self, key: &str) -> Result<Option<String>> {
+        match self.entry(key)?.get_password() {
+            Ok(v) => Ok(Some(v)),
+            Err(keyring::Error::NoEntry) => Ok(None),
+            Err(e) => Err(map_keyring_err(e)),
+        }
+    }
+
+    fn set_secret(&self, key: &str, value: &str) -> Result<()> {
+        self.entry(key)?
+            .set_password(value)
+            .map_err(map_keyring_err)
+    }
+
+    fn delete_secret(&self, key: &str) -> Result<()> {
+        self.delete(key)
+    }
 }
 
 /// In-memory store for tests.
 #[derive(Default)]
 pub struct MemoryStore {
     inner: Mutex<HashMap<String, TokenSet>>,
+    secrets: Mutex<HashMap<String, String>>,
 }
 
 impl MemoryStore {
@@ -133,6 +159,23 @@ impl TokenStore for MemoryStore {
 
     fn delete(&self, account_id: &str) -> Result<()> {
         self.inner.lock().unwrap().remove(account_id);
+        Ok(())
+    }
+
+    fn get_secret(&self, key: &str) -> Result<Option<String>> {
+        Ok(self.secrets.lock().unwrap().get(key).cloned())
+    }
+
+    fn set_secret(&self, key: &str, value: &str) -> Result<()> {
+        self.secrets
+            .lock()
+            .unwrap()
+            .insert(key.to_owned(), value.to_owned());
+        Ok(())
+    }
+
+    fn delete_secret(&self, key: &str) -> Result<()> {
+        self.secrets.lock().unwrap().remove(key);
         Ok(())
     }
 }

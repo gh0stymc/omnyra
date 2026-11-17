@@ -11,7 +11,8 @@
     "competitors": "Competitors",
     "security": "Security",
     "settings": "Settings",
-    "accounts": "Accounts"
+    "accounts": "Accounts",
+    "uploads": "Uploads"
   },
   "dashboard": {
     "title": "Global dashboard",
@@ -37,7 +38,8 @@
       "1y": "1 year",
       "5y": "5 years",
       "all": "All"
-    }
+    },
+    "uploadVideo": "Upload video"
   },
   "platform": {
     "title": "{{name}} view",
@@ -74,7 +76,9 @@
     "NO_CHANNEL": "This Google account has no YouTube channel. Pick another account or create the channel.",
     "NOT_CONNECTED": "The account is not connected. Reconnect it in Settings.",
     "unknown": "An unexpected error occurred.",
-    "SYNC_IN_PROGRESS": "This account is already syncing."
+    "SYNC_IN_PROGRESS": "This account is already syncing.",
+    "UPLOAD_SESSION_EXPIRED": "The upload session expired; it will start again.",
+    "FILE_UNAVAILABLE": "The file is no longer available or has changed."
   },
   "accounts": {
     "title": "Connected accounts",
@@ -125,5 +129,101 @@
     "hoverHint": "Hover a cell for details.",
     "legendNoData": "little data",
     "footnote": "First-week views compared with the channel's usual; {{sample}} {{format}}, recent ones count more. Time zone: {{tz}}."
+  },
+  "upload": {
+    "pageTitle": "Uploads",
+    "newTitle": "Upload a video",
+    "noAccounts": "No connected account supports uploads.",
+    "account": "Account",
+    "auditWarning": "Google locks videos uploaded from apps that have not passed its audit (like this one, for now) as private. You can publish them later from YouTube Studio. Choosing Public or Unlisted still uploads them as private.",
+    "needsScope": "Omnyra needs permission to upload videos to this channel. Google will open so you can grant it; pick the same channel.",
+    "needsPlaylistScope": "To add the video to a playlist, Omnyra also needs permission to manage your YouTube account. Google will open; pick the same channel.",
+    "authorize": "Grant permission",
+    "pickVideo": "Choose video",
+    "videoFiles": "Videos",
+    "imageFiles": "Images",
+    "title": "Title",
+    "description": "Description",
+    "tags": "Tags",
+    "tagsPlaceholder": "comma-separated",
+    "visibility": "Visibility",
+    "visibilityOption": {
+      "private": "Private",
+      "unlisted": "Unlisted",
+      "public": "Public"
+    },
+    "category": "Category",
+    "playlist": "Playlist",
+    "noPlaylist": "None",
+    "pickThumbnail": "Choose thumbnail",
+    "removeThumbnail": "remove",
+    "thumbnailOptional": "Optional (JPG or PNG, max 2 MB)",
+    "madeForKids": "Is it made for kids? (required by law, COPPA)",
+    "kidsNo": "No",
+    "kidsYes": "Yes",
+    "enqueue": "Add to queue",
+    "checking": "Checking…",
+    "queueTitle": "Upload queue",
+    "queueEmpty": "No uploads.",
+    "untitled": "(untitled)",
+    "status": {
+      "queued": "Queued",
+      "uploading": "Uploading",
+      "published": "Uploaded",
+      "failed": "Failed",
+      "cancelled": "Cancelled"
+    },
+    "retryAt": "Will retry at {{at}} ({{reason}}).",
+    "open": "Open on YouTube",
+    "cancel": "Cancel",
+    "retry": "Retry",
+    "remove": "Remove from list",
+    "warning": {
+      "thumbnail_not_allowed": "Thumbnail not set: YouTube only allows custom thumbnails on phone-verified channels.",
+      "thumbnail_quota": "Thumbnail not set: quota exhausted.",
+      "thumbnail_failed": "Thumbnail not set.",
+      "playlist_scope": "Not added to the playlist: permission missing.",
+      "playlist_quota": "Not added to the playlist: quota exhausted.",
+      "playlist_failed": "Could not add to the playlist."
+    },
+    "issue": {
+      "file": {
+        "missing": "File not found.",
+        "unreadable": "The file is not a valid video.",
+        "format": "Format not supported by YouTube.",
+        "empty": "The file is empty.",
+        "too_big": "The file exceeds the {{limit}} maximum.",
+        "no_video": "The file has no video track.",
+        "too_long": "The video exceeds the maximum length of {{limit}}.",
+        "needs_verification": "Longer than {{limit}}: your channel must be phone-verified.",
+        "probe_unavailable": "FFmpeg is not installed: the file's length and content cannot be checked."
+      },
+      "title": {
+        "required": "A title is required.",
+        "too_long": "The title allows at most {{limit}} characters.",
+        "invalid_chars": "The title cannot contain < or >."
+      },
+      "description": {
+        "too_long": "The description allows at most {{limit}} bytes.",
+        "invalid_chars": "The description cannot contain < or >.",
+        "too_many_hashtags": "With more than {{limit}} hashtags, YouTube ignores all of them."
+      },
+      "tags": {
+        "too_long": "Tags add up to more than {{limit}} characters.",
+        "invalid_chars": "A tag is empty or contains < or >."
+      },
+      "visibility": {
+        "invalid": "Invalid visibility.",
+        "private_until_audit": "It will be uploaded as private (see the notice above)."
+      },
+      "thumbnail": {
+        "missing": "Thumbnail not found.",
+        "format": "The thumbnail must be JPG or PNG.",
+        "too_big": "The thumbnail exceeds {{limit}}."
+      },
+      "platform": {
+        "upload_not_supported": "This network does not support uploads from Omnyra."
+      }
+    }
   }
 }

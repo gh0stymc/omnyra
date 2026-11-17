@@ -11,50 +11,89 @@ use specta::Type;
 use std::sync::{Arc, Mutex};
 use time::{Date, Duration, Month, OffsetDateTime, Weekday};
 
+/// Quota buckets (rows of `quota_ledger`).
+pub const YOUTUBE: &str = "youtube";
+/// `videos.insert` has its own bucket: 100 calls a day, 1 unit each (checked 2026-11-17 on
+/// developers.google.com/youtube/v3/determine_quota_cost).
+pub const YOUTUBE_UPLOAD: &str = "youtube.upload";
+
 /// YouTube Data API daily quota per project.
 pub const YOUTUBE_DAILY_UNITS: u32 = 10_000;
-/// Share of the daily quota that syncing may use; the rest is reserved for uploads (R5).
+pub const YOUTUBE_DAILY_UPLOADS: u32 = 100;
+/// Share of the daily quota that syncing may use; the rest is kept for uploads (custom
+/// thumbnails and playlist inserts cost 50 units each) and later features (R5).
 pub const YOUTUBE_SYNC_BUDGET: u32 = YOUTUBE_DAILY_UNITS * 60 / 100;
 
-/// Sync budget for platforms whose API has a metered daily quota.
-pub fn sync_budget(platform: &str) -> Option<u32> {
-    (platform == "youtube").then_some(YOUTUBE_SYNC_BUDGET)
+/// What a quota gate is spending for: each purpose has its own budgets.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Purpose {
+    Sync,
+    Upload,
+}
+
+/// Budgets for `platform` and `purpose`; empty for platforms without a metered quota.
+pub fn budgets(platform: &str, purpose: Purpose) -> Vec<(&'static str, u32)> {
+    match (platform, purpose) {
+        ("youtube", Purpose::Sync) => vec![(YOUTUBE, YOUTUBE_SYNC_BUDGET)],
+        ("youtube", Purpose::Upload) => vec![
+            (YOUTUBE, YOUTUBE_DAILY_UNITS),
+            (YOUTUBE_UPLOAD, YOUTUBE_DAILY_UPLOADS),
+        ],
+        _ => Vec::new(),
+    }
 }
 
 /// Charges quota units before a metered API call. Connectors receive one through
 /// [`crate::connectors::AccountCtx`].
 pub trait QuotaGate: Send + Sync {
-    /// Records `units` if they fit in the budget; `QuotaExceeded` (and nothing recorded)
-    /// otherwise.
-    fn spend(&self, units: u32) -> Result<()>;
+    /// Records `units` in `bucket` if they fit in the budget; `QuotaExceeded` (and nothing
+    /// recorded) otherwise. Buckets without a budget are not metered.
+    fn spend(&self, bucket: &str, units: u32) -> Result<()>;
 }
 
 /// No metering (mock connector, the connect flow, tests).
 pub struct Unmetered;
 
 impl QuotaGate for Unmetered {
-    fn spend(&self, _units: u32) -> Result<()> {
+    fn spend(&self, _bucket: &str, _units: u32) -> Result<()> {
         Ok(())
     }
 }
 
-/// Quota tracked in SQLite (`quota_ledger`), per platform and Pacific-time day.
+/// Quota tracked in SQLite (`quota_ledger`), per bucket and Pacific-time day.
 pub struct DbQuota {
     pub db: Arc<Mutex<Connection>>,
     pub clock: Arc<dyn Clock>,
-    pub platform: String,
-    pub budget: u32,
+    pub budgets: Vec<(&'static str, u32)>,
+}
+
+impl DbQuota {
+    pub fn new(
+        db: Arc<Mutex<Connection>>,
+        clock: Arc<dyn Clock>,
+        platform: &str,
+        purpose: Purpose,
+    ) -> Self {
+        Self {
+            db,
+            clock,
+            budgets: budgets(platform, purpose),
+        }
+    }
 }
 
 impl QuotaGate for DbQuota {
-    fn spend(&self, units: u32) -> Result<()> {
+    fn spend(&self, bucket: &str, units: u32) -> Result<()> {
+        let Some(&(_, budget)) = self.budgets.iter().find(|(b, _)| *b == bucket) else {
+            return Ok(());
+        };
         let mut conn = self.db.lock().map_err(|_| AppError::Internal)?;
         try_spend(
             &mut conn,
-            &self.platform,
+            bucket,
             &pacific_day(self.clock.now()),
             units,
-            self.budget,
+            budget,
         )
     }
 }
@@ -95,24 +134,34 @@ pub fn used_on(conn: &Connection, platform: &str, day: &str) -> Result<u32> {
 #[derive(Debug, Clone, Serialize, Type, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct QuotaUsage {
-    pub platform: String,
+    /// Bucket: `youtube` (Data API units) or `youtube.upload` (uploads).
+    pub bucket: String,
     /// Quota day (`YYYY-MM-DD`, Pacific time).
     pub day: String,
     pub used: u32,
     pub daily_limit: u32,
+    /// What syncing may use of `daily_limit`.
     pub sync_budget: u32,
 }
 
 /// Today's usage for the metered platforms.
 pub fn usage(conn: &Connection, now: OffsetDateTime) -> Result<Vec<QuotaUsage>> {
     let day = pacific_day(now);
-    Ok(vec![QuotaUsage {
-        platform: "youtube".into(),
-        used: used_on(conn, "youtube", &day)?,
-        day,
-        daily_limit: YOUTUBE_DAILY_UNITS,
-        sync_budget: YOUTUBE_SYNC_BUDGET,
-    }])
+    [
+        (YOUTUBE, YOUTUBE_DAILY_UNITS, YOUTUBE_SYNC_BUDGET),
+        (YOUTUBE_UPLOAD, YOUTUBE_DAILY_UPLOADS, 0),
+    ]
+    .into_iter()
+    .map(|(bucket, daily_limit, sync_budget)| {
+        Ok(QuotaUsage {
+            bucket: bucket.into(),
+            used: used_on(conn, bucket, &day)?,
+            day: day.clone(),
+            daily_limit,
+            sync_budget,
+        })
+    })
+    .collect()
 }
 
 /// Current day in US Pacific time (when YouTube quota resets), as `YYYY-MM-DD`.

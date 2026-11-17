@@ -15,7 +15,7 @@ time.workspace = true
 specta.workspace = true
 keyring = "4.2"
 reqwest = { version = "0.13", default-features = false, features = ["rustls", "http2", "charset", "json", "form", "query"] }
-tokio = { workspace = true, features = ["net", "io-util"] }
+tokio = { workspace = true, features = ["net", "io-util", "fs", "process"] }
 rand = "0.10"
 sha2 = "0.11"
 base64 = "0.23"

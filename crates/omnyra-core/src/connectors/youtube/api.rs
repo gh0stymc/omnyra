@@ -6,7 +6,7 @@ use super::super::{
     Profile,
 };
 use super::duration::parse_iso8601;
-use crate::{AppError, Result};
+use crate::{quota, AppError, Result};
 use serde::Deserialize;
 
 pub const COST_CHANNELS_LIST: u32 = 1;
@@ -86,7 +86,7 @@ fn profile_of(ch: &Channel) -> Profile {
 }
 
 async fn my_channel(ctx: &AccountCtx, base: &str, part: &str) -> Result<Channel> {
-    ctx.quota.spend(COST_CHANNELS_LIST)?;
+    ctx.quota.spend(quota::YOUTUBE, COST_CHANNELS_LIST)?;
     let list: ChannelList = ctx
         .api
         .get_json(
@@ -168,7 +168,7 @@ pub async fn list_uploads(
     page: Option<String>,
 ) -> Result<Page<ContentRef>> {
     let playlist = uploads_playlist(&ctx.external_id).ok_or(AppError::Internal)?;
-    ctx.quota.spend(COST_PLAYLIST_ITEMS_LIST)?;
+    ctx.quota.spend(quota::YOUTUBE, COST_PLAYLIST_ITEMS_LIST)?;
     let max = PAGE_SIZE.to_string();
     let mut query = vec![
         ("part", "contentDetails"),
@@ -296,7 +296,7 @@ fn details_of(v: Video) -> ContentDetails {
 pub async fn videos(ctx: &AccountCtx, base: &str, ids: &[String]) -> Result<Vec<ContentDetails>> {
     let mut out = Vec::with_capacity(ids.len());
     for batch in ids.chunks(PAGE_SIZE) {
-        ctx.quota.spend(COST_VIDEOS_LIST)?;
+        ctx.quota.spend(quota::YOUTUBE, COST_VIDEOS_LIST)?;
         let joined = batch.join(",");
         let list: VideoList = ctx
             .api

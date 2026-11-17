@@ -28,3 +28,20 @@ pub struct SyncStatus {
     /// `AppError` code when `state` is `error`.
     pub error_code: Option<String>,
 }
+
+/// Bytes sent of the upload in progress (several times per second at most per chunk).
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type, tauri_specta::Event)]
+#[serde(rename_all = "camelCase")]
+pub struct UploadProgress {
+    pub publication_id: String,
+    pub sent: f64,
+    pub total: f64,
+}
+
+/// An upload changed status (`queued`, `uploading`, `published`, `failed`, `cancelled`).
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type, tauri_specta::Event)]
+#[serde(rename_all = "camelCase")]
+pub struct UploadChanged {
+    pub publication_id: String,
+    pub status: String,
+}

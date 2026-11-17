@@ -13,7 +13,7 @@ use crate::db::repo::{
     accounts::{self, AccountStatus},
     contents, snapshots,
 };
-use crate::quota::{self, DbQuota, QuotaGate, Unmetered};
+use crate::quota::{DbQuota, Purpose, QuotaGate};
 use crate::{AppError, Result};
 use rusqlite::Connection;
 use serde::Serialize;
@@ -87,8 +87,8 @@ struct Counting {
 }
 
 impl QuotaGate for Counting {
-    fn spend(&self, units: u32) -> Result<()> {
-        self.inner.spend(units)?;
+    fn spend(&self, bucket: &str, units: u32) -> Result<()> {
+        self.inner.spend(bucket, units)?;
         self.used.fetch_add(units, Ordering::SeqCst);
         Ok(())
     }
@@ -133,15 +133,12 @@ pub async fn sync_account(
     if account.status != AccountStatus::Active {
         return Err(AppError::NotConnected);
     }
-    let gate: Arc<dyn QuotaGate> = match quota::sync_budget(&account.platform) {
-        Some(budget) => Arc::new(DbQuota {
-            db: db.clone(),
-            clock: clock.clone(),
-            platform: account.platform.clone(),
-            budget,
-        }),
-        None => Arc::new(Unmetered),
-    };
+    let gate: Arc<dyn QuotaGate> = Arc::new(DbQuota::new(
+        db.clone(),
+        clock.clone(),
+        &account.platform,
+        Purpose::Sync,
+    ));
     let counting = Arc::new(Counting {
         inner: gate,
         used: AtomicU32::new(0),
@@ -423,6 +420,7 @@ mod tests {
     use crate::clock::FixedClock;
     use crate::connectors::mock::MockConnector;
     use crate::db::{open_in_memory, repo::accounts::NewAccount};
+    use crate::quota;
     use time::macros::datetime;
 
     struct Env {

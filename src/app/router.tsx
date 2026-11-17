@@ -3,6 +3,7 @@ import { Layout } from "./layout/Layout";
 import { DashboardPage } from "../features/dashboard/DashboardPage";
 import { PlatformViewPage } from "../features/platform-view/PlatformViewPage";
 import { SettingsPage } from "../features/settings/SettingsPage";
+import { UploadsPage } from "../features/uploads/UploadsPage";
 import { PlaceholderPage } from "../features/placeholder/PlaceholderPage";
 
 export const router = createBrowserRouter([
@@ -12,6 +13,7 @@ export const router = createBrowserRouter([
       { path: "/", element: <DashboardPage /> },
       { path: "/platform/:platform/:accountId", element: <PlatformViewPage /> },
       { path: "/settings", element: <SettingsPage /> },
+      { path: "/uploads", element: <UploadsPage /> },
       { path: "/calendar", element: <PlaceholderPage section="calendar" /> },
       { path: "/community", element: <PlaceholderPage section="community" /> },
       { path: "/creation", element: <PlaceholderPage section="creation" /> },

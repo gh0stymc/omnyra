@@ -199,14 +199,42 @@ impl Connector for MockConnector {
             .collect()
     }
 
-    async fn upload(&self, _ctx: &AccountCtx, req: UploadRequest) -> Result<UploadOutcome> {
-        if req.title.trim().is_empty() {
-            return Err(AppError::Validation {
-                field: "title".into(),
-            });
+    fn check_upload(&self, draft: &UploadDraft, _facts: &FileFacts) -> Vec<Issue> {
+        if draft.title.trim().is_empty() {
+            vec![Issue::error("title", "required")]
+        } else {
+            Vec::new()
+        }
+    }
+
+    async fn upload_options(&self, _ctx: &AccountCtx, _lang: &str) -> Result<UploadOptions> {
+        Ok(UploadOptions {
+            categories: vec![NamedOption {
+                id: "1".into(),
+                title: "Mock".into(),
+            }],
+            playlists: Vec::new(),
+        })
+    }
+
+    /// Pretends to send the file in four steps; nothing leaves the machine.
+    async fn upload(
+        &self,
+        _ctx: &AccountCtx,
+        req: &UploadRequest,
+        resume: Option<String>,
+        sink: &dyn UploadSink,
+    ) -> Result<UploadOutcome> {
+        if resume.is_none() {
+            sink.session_started("mock-session").await?;
+        }
+        for step in 1..=4u64 {
+            tokio::time::sleep(std::time::Duration::from_millis(150)).await;
+            sink.progress(req.size_bytes * step / 4, req.size_bytes);
         }
         Ok(UploadOutcome {
-            external_id: "mock-uploaded".into(),
+            external_id: format!("mock-upload-{}", req.size_bytes),
+            warnings: Vec::new(),
         })
     }
 }

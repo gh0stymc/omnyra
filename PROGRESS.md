@@ -2,7 +2,7 @@
 
 > Estado del proyecto para cualquier sesión nueva (tras `/clear`). Ver `OMNYRA_SPEC.md` sección 9.
 
-**Paso actual:** 1d — Subida de vídeos a YouTube (`claude-opus-5-5`). El 1c está hecho y probado con gh0stymc.
+**Paso actual:** 1e — Pantallas del MVP (`claude-sonnet-5-5`). El 1d está hecho y probado con gh0stymc.
 
 ## Pasos
 
@@ -13,7 +13,7 @@
 - [x] 1a — OAuth de Google y almacenamiento seguro
 - [x] 1b — Conector de YouTube y snapshots
 - [x] 1c — Mejor hora para publicar
-- [ ] 1d — Subida de vídeos a YouTube
+- [x] 1d — Subida de vídeos a YouTube
 - [ ] 1e — Pantallas del MVP
 - [ ] 2a — Conector de Twitch
 - [ ] 2b — Calendario y tablero de ideas
@@ -70,6 +70,14 @@
 
 - 2026-11-17: el usuario prefiere dejar la estética para el final (pedirá un repaso visual cuando esté todo); hasta entonces, interfaz funcional y mínima.
 
+- 2026-11-17 (1d): **cuota de subidas resuelta** (R5 [VERIFICAR]): `videos.insert` ya no cuesta 1.600 unidades; tiene su propio cubo de 100 llamadas/día a 1 unidad (developers.google.com/youtube/v3/determine_quota_cost, consultado 2026-11-17). `quota_ledger` usa cubos `youtube` y `youtube.upload`; `thumbnails.set` y `playlistItems.insert` (50 c/u) van al cubo general. `QuotaGate::spend(bucket, units)` con presupuestos por propósito (`Purpose::Sync` 6.000; `Purpose::Upload` 10.000 + 100).
+- 2026-11-17 (1d): subida reanudable escrita a mano (`connectors/youtube/upload.rs`): trozos de 8 MiB, reanudación con `Content-Range: bytes */total`, sesión caducada (404/410) → se empieza de nuevo una vez. La URI de sesión va al llavero (`omnyra/upload/<publication_id>`, H6) mediante `TokenStore::{get,set,delete}_secret`.
+- 2026-11-17 (1d): cola = tabla `publications` (migración 0002: `attempts`, `retry_at`, `progress`, `external_id`, `warnings`), no la tabla `jobs` (eso es del 2c). Un trabajador en segundo plano sube de una en una; errores transitorios (red, 5xx, 429) → reintento con backoff 30 s·2^n (máx. 15 min) hasta 5 intentos; el resto → `failed`. Al arrancar, `uploading` → `queued` (se reanuda). Se puede cancelar en marcha (se aborta la transferencia).
+- 2026-11-17 (1d): permisos incrementales: `youtube.upload` al subir; `youtube.force-ssl` solo si se elige lista de reproducción (`playlistItems.insert` no lo cubre `youtube.upload`). Comando `authorize_upload`.
+- 2026-11-17 (1d): validación = metadatos del archivo + ffprobe (`media/probe.rs`, ruta con `OMNYRA_FFPROBE`) + reglas de YouTube (formatos, 256 GB, 12 h y aviso de 15 min sin verificar, título 100 caracteres, descripción 5.000 bytes, sin `<>`, etiquetas 500, >60 hashtags, miniatura JPG/PNG ≤ 2 MB). Sin ffprobe se avisa y se deja subir. La miniatura o la lista que fallen son avisos, no errores (las miniaturas personalizadas exigen canal verificado por teléfono).
+- 2026-11-17 (1d): **cambio sobre H9**: la descarga verificada de FFmpeg en Windows NO se ha hecho en el 1d; sin ffprobe la subida funciona con un aviso. Se hará cuando haga falta FFmpeg de verdad (renderizados del 3c) o en el 7c.
+- 2026-11-17 (1d): «hecho para niños» es obligatorio en el formulario (sin valor por defecto). Categoría por defecto: Juegos (20) si existe.
+
 ## Problemas pendientes
 
 - R1: la CI no se ha ejecutado nunca: la cuenta de GitHub sigue suspendida y el repo no tiene remoto. Revisar la primera ejecución al subirlo (no se pudo pasar `actionlint` en local).
@@ -92,6 +100,7 @@
 - [x] Flujo OAuth real con Google en Linux (conectar gh0stymc, reiniciar la app, desconectar y comprobar que desaparece de myaccount.google.com/connections) (2026-11-17)
 - [ ] Flujo OAuth real en Windows
 - [x] Sincronización real de gh0stymc (1b): 100 contenidos (94 vídeos, 6 Shorts, todos clasificados), seguidores reconstruidos desde 2020-03-30, 9 unidades de cuota en el día (2026-11-17)
+- [x] Subida real a gh0stymc (1d): permiso incremental, vídeo corto con miniatura, cancelar a mitad, reanudar tras cerrar la app
 - [ ] Llavero (Credential Manager) en Windows
 - [ ] Rutas de `app_data_dir` en Windows
 - [ ] Instalar y abrir el `.msi`/`.exe` en Windows (VM)

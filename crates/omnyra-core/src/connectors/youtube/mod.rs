@@ -5,6 +5,7 @@ mod analytics;
 mod api;
 mod duration;
 mod shorts;
+mod upload;
 
 use super::*;
 use crate::auth::ClientCredentials;
@@ -54,6 +55,7 @@ pub struct YouTubeConnector {
     web_base: String,
     /// No redirects, no cookies, no token (see `shorts.rs`).
     web_http: reqwest::Client,
+    upload_chunk: usize,
 }
 
 impl YouTubeConnector {
@@ -111,6 +113,7 @@ impl YouTubeConnector {
             analytics_base: ep.analytics_base,
             web_base: ep.web_base,
             web_http: shorts::client(),
+            upload_chunk: upload::CHUNK_SIZE,
         }
     }
 }
@@ -172,6 +175,33 @@ impl Connector for YouTubeConnector {
         Ok(out)
     }
 
+    fn upload_scopes(&self, with_playlist: bool) -> Vec<String> {
+        let mut s = vec![SCOPE_UPLOAD.to_owned()];
+        if with_playlist {
+            // playlistItems.insert is not covered by youtube.upload.
+            s.push(SCOPE_FORCE_SSL.to_owned());
+        }
+        s
+    }
+
+    fn check_upload(&self, draft: &UploadDraft, facts: &FileFacts) -> Vec<Issue> {
+        upload::check(draft, facts)
+    }
+
+    async fn upload_options(&self, ctx: &AccountCtx, lang: &str) -> Result<UploadOptions> {
+        upload::options(ctx, &self.api_base, lang).await
+    }
+
+    async fn upload(
+        &self,
+        ctx: &AccountCtx,
+        req: &UploadRequest,
+        resume: Option<String>,
+        sink: &dyn UploadSink,
+    ) -> Result<UploadOutcome> {
+        upload::upload(ctx, &self.api_base, req, resume, sink, self.upload_chunk).await
+    }
+
     async fn classify(&self, _ctx: &AccountCtx, ids: &[String]) -> Vec<(String, String)> {
         shorts::classify(&self.web_http, &self.web_base, ids).await
     }
@@ -179,6 +209,13 @@ impl Connector for YouTubeConnector {
 
 #[cfg(test)]
 pub(crate) fn test_connector(server_url: &str) -> YouTubeConnector {
+    let mut c = test_connector_base(server_url);
+    c.upload_chunk = 4;
+    c
+}
+
+#[cfg(test)]
+fn test_connector_base(server_url: &str) -> YouTubeConnector {
     YouTubeConnector::with_endpoints(
         ClientCredentials::from_parts(Some("cid"), Some("csecret")),
         Endpoints {
@@ -347,7 +384,7 @@ mod tests {
         use std::sync::atomic::{AtomicU32, Ordering};
         struct Count(AtomicU32);
         impl QuotaGate for Count {
-            fn spend(&self, units: u32) -> Result<()> {
+            fn spend(&self, _bucket: &str, units: u32) -> Result<()> {
                 self.0.fetch_add(units, Ordering::SeqCst);
                 Ok(())
             }
@@ -375,7 +412,7 @@ mod tests {
     async fn exhausted_quota_makes_no_request() {
         struct Empty;
         impl crate::quota::QuotaGate for Empty {
-            fn spend(&self, _: u32) -> Result<()> {
+            fn spend(&self, _: &str, _: u32) -> Result<()> {
                 Err(AppError::QuotaExceeded)
             }
         }
@@ -453,5 +490,179 @@ mod tests {
         ];
         let out = yt.fetch_early_views(&ctx("tok"), &items, 7).await.unwrap();
         assert_eq!(out, vec![("v1".into(), 321.0), ("v2".into(), 0.0)]);
+    }
+
+    struct Sink {
+        session: std::sync::Mutex<Option<String>>,
+        progress: std::sync::Mutex<Vec<u64>>,
+    }
+
+    #[async_trait]
+    impl UploadSink for Sink {
+        async fn session_started(&self, uri: &str) -> Result<()> {
+            *self.session.lock().unwrap() = Some(uri.to_owned());
+            Ok(())
+        }
+        fn progress(&self, sent: u64, _total: u64) {
+            self.progress.lock().unwrap().push(sent);
+        }
+    }
+
+    fn sink() -> Sink {
+        Sink {
+            session: Default::default(),
+            progress: Default::default(),
+        }
+    }
+
+    fn upload_req(dir: &std::path::Path) -> UploadRequest {
+        let path = dir.join("v.mp4");
+        std::fs::write(&path, b"0123456789").unwrap();
+        UploadRequest {
+            draft: UploadDraft {
+                file_path: path.to_string_lossy().into(),
+                title: "T".into(),
+                description: String::new(),
+                tags: vec![],
+                visibility: "private".into(),
+                category_id: Some("20".into()),
+                playlist_id: None,
+                thumbnail_path: None,
+                made_for_kids: false,
+            },
+            size_bytes: 10,
+            mime: "video/mp4".into(),
+        }
+    }
+
+    fn tmp(name: &str) -> std::path::PathBuf {
+        let d = std::env::temp_dir().join(format!("omnyra-{name}-{}", std::process::id()));
+        std::fs::create_dir_all(&d).unwrap();
+        d
+    }
+
+    async fn chunk(
+        srv: &mut mockito::Server,
+        range: &str,
+        status: usize,
+        header: Option<&str>,
+        body: &str,
+    ) -> mockito::Mock {
+        let mut m = srv
+            .mock("PUT", "/session")
+            .match_header("content-range", range)
+            .with_status(status);
+        if let Some(h) = header {
+            m = m.with_header("range", h);
+        }
+        m.with_body(body).create_async().await
+    }
+
+    #[tokio::test]
+    async fn resumable_upload_sends_chunks_in_order() {
+        let mut srv = mockito::Server::new_async().await;
+        let start = srv
+            .mock("POST", "/upload/youtube/v3/videos")
+            .match_query(mockito::Matcher::UrlEncoded("uploadType".into(), "resumable".into()))
+            .match_header("x-upload-content-length", "10")
+            .match_body(mockito::Matcher::PartialJsonString(
+                r#"{"snippet":{"title":"T","categoryId":"20"},"status":{"privacyStatus":"private","selfDeclaredMadeForKids":false}}"#.into(),
+            ))
+            .with_header("location", &format!("{}/session", srv.url()))
+            .create_async()
+            .await;
+        let c1 = chunk(&mut srv, "bytes 0-3/10", 308, Some("bytes=0-3"), "").await;
+        let c2 = chunk(&mut srv, "bytes 4-7/10", 308, Some("bytes=0-7"), "").await;
+        let c3 = chunk(&mut srv, "bytes 8-9/10", 201, None, r#"{"id":"vid1"}"#).await;
+        let yt = test_connector(&srv.url());
+        let dir = tmp("upload");
+        let s = sink();
+        let out = yt
+            .upload(&ctx("tok"), &upload_req(&dir), None, &s)
+            .await
+            .unwrap();
+        for m in [start, c1, c2, c3] {
+            m.assert_async().await;
+        }
+        assert_eq!(out.external_id, "vid1");
+        assert!(out.warnings.is_empty());
+        assert_eq!(
+            s.session.lock().unwrap().as_deref(),
+            Some(format!("{}/session", srv.url()).as_str())
+        );
+        assert_eq!(*s.progress.lock().unwrap(), vec![0, 4, 8, 10]);
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn resumes_from_the_server_offset() {
+        let mut srv = mockito::Server::new_async().await;
+        let probe = chunk(&mut srv, "bytes */10", 308, Some("bytes=0-5"), "").await;
+        let rest = chunk(&mut srv, "bytes 6-9/10", 200, None, r#"{"id":"vid2"}"#).await;
+        let yt = test_connector(&srv.url());
+        let dir = tmp("resume");
+        let s = sink();
+        let session = format!("{}/session", srv.url());
+        let out = yt
+            .upload(&ctx("tok"), &upload_req(&dir), Some(session), &s)
+            .await
+            .unwrap();
+        probe.assert_async().await;
+        rest.assert_async().await;
+        assert_eq!(out.external_id, "vid2");
+        assert!(s.session.lock().unwrap().is_none());
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn expired_session_and_changed_file_are_reported() {
+        let mut srv = mockito::Server::new_async().await;
+        chunk(&mut srv, "bytes */10", 404, None, "").await;
+        let yt = test_connector(&srv.url());
+        let dir = tmp("expired");
+        let req = upload_req(&dir);
+        let session = Some(format!("{}/session", srv.url()));
+        assert!(matches!(
+            yt.upload(&ctx("tok"), &req, session, &sink()).await,
+            Err(AppError::UploadSessionExpired)
+        ));
+        std::fs::write(&req.draft.file_path, b"short").unwrap();
+        assert!(matches!(
+            yt.upload(&ctx("tok"), &req, None, &sink()).await,
+            Err(AppError::FileUnavailable)
+        ));
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[tokio::test]
+    async fn thumbnail_refusal_is_only_a_warning() {
+        let mut srv = mockito::Server::new_async().await;
+        srv.mock("POST", "/upload/youtube/v3/videos")
+            .match_query(mockito::Matcher::Any)
+            .with_header("location", &format!("{}/session", srv.url()))
+            .create_async()
+            .await;
+        srv.mock("PUT", "/session")
+            .with_status(200)
+            .with_body(r#"{"id":"vid3"}"#)
+            .create_async()
+            .await;
+        srv.mock("POST", "/upload/youtube/v3/thumbnails/set")
+            .match_query(mockito::Matcher::Any)
+            .with_status(403)
+            .with_body(r#"{"error":{"errors":[{"reason":"forbidden"}]}}"#)
+            .create_async()
+            .await;
+        let mut yt = test_connector(&srv.url());
+        yt.upload_chunk = 1024;
+        let dir = tmp("thumb");
+        let mut req = upload_req(&dir);
+        let thumb = dir.join("t.png");
+        std::fs::write(&thumb, b"png").unwrap();
+        req.draft.thumbnail_path = Some(thumb.to_string_lossy().into());
+        let out = yt.upload(&ctx("tok"), &req, None, &sink()).await.unwrap();
+        assert_eq!(out.external_id, "vid3");
+        assert_eq!(out.warnings, vec!["thumbnail_not_allowed".to_string()]);
+        let _ = std::fs::remove_dir_all(dir);
     }
 }

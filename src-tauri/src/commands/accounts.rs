@@ -67,10 +67,41 @@ pub async fn connect_account(
     state: State<'_, AppState>,
     platform: String,
 ) -> Result<Account, AppError> {
+    run_connect(&app, &state, &platform, &[]).await
+}
+
+/// Asks for the extra permissions uploads need (incremental authorization): the user goes
+/// through Google's consent screen again and must pick the same channel.
+#[tauri::command]
+#[specta::specta]
+pub async fn authorize_upload(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    account_id: String,
+    with_playlist: bool,
+) -> Result<Account, AppError> {
+    let account = accounts::get(&*lock_db(&state)?, &account_id)?;
     let connector = state
         .registry
-        .get(&platform)
+        .get(&account.platform)
         .ok_or(AppError::NotSupported)?;
+    let scopes = connector.upload_scopes(with_playlist);
+    let connected = run_connect(&app, &state, &account.platform, &scopes).await?;
+    if connected.id != account.id {
+        // Another channel was picked: it is now connected too, but this one still lacks
+        // the permission.
+        return Err(AppError::ScopesDenied);
+    }
+    Ok(connected)
+}
+
+async fn run_connect(
+    app: &AppHandle,
+    state: &State<'_, AppState>,
+    platform: &str,
+    extra_scopes: &[String],
+) -> Result<Account, AppError> {
+    let connector = state.registry.get(platform).ok_or(AppError::NotSupported)?;
     let (cancel_tx, cancel_rx) = oneshot::channel();
     {
         let mut slot = state
@@ -88,7 +119,7 @@ pub async fn connect_account(
         &state.auth,
         state.clock.as_ref(),
         connector.as_ref(),
-        &[],
+        extra_scopes,
         CONNECT_TIMEOUT,
         |url| {
             // Only ever hand provider HTTPS URLs to the OS.
@@ -106,7 +137,7 @@ pub async fn connect_account(
         *slot = None;
     }
     if let Ok(account) = &result {
-        notify(&app, &account.id, account.status);
+        notify(app, &account.id, account.status);
     }
     result
 }

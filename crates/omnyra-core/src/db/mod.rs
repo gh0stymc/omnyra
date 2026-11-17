@@ -11,8 +11,12 @@ use std::sync::OnceLock;
 
 fn migrations() -> &'static Migrations<'static> {
     static MIGRATIONS: OnceLock<Migrations<'static>> = OnceLock::new();
-    MIGRATIONS
-        .get_or_init(|| Migrations::new(vec![M::up(include_str!("migrations/0001_init.sql"))]))
+    MIGRATIONS.get_or_init(|| {
+        Migrations::new(vec![
+            M::up(include_str!("migrations/0001_init.sql")),
+            M::up(include_str!("migrations/0002_uploads.sql")),
+        ])
+    })
 }
 
 fn configure(conn: &mut Connection) -> Result<()> {

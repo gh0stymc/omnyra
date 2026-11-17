@@ -28,12 +28,32 @@ export const commands = {
 	getQuotaUsage: (options?: InvokeOptions) => __TAURI_INVOKE<QuotaUsage[]>("get_quota_usage", undefined, options),
 	/**  Best weekday and hour to publish, from the first-week views of past contents. */
 	getBestTime: (accountId: string, query: BestTimeQuery, options?: InvokeOptions) => __TAURI_INVOKE<BestTime>("get_best_time", { accountId, query }, options),
+	/**
+	 *  Asks for the extra permissions uploads need (incremental authorization): the user goes
+	 *  through Google's consent screen again and must pick the same channel.
+	 */
+	authorizeUpload: (accountId: string, withPlaylist: boolean, options?: InvokeOptions) => __TAURI_INVOKE<Account_Serialize>("authorize_upload", { accountId, withPlaylist }, options),
+	/**  Checks the file (ffprobe) and the form against the platform's rules. */
+	validateUpload: (accountId: string, draft: UploadDraft_Deserialize, options?: InvokeOptions) => __TAURI_INVOKE<ValidationReport_Serialize>("validate_upload", { accountId, draft }, options),
+	/**  Queues the upload; the background worker sends it. Returns the publication ID. */
+	enqueueUpload: (accountId: string, draft: UploadDraft_Deserialize, options?: InvokeOptions) => __TAURI_INVOKE<string>("enqueue_upload", { accountId, draft }, options),
+	/**  Categories and playlists for the form (2 quota units). */
+	getUploadOptions: (accountId: string, lang: string, options?: InvokeOptions) => __TAURI_INVOKE<UploadOptions>("get_upload_options", { accountId, lang }, options),
+	/**  OAuth scopes the upload needs for this account (to ask for them before queuing). */
+	uploadScopes: (accountId: string, withPlaylist: boolean, options?: InvokeOptions) => __TAURI_INVOKE<string[]>("upload_scopes", { accountId, withPlaylist }, options),
+	listUploads: (options?: InvokeOptions) => __TAURI_INVOKE<UploadRow_Serialize[]>("list_uploads", undefined, options),
+	cancelUpload: (id: string, options?: InvokeOptions) => __TAURI_INVOKE<null>("cancel_upload", { id }, options),
+	retryUpload: (id: string, options?: InvokeOptions) => __TAURI_INVOKE<null>("retry_upload", { id }, options),
+	/**  Removes a finished, failed or cancelled upload from the list (the file is not touched). */
+	removeUpload: (id: string, options?: InvokeOptions) => __TAURI_INVOKE<null>("remove_upload", { id }, options),
 };
 
 /** Events */
 export const events = {
 	accountChanged: makeEvent<AccountChanged, AccountChanged>("account-changed"),
 	syncStatus: makeEvent<SyncStatus_Serialize, SyncStatus_Deserialize>("sync-status"),
+	uploadChanged: makeEvent<UploadChanged, UploadChanged>("upload-changed"),
+	uploadProgress: makeEvent<UploadProgress, UploadProgress>("upload-progress"),
 };
 
 /* Types */
@@ -109,7 +129,11 @@ export type AppError = { code: "TOKEN_EXPIRED" } | { code: "QUOTA_EXCEEDED" } | 
 /**  The account is disconnected (or needs to be reconnected) and has no usable token. */
 { code: "NOT_CONNECTED" } | 
 /**  This account is already being synchronised. */
-{ code: "SYNC_IN_PROGRESS" };
+{ code: "SYNC_IN_PROGRESS" } | 
+/**  The resumable upload session expired or is unknown: start a new one. */
+{ code: "UPLOAD_SESSION_EXPIRED" } | 
+/**  The file changed or disappeared since it was queued. */
+{ code: "FILE_UNAVAILABLE" };
 
 export type AuthKind = 
 /**  No login (mock). */
@@ -229,6 +253,56 @@ export type DisconnectOutcome = {
 
 export type Format = "video" | "short";
 
+/**
+ *  A validation finding. `code` is stable and translated by the frontend
+ *  (`upload.issue.<code>`); `limit` carries the number it refers to, if any.
+ */
+export type Issue = Issue_Serialize | Issue_Deserialize;
+
+/**
+ *  A validation finding. `code` is stable and translated by the frontend
+ *  (`upload.issue.<code>`); `limit` carries the number it refers to, if any.
+ */
+export type Issue_Deserialize = {
+	field: string,
+	code: string,
+	severity: Severity,
+	limit?: number | null,
+};
+
+/**
+ *  A validation finding. `code` is stable and translated by the frontend
+ *  (`upload.issue.<code>`); `limit` carries the number it refers to, if any.
+ */
+export type Issue_Serialize = {
+	field: string,
+	code: string,
+	severity: Severity,
+	limit: number | null,
+};
+
+export type MediaInfo = MediaInfo_Serialize | MediaInfo_Deserialize;
+
+export type MediaInfo_Deserialize = {
+	durationS?: number | null,
+	width?: number | null,
+	height?: number | null,
+	videoCodec?: string | null,
+	audioCodec?: string | null,
+	/**  Container as ffprobe names it (`mov,mp4,m4a,3gp,3g2,mj2`, `matroska,webm`...). */
+	container?: string | null,
+};
+
+export type MediaInfo_Serialize = {
+	durationS: number | null,
+	width: number | null,
+	height: number | null,
+	videoCodec: string | null,
+	audioCodec: string | null,
+	/**  Container as ffprobe names it (`mov,mp4,m4a,3gp,3g2,mj2`, `matroska,webm`...). */
+	container: string | null,
+};
+
 export type MediaLimits = MediaLimits_Serialize | MediaLimits_Deserialize;
 
 export type MediaLimits_Deserialize = {
@@ -257,6 +331,11 @@ export type MetricPoint = {
 	value: number | null,
 };
 
+export type NamedOption = {
+	id: string,
+	title: string,
+};
+
 export type PlatformInfo = PlatformInfo_Serialize | PlatformInfo_Deserialize;
 
 export type PlatformInfo_Deserialize = {
@@ -280,15 +359,19 @@ export type PlatformInfo_Serialize = {
 };
 
 export type QuotaUsage = {
-	platform: string,
+	/**  Bucket: `youtube` (Data API units) or `youtube.upload` (uploads). */
+	bucket: string,
 	/**  Quota day (`YYYY-MM-DD`, Pacific time). */
 	day: string,
 	used: number,
 	dailyLimit: number,
+	/**  What syncing may use of `daily_limit`. */
 	syncBudget: number,
 };
 
 export type ScheduleSupport = "none" | "native" | "localOnly";
+
+export type Severity = "error" | "warning";
 
 export type SyncReport = {
 	newContents: number,
@@ -327,7 +410,107 @@ export type SyncStatus_Serialize = {
 	errorCode: string | null,
 };
 
+/**  An upload changed status (`queued`, `uploading`, `published`, `failed`, `cancelled`). */
+export type UploadChanged = {
+	publicationId: string,
+	status: string,
+};
+
+/**  What the user wants to publish, as entered in the upload form. */
+export type UploadDraft = UploadDraft_Serialize | UploadDraft_Deserialize;
+
+/**  What the user wants to publish, as entered in the upload form. */
+export type UploadDraft_Deserialize = {
+	filePath: string,
+	title: string,
+	description: string,
+	tags: string[],
+	/**  `private` | `unlisted` | `public`. */
+	visibility: string,
+	categoryId?: string | null,
+	playlistId?: string | null,
+	thumbnailPath?: string | null,
+	/**  Required by YouTube (COPPA): is the video made for kids? */
+	madeForKids: boolean,
+};
+
+/**  What the user wants to publish, as entered in the upload form. */
+export type UploadDraft_Serialize = {
+	filePath: string,
+	title: string,
+	description: string,
+	tags: string[],
+	/**  `private` | `unlisted` | `public`. */
+	visibility: string,
+	categoryId: string | null,
+	playlistId: string | null,
+	thumbnailPath: string | null,
+	/**  Required by YouTube (COPPA): is the video made for kids? */
+	madeForKids: boolean,
+};
+
+/**  Choices for the upload form that come from the platform. */
+export type UploadOptions = {
+	categories: NamedOption[],
+	playlists: NamedOption[],
+};
+
+/**  Bytes sent of the upload in progress (several times per second at most per chunk). */
+export type UploadProgress = {
+	publicationId: string,
+	sent: number | null,
+	total: number | null,
+};
+
+export type UploadRow = UploadRow_Serialize | UploadRow_Deserialize;
+
+export type UploadRow_Deserialize = {
+	id: string,
+	accountId: string,
+	title?: string | null,
+	visibility?: string | null,
+	status: string,
+	progress?: number | null,
+	attempts: number,
+	retryAt?: string | null,
+	errorCode?: string | null,
+	warnings: string[],
+	externalId?: string | null,
+	createdAt: string,
+};
+
+export type UploadRow_Serialize = {
+	id: string,
+	accountId: string,
+	title: string | null,
+	visibility: string | null,
+	status: string,
+	progress: number | null,
+	attempts: number,
+	retryAt: string | null,
+	errorCode: string | null,
+	warnings: string[],
+	externalId: string | null,
+	createdAt: string,
+};
+
 export type UploadSupport = "none" | "direct" | "draftOnly" | "privateOnlyUnaudited";
+
+export type ValidationReport = ValidationReport_Serialize | ValidationReport_Deserialize;
+
+export type ValidationReport_Deserialize = {
+	issues: Issue_Deserialize[],
+	media?: MediaInfo_Deserialize | null,
+	/**  f64 because TypeScript numbers cannot hold every u64 (exact up to 8 PiB). */
+	sizeBytes?: number | null,
+};
+
+export type ValidationReport_Serialize = {
+	issues: Issue_Serialize[],
+	media: MediaInfo_Serialize | null,
+	/**  f64 because TypeScript numbers cannot hold every u64 (exact up to 8 PiB). */
+	sizeBytes: number | null,
+};
 
 /* Tauri Specta runtime */
 type EventEmit<T> = [T] extends [null] ? () => Promise<void> : (payload: T) => Promise<void>;

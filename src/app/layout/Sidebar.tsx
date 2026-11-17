@@ -10,12 +10,14 @@ import {
   Shield,
   Handshake,
   Radar,
+  Upload,
 } from "lucide-react";
 import { commands } from "../../lib/bindings";
 import { queryKeys } from "../../lib/queryKeys";
 
 const sections = [
   { to: "/", key: "dashboard", icon: LayoutDashboard },
+  { to: "/uploads", key: "uploads", icon: Upload },
   { to: "/calendar", key: "calendar", icon: Calendar },
   { to: "/community", key: "community", icon: MessageSquare },
   { to: "/creation", key: "creation", icon: Palette },

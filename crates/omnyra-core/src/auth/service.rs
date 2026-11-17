@@ -51,6 +51,21 @@ impl AuthService {
         blocking(move || store.delete(&id)).await
     }
 
+    pub async fn get_secret(&self, key: &str) -> Result<Option<String>> {
+        let (store, k) = (self.store.clone(), key.to_owned());
+        blocking(move || store.get_secret(&k)).await
+    }
+
+    pub async fn set_secret(&self, key: &str, value: &str) -> Result<()> {
+        let (store, k, v) = (self.store.clone(), key.to_owned(), value.to_owned());
+        blocking(move || store.set_secret(&k, &v)).await
+    }
+
+    pub async fn delete_secret(&self, key: &str) -> Result<()> {
+        let (store, k) = (self.store.clone(), key.to_owned());
+        blocking(move || store.delete_secret(&k)).await
+    }
+
     fn lock_for(&self, account_id: &str) -> Arc<tokio::sync::Mutex<()>> {
         self.refresh_locks
             .lock()

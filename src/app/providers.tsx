@@ -26,6 +26,12 @@ function useBackendEvents() {
           void queryClient.invalidateQueries({ queryKey: ["bestTime", payload.accountId] });
         }
       }),
+      events.uploadChanged.listen(({ payload }) => {
+        void queryClient.invalidateQueries({ queryKey: queryKeys.uploads });
+        if (payload.status === "published") {
+          void queryClient.invalidateQueries({ queryKey: ["contents"] });
+        }
+      }),
     ].map((p) => p.catch(() => undefined)); // not running inside Tauri (tests, plain browser)
     return () => subs.forEach((p) => void p.then((f) => f?.()));
   }, []);
