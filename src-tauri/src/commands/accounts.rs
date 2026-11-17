@@ -2,6 +2,7 @@ use crate::events::AccountChanged;
 use crate::state::AppState;
 use omnyra_core::{
     accounts::{self as account_service, DisconnectOutcome, CONNECT_TIMEOUT},
+    best_time::{self, BestTime, BestTimeQuery},
     connectors::MetricPoint,
     db::repo::{
         accounts::{self, Account, AccountStatus, NewAccount},
@@ -156,6 +157,17 @@ pub fn list_contents(
     account_id: String,
 ) -> Result<Vec<ContentRow>, AppError> {
     contents::list_with_stats(&*lock_db(&state)?, &account_id)
+}
+
+/// Best weekday and hour to publish, from the first-week views of past contents.
+#[tauri::command]
+#[specta::specta]
+pub fn get_best_time(
+    state: State<'_, AppState>,
+    account_id: String,
+    query: BestTimeQuery,
+) -> Result<BestTime, AppError> {
+    best_time::best_time(&*lock_db(&state)?, &account_id, &query, state.clock.now())
 }
 
 /// Today's API quota usage.

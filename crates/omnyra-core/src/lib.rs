@@ -2,6 +2,7 @@
 
 pub mod accounts;
 pub mod auth;
+pub mod best_time;
 pub mod clock;
 pub mod connectors;
 pub mod db;

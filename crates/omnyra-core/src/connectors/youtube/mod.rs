@@ -157,6 +157,21 @@ impl Connector for YouTubeConnector {
         api::videos(ctx, &self.api_base, ids).await
     }
 
+    async fn fetch_early_views(
+        &self,
+        ctx: &AccountCtx,
+        items: &[(String, String)],
+        days: u32,
+    ) -> Result<Vec<(String, f64)>> {
+        let mut out = Vec::with_capacity(items.len());
+        for (id, day) in items {
+            // A video with no views in the window has no row: that is 0 views.
+            let v = analytics::early_views(ctx, &self.analytics_base, id, day, days).await?;
+            out.push((id.clone(), v.unwrap_or(0.0)));
+        }
+        Ok(out)
+    }
+
     async fn classify(&self, _ctx: &AccountCtx, ids: &[String]) -> Vec<(String, String)> {
         shorts::classify(&self.web_http, &self.web_base, ids).await
     }
@@ -409,5 +424,34 @@ mod tests {
             .unwrap();
         m.assert_async().await;
         assert_eq!(pts.len(), 2);
+    }
+
+    #[tokio::test]
+    async fn early_views_query_one_video_window() {
+        let mut srv = mockito::Server::new_async().await;
+        srv.mock("GET", "/v2/reports")
+            .match_query(mockito::Matcher::AllOf(vec![
+                mockito::Matcher::UrlEncoded("filters".into(), "video==v1".into()),
+                mockito::Matcher::UrlEncoded("startDate".into(), "2026-10-30".into()),
+                mockito::Matcher::UrlEncoded("endDate".into(), "2026-11-05".into()),
+            ]))
+            .with_body(r#"{"columnHeaders":[{"name":"views"}],"rows":[[321]]}"#)
+            .create_async()
+            .await;
+        srv.mock("GET", "/v2/reports")
+            .match_query(mockito::Matcher::UrlEncoded(
+                "filters".into(),
+                "video==v2".into(),
+            ))
+            .with_body(r#"{"columnHeaders":[{"name":"views"}]}"#)
+            .create_async()
+            .await;
+        let yt = test_connector(&srv.url());
+        let items = vec![
+            ("v1".to_string(), "2026-10-30".to_string()),
+            ("v2".to_string(), "2026-10-30".to_string()),
+        ];
+        let out = yt.fetch_early_views(&ctx("tok"), &items, 7).await.unwrap();
+        assert_eq!(out, vec![("v1".into(), 321.0), ("v2".into(), 0.0)]);
     }
 }

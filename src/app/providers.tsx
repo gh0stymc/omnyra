@@ -23,6 +23,7 @@ function useBackendEvents() {
           void queryClient.invalidateQueries({ queryKey: ["series", payload.accountId] });
           void queryClient.invalidateQueries({ queryKey: queryKeys.contents(payload.accountId) });
           void queryClient.invalidateQueries({ queryKey: queryKeys.quota });
+          void queryClient.invalidateQueries({ queryKey: ["bestTime", payload.accountId] });
         }
       }),
     ].map((p) => p.catch(() => undefined)); // not running inside Tauri (tests, plain browser)

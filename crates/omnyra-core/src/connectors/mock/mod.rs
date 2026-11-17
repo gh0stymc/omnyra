@@ -169,6 +169,21 @@ impl Connector for MockConnector {
             .collect())
     }
 
+    async fn fetch_early_views(
+        &self,
+        _ctx: &AccountCtx,
+        items: &[(String, String)],
+        _days: u32,
+    ) -> Result<Vec<(String, f64)>> {
+        Ok(items
+            .iter()
+            .filter_map(|(id, _)| {
+                let n: u32 = id.strip_prefix("mock-video-")?.parse().ok()?;
+                Some((id.clone(), 200.0 + f64::from(n * 37 % 11) * 40.0))
+            })
+            .collect())
+    }
+
     /// Every third mock video is a Short.
     async fn classify(&self, _ctx: &AccountCtx, ids: &[String]) -> Vec<(String, String)> {
         ids.iter()

@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { commands, type Account } from "../lib/bindings";
 import { errorMessage } from "../lib/ipc";
 import { queryKeys } from "../lib/queryKeys";
+import { BestTimeHeatmap } from "./BestTimeHeatmap";
 import { MetricChart, RANGES, type Range } from "./MetricChart";
 
 export const CHART_METRICS = ["followers", "views", "watch_time_s"] as const;
@@ -82,6 +83,9 @@ export function AccountPanel({ account }: { account: Account }) {
         </div>
       </div>
       <MetricChart accountId={account.id} metric={metric} range={range} />
+      <div className="border-t border-[var(--border)] pt-3">
+        <BestTimeHeatmap accountId={account.id} />
+      </div>
     </section>
   );
 }

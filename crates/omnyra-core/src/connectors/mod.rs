@@ -86,6 +86,17 @@ pub trait Connector: Send + Sync {
         ids: &[String],
     ) -> Result<Vec<ContentDetails>>;
 
+    /// Views each content got during its first `days` days, for `(id, publication day)`
+    /// pairs. Contents the platform has no data for are left out.
+    async fn fetch_early_views(
+        &self,
+        _ctx: &AccountCtx,
+        _items: &[(String, String)],
+        _days: u32,
+    ) -> Result<Vec<(String, f64)>> {
+        Err(AppError::NotSupported)
+    }
+
     /// Refines the provisional kind of contents whose `kind_final` was false. Returns
     /// `(id, kind)` for the ones it could settle; the rest are retried on the next sync.
     async fn classify(&self, _ctx: &AccountCtx, _ids: &[String]) -> Vec<(String, String)> {

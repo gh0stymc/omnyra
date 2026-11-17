@@ -27,6 +27,10 @@ use time::{macros::format_description, Date, Duration};
 const HISTORY_OVERLAP_DAYS: i64 = 3;
 /// Backfill start when the platform does not say when the account was created.
 const DEFAULT_BACKFILL_DAYS: i64 = 365;
+/// "Best time" compares contents by the views of their first week.
+pub const EARLY_DAYS: u32 = 7;
+pub const EARLY_VIEWS_METRIC: &str = "views_7d";
+const EARLY_VIEWS_BATCH: usize = 10;
 /// Content IDs per details request (the connector may batch further).
 const DETAILS_BATCH: usize = 50;
 
@@ -38,6 +42,8 @@ pub struct SyncReport {
     /// Contents whose kind (Short or video) could not be settled yet.
     pub unclassified: u32,
     pub historic_days: u32,
+    /// Contents whose first-week views were stored by this sync (for "best time").
+    pub early_views: u32,
     /// Data API units spent by this sync.
     pub quota_used: u32,
     /// The sync budget ran out: some steps were skipped (they resume on the next sync).
@@ -178,6 +184,17 @@ pub async fn sync_account(
         }
     }
 
+    // 4b. First-week views of each content, once it is old enough (step 1c input).
+    match sync_early_views(db, connector, &ctx, &today, &now).await {
+        Ok(n) => report.early_views = n,
+        Err(e @ (AppError::TokenExpired | AppError::NotConnected | AppError::ScopesDenied)) => {
+            return Err(e)
+        }
+        Err(AppError::NotSupported) => {}
+        // Not critical: retried on the next sync.
+        Err(e) => tracing::warn!(error = %e, "first-week views not fetched"),
+    }
+
     // 5. Daily history and gap filling.
     if connector.info().capabilities.historic_analytics {
         let from = {
@@ -308,6 +325,51 @@ async fn sync_contents(
     Ok(())
 }
 
+/// Fetches `EARLY_VIEWS_METRIC` for contents published at least
+/// `EARLY_DAYS + HISTORY_OVERLAP_DAYS` days ago that do not have it yet. Writes after every
+/// batch, so an interruption keeps what was fetched.
+async fn sync_early_views(
+    db: &Arc<Mutex<Connection>>,
+    connector: &dyn Connector,
+    ctx: &AccountCtx,
+    today: &str,
+    now: &str,
+) -> Result<u32> {
+    let cutoff = parse_day(today)? - Duration::days(i64::from(EARLY_DAYS) + HISTORY_OVERLAP_DAYS);
+    let pending = contents::missing_metric(
+        &*lock(db)?,
+        &ctx.account_id,
+        EARLY_VIEWS_METRIC,
+        &fmt_day(cutoff),
+    )?;
+    let mut stored = 0;
+    for batch in pending.chunks(EARLY_VIEWS_BATCH) {
+        let items: Vec<(String, String)> = batch
+            .iter()
+            .map(|p| (p.external_id.clone(), p.published_day.clone()))
+            .collect();
+        let views = connector.fetch_early_views(ctx, &items, EARLY_DAYS).await?;
+        write(db, |tx| {
+            for (ext, v) in &views {
+                if let Some(p) = batch.iter().find(|p| &p.external_id == ext) {
+                    snapshots::upsert_content_snapshot(
+                        tx,
+                        &p.content_id,
+                        &p.published_day,
+                        EARLY_VIEWS_METRIC,
+                        *v,
+                        "historic",
+                        now,
+                    )?;
+                    stored += 1;
+                }
+            }
+            Ok(())
+        })?;
+    }
+    Ok(stored)
+}
+
 /// Walks back from every day with a real (`current`) follower count, subtracting each
 /// day's net gain, and writes `historic` followers on the days in between. Days with a
 /// real count are never overwritten and re-anchor the walk.
@@ -435,6 +497,30 @@ mod tests {
             count(&e.db, "SELECT COUNT(*) FROM contents WHERE kind = 'short'"),
             4
         );
+    }
+
+    #[tokio::test]
+    async fn mock_sync_stores_early_views_once() {
+        let e = env("mock");
+        let mock = MockConnector::new();
+        let r = sync_account(&e.db, &e.auth, &e.clock, &mock, &e.account_id)
+            .await
+            .unwrap();
+        // All mock contents (2026-10-01..10) are >= 10 days before 2026-11-17.
+        assert_eq!(r.early_views, 10);
+        assert_eq!(
+            count(
+                &e.db,
+                &format!(
+                    "SELECT COUNT(*) FROM content_snapshots WHERE metric = '{EARLY_VIEWS_METRIC}'"
+                )
+            ),
+            10
+        );
+        let r2 = sync_account(&e.db, &e.auth, &e.clock, &mock, &e.account_id)
+            .await
+            .unwrap();
+        assert_eq!(r2.early_views, 0);
     }
 
     #[test]

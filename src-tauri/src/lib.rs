@@ -30,6 +30,7 @@ fn specta_builder() -> Builder<tauri::Wry> {
             commands::accounts::get_account_series,
             commands::accounts::list_contents,
             commands::accounts::get_quota_usage,
+            commands::accounts::get_best_time,
         ])
         .events(collect_events![events::AccountChanged, events::SyncStatus])
 }

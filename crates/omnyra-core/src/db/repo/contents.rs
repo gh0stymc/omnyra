@@ -92,6 +92,66 @@ pub fn set_kind(conn: &Connection, account_id: &str, external_id: &str, kind: &s
     Ok(())
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub struct Pending {
+    pub content_id: String,
+    pub external_id: String,
+    /// Publication day (`YYYY-MM-DD`, UTC).
+    pub published_day: String,
+}
+
+/// Non-stream contents published on or before `published_until` (a day) that have no
+/// snapshot of `metric` yet. Oldest first.
+pub fn missing_metric(
+    conn: &Connection,
+    account_id: &str,
+    metric: &str,
+    published_until: &str,
+) -> Result<Vec<Pending>> {
+    let mut stmt = conn.prepare(
+        "SELECT c.id, c.external_id, substr(c.published_at, 1, 10) FROM contents c
+         WHERE c.account_id = ?1 AND c.kind <> 'stream' AND c.published_at IS NOT NULL
+           AND substr(c.published_at, 1, 10) <= ?3
+           AND NOT EXISTS (SELECT 1 FROM content_snapshots s
+                           WHERE s.content_id = c.id AND s.metric = ?2)
+         ORDER BY c.published_at",
+    )?;
+    let rows = stmt.query_map(params![account_id, metric, published_until], |r| {
+        Ok(Pending {
+            content_id: r.get(0)?,
+            external_id: r.get(1)?,
+            published_day: r.get(2)?,
+        })
+    })?;
+    Ok(rows.collect::<std::result::Result<_, _>>()?)
+}
+
+/// Inputs of the "best time" analysis: one row per content with a value of `metric`.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Performance {
+    pub kind: String,
+    pub visibility: Option<String>,
+    pub published_at: String,
+    pub value: f64,
+}
+
+pub fn performance(conn: &Connection, account_id: &str, metric: &str) -> Result<Vec<Performance>> {
+    let mut stmt = conn.prepare(
+        "SELECT c.kind, c.visibility, c.published_at, s.value FROM contents c
+         JOIN content_snapshots s ON s.content_id = c.id AND s.metric = ?2
+         WHERE c.account_id = ?1 AND c.published_at IS NOT NULL",
+    )?;
+    let rows = stmt.query_map(params![account_id, metric], |r| {
+        Ok(Performance {
+            kind: r.get(0)?,
+            visibility: r.get(1)?,
+            published_at: r.get(2)?,
+            value: r.get(3)?,
+        })
+    })?;
+    Ok(rows.collect::<std::result::Result<_, _>>()?)
+}
+
 #[derive(Debug, Clone, Serialize, Type, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct ContentRow {

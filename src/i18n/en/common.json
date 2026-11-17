@@ -104,5 +104,26 @@
     "ytAnalytics": "View YouTube analytics",
     "ytUpload": "Upload videos to YouTube",
     "ytForceSsl": "Manage YouTube comments"
+  },
+  "bestTime": {
+    "title": "Best time to publish",
+    "formatLabel": "Format",
+    "format": {
+      "video": "videos",
+      "short": "Shorts"
+    },
+    "includeUnlisted": "Include unlisted",
+    "indicative": "Indicative only: views of unlisted videos depend on where you share the link, not on when you publish.",
+    "insufficient": "Not enough data: {{sample}} {{format}} have first-week data and {{needed}} are needed.",
+    "tryUnlisted": "You can include unlisted ones for an indicative result.",
+    "best": "Best moments: {{list}}.",
+    "noStandout": "No moment clearly stands out from the usual.",
+    "cellValue_one": "{{pct}} views vs. usual · {{count}} upload",
+    "cellValue_other": "{{pct}} views vs. usual · {{count}} uploads",
+    "cellNoData_one": "little data · {{count}} upload",
+    "cellNoData_other": "little data · {{count}} uploads",
+    "hoverHint": "Hover a cell for details.",
+    "legendNoData": "little data",
+    "footnote": "First-week views compared with the channel's usual; {{sample}} {{format}}, recent ones count more. Time zone: {{tz}}."
   }
 }

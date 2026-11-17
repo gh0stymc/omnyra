@@ -104,5 +104,26 @@
     "ytAnalytics": "Ver las analíticas de YouTube",
     "ytUpload": "Subir vídeos a YouTube",
     "ytForceSsl": "Gestionar comentarios de YouTube"
+  },
+  "bestTime": {
+    "title": "Mejor hora para publicar",
+    "formatLabel": "Formato",
+    "format": {
+      "video": "vídeos",
+      "short": "Shorts"
+    },
+    "includeUnlisted": "Incluir no listados",
+    "indicative": "Orientativo: las visitas de los vídeos no listados dependen de dónde compartes el enlace, no de la hora de publicación.",
+    "insufficient": "Datos insuficientes: hay {{sample}} {{format}} con datos de su primera semana y hacen falta {{needed}}.",
+    "tryUnlisted": "Puedes incluir los no listados para ver un resultado orientativo.",
+    "best": "Mejores momentos: {{list}}.",
+    "noStandout": "Ningún momento destaca claramente sobre lo habitual.",
+    "cellValue_one": "{{pct}} visitas que lo habitual · {{count}} publicación",
+    "cellValue_other": "{{pct}} visitas que lo habitual · {{count}} publicaciones",
+    "cellNoData_one": "pocos datos · {{count}} publicación",
+    "cellNoData_other": "pocos datos · {{count}} publicaciones",
+    "hoverHint": "Pasa el ratón por una casilla para ver el detalle.",
+    "legendNoData": "pocos datos",
+    "footnote": "Visitas en la primera semana comparadas con lo habitual del canal; {{sample}} {{format}}, los recientes cuentan más. Hora de {{tz}}."
   }
 }

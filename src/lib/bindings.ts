@@ -26,6 +26,8 @@ export const commands = {
 	listContents: (accountId: string, options?: InvokeOptions) => __TAURI_INVOKE<ContentRow_Serialize[]>("list_contents", { accountId }, options),
 	/**  Today's API quota usage. */
 	getQuotaUsage: (options?: InvokeOptions) => __TAURI_INVOKE<QuotaUsage[]>("get_quota_usage", undefined, options),
+	/**  Best weekday and hour to publish, from the first-week views of past contents. */
+	getBestTime: (accountId: string, query: BestTimeQuery, options?: InvokeOptions) => __TAURI_INVOKE<BestTime>("get_best_time", { accountId, query }, options),
 };
 
 /** Events */
@@ -115,6 +117,31 @@ export type AuthKind =
 /**  OAuth 2.0 + PKCE with a loopback redirect. */
 "oauth";
 
+export type BestTime = {
+	format: Format,
+	includeUnlisted: boolean,
+	timezone: string,
+	/**  Contents in the sample. */
+	sample: number,
+	needed: number,
+	/**  False when `sample < needed`: `cells` and `best` are then empty. */
+	sufficient: boolean,
+	/**  7 × 24 cells, Monday 00:00 first. */
+	cells: Cell[],
+	/**
+	 *  Up to three cells with enough data and a positive score, best first, never two
+	 *  consecutive hours.
+	 */
+	best: Cell[],
+};
+
+export type BestTimeQuery = {
+	format: Format,
+	includeUnlisted: boolean,
+	/**  IANA time zone (`Europe/Madrid`). */
+	timezone: string,
+};
+
 export type Capabilities = Capabilities_Serialize | Capabilities_Deserialize;
 
 export type Capabilities_Deserialize = {
@@ -139,6 +166,21 @@ export type Capabilities_Serialize = {
 	live: boolean,
 	publicLookup: boolean,
 	limits: MediaLimits_Serialize,
+};
+
+export type Cell = {
+	/**  0 = Monday … 6 = Sunday. */
+	weekday: number,
+	hour: number,
+	/**  Smoothed score; 0 = as usual. */
+	score: number | null,
+	/**  `exp(score)`: multiplier on first-week views. */
+	factor: number | null,
+	/**  Total recency weight backing the cell (neighbours included). */
+	weight: number | null,
+	/**  Contents published in exactly this hour. */
+	contents: number,
+	enoughData: boolean,
 };
 
 export type CommentSupport = "none" | "read" | "readReply";
@@ -184,6 +226,8 @@ export type DisconnectOutcome = {
 	 */
 	revoked: boolean,
 };
+
+export type Format = "video" | "short";
 
 export type MediaLimits = MediaLimits_Serialize | MediaLimits_Deserialize;
 
@@ -252,6 +296,8 @@ export type SyncReport = {
 	/**  Contents whose kind (Short or video) could not be settled yet. */
 	unclassified: number,
 	historicDays: number,
+	/**  Contents whose first-week views were stored by this sync (for "best time"). */
+	earlyViews: number,
 	/**  Data API units spent by this sync. */
 	quotaUsed: number,
 	/**  The sync budget ran out: some steps were skipped (they resume on the next sync). */

@@ -2,7 +2,7 @@
 
 > Estado del proyecto para cualquier sesión nueva (tras `/clear`). Ver `OMNYRA_SPEC.md` sección 9.
 
-**Paso actual:** 1c — Mejor hora para publicar (`claude-opus-5-5`). El 1b está hecho y probado con gh0stymc.
+**Paso actual:** 1d — Subida de vídeos a YouTube (`claude-opus-5-5`). El 1c está hecho y probado con gh0stymc.
 
 ## Pasos
 
@@ -12,7 +12,7 @@
 - [x] 0c — CI multiplataforma
 - [x] 1a — OAuth de Google y almacenamiento seguro
 - [x] 1b — Conector de YouTube y snapshots
-- [ ] 1c — Mejor hora para publicar
+- [x] 1c — Mejor hora para publicar
 - [ ] 1d — Subida de vídeos a YouTube
 - [ ] 1e — Pantallas del MVP
 - [ ] 2a — Conector de Twitch
@@ -61,6 +61,14 @@
 - 2026-11-17 (1b): cuota en `quota_ledger` por día del Pacífico (regla DST de EE. UU. a mano). La sincronización puede gastar el 60 % (6.000 unidades); sin presupuesto se salta la Data API y se sigue con Analytics (cuota aparte). Reintentos con backoff y jitter (máx. 3) en 429/5xx/red; `Retry-After` > 60 s no se espera.
 - 2026-11-17 (1b): sin caché ETag por ahora: el listado incremental y la clasificación única ya evitan lo repetido, y no está claro que un 304 no gaste cuota. `api_cache` queda sin usar.
 - 2026-11-17 (1b): sincronización automática al arrancar para las cuentas activas con `last_sync_at` de hace más de 6 h, en serie. `SyncLocks` impide dos a la vez sobre la misma cuenta (`SYNC_IN_PROGRESS`). Evento `sync-status`. Sin cola `jobs` hasta el 2c.
+
+- 2026-11-17 (1c): algoritmo documentado en `omnyra-core/src/best_time.rs`. Muestra = un formato (vídeos o Shorts; directos fuera) con `views_7d`; `y = ln(1+views_7d)`, peso `0.5^(edad/180)`, score = y − media ponderada; cada contenido suma a su (día, hora local) y la mitad a la hora anterior y siguiente; casilla = Σws/(Σw+1); < 15 contenidos → "datos insuficientes"; casillas con peso < 0,75 → "pocos datos" y nunca se recomiendan. Top 3 sin horas consecutivas.
+- 2026-11-17 (1c): `views_7d` = visitas de los 7 primeros días por Analytics (`filters=video==ID`, una petición por vídeo, cuota de Analytics), guardado como `content_snapshots` (`day` = día de publicación, `historic`). Se pide una vez por contenido con al menos 10 días. El día de publicación es el UTC (YouTube Analytics usa días del Pacífico: error ≤ 1 día, aceptable).
+- 2026-11-17 (1c): por defecto solo vídeos públicos; interruptor "incluir no listados" con aviso de que es orientativo (decisión del usuario: gh0stymc tiene 96 de 100 no listados).
+- 2026-11-17 (1c): zona horaria = la del sistema (`Intl` en el frontend, validada con `jiff` en Rust). El ajuste manual de zona (H8) queda para cuando haya pantalla de ajustes generales.
+- 2026-11-17 (1c): los tests del algoritmo los escribió un subagente con las instrucciones de `test-writer` (los agentes de `.claude/agents/` no se cargan si Claude Code se abre fuera de la carpeta del proyecto).
+
+- 2026-11-17: el usuario prefiere dejar la estética para el final (pedirá un repaso visual cuando esté todo); hasta entonces, interfaz funcional y mínima.
 
 ## Problemas pendientes
 

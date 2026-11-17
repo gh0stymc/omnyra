@@ -9,6 +9,10 @@
   --text: #16161d;
   --muted: #6b6b7b;
   --accent: #7c3aed;
+  /* Diverging scale (best-time heatmap): better / as usual / worse than usual. */
+  --div-pos: #2a78d6;
+  --div-mid: #f0efec;
+  --div-neg: #e34948;
   color-scheme: light;
 }
 .dark {
@@ -18,6 +22,9 @@
   --text: #ececf3;
   --muted: #9a9aad;
   --accent: #a78bfa;
+  --div-pos: #3987e5;
+  --div-mid: #383835;
+  --div-neg: #e66767;
   color-scheme: dark;
 }
 

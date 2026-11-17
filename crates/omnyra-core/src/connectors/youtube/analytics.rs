@@ -87,6 +87,43 @@ pub async fn daily_metrics(
     Ok(out)
 }
 
+#[derive(Deserialize)]
+struct Totals {
+    #[serde(default)]
+    rows: Vec<Vec<serde_json::Value>>,
+}
+
+/// Views of one video during `[day, day + days - 1]` (one request; Analytics quota).
+pub async fn early_views(
+    ctx: &AccountCtx,
+    base: &str,
+    video_id: &str,
+    day: &str,
+    days: u32,
+) -> Result<Option<f64>> {
+    let start = parse_day(day, "day")?;
+    let end = fmt_day(start + Duration::days(i64::from(days) - 1));
+    let filter = format!("video=={video_id}");
+    let report: Totals = ctx
+        .api
+        .get_json(
+            &format!("{base}/v2/reports"),
+            &[
+                ("ids", "channel==MINE"),
+                ("startDate", day),
+                ("endDate", &end),
+                ("metrics", "views"),
+                ("filters", &filter),
+            ],
+        )
+        .await?;
+    Ok(report
+        .rows
+        .first()
+        .and_then(|r| r.first())
+        .and_then(|v| v.as_f64()))
+}
+
 /// Columns are matched by name, so their order in the response does not matter.
 fn parse_report(report: Report) -> Vec<MetricPoint> {
     let names: Vec<&str> = report

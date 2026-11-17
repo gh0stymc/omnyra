@@ -2930,6 +2930,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "base64 0.23.1",
+ "jiff",
  "keyring",
  "mockito",
  "rand 0.10.4",
