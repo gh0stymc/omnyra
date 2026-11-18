@@ -347,6 +347,25 @@ pub fn delete_reminder(conn: &Connection, id: &str) -> Result<()> {
     Ok(())
 }
 
+/// Reminders due at or before `now_iso` that have not been notified yet, as `(id, title)`.
+/// Used by the background notifier (step 2c).
+pub fn due_reminders(conn: &Connection, now_iso: &str) -> Result<Vec<(String, String)>> {
+    let mut stmt = conn.prepare(
+        "SELECT id, title FROM reminders
+         WHERE notified_at IS NULL AND at <= ?1 ORDER BY at",
+    )?;
+    let rows = stmt.query_map(params![now_iso], |r| Ok((r.get(0)?, r.get(1)?)))?;
+    Ok(rows.collect::<std::result::Result<_, _>>()?)
+}
+
+pub fn mark_reminder_notified(conn: &Connection, id: &str, now_iso: &str) -> Result<()> {
+    conn.execute(
+        "UPDATE reminders SET notified_at = ?2 WHERE id = ?1",
+        params![id, now_iso],
+    )?;
+    Ok(())
+}
+
 // ---- calendar ------------------------------------------------------------------------
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, Type, PartialEq, Eq)]

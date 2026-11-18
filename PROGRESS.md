@@ -2,7 +2,7 @@
 
 > Estado del proyecto para cualquier sesión nueva (tras `/clear`). Ver `OMNYRA_SPEC.md` sección 9.
 
-**Paso actual:** 2c — Segundo plano y notificaciones (hecho con Opus). El 2b (calendario y tablero de ideas) quedó implementado, con tests y commiteado; el usuario optó por confiar en los tests y pasar a 2c sin prueba manual.
+**Paso actual:** 2c — Segundo plano y notificaciones (hecho con Opus). Implementado y con tests; bandeja, cerrar-a-bandeja, autostart, notificaciones (recordatorios + alertas) y planificador periódico. Falta prueba manual real (bandeja/notificaciones en GNOME/KDE y Windows). Después: 3a.
 
 ## Pasos
 
@@ -17,7 +17,7 @@
 - [x] 1e — Pantallas del MVP
 - [x] 2a — Conector de Twitch
 - [x] 2b — Calendario y tablero de ideas
-- [ ] 2c — Segundo plano y notificaciones
+- [x] 2c — Segundo plano y notificaciones
 - [ ] 3a — Estrategia de autenticación Meta y TikTok
 - [ ] 3b — Conectores de Instagram y TikTok
 - [ ] 3c — Publicación multi-red
@@ -95,6 +95,14 @@
 - 2026-11-17 (2b): Kanban con posiciones fraccionarias (solo se escribe la tarjeta movida; si el hueco baja de 1e-9 se renumera la columna). Archivos de las ideas por referencia (no se copian ni se borran nunca del disco); se abren con `open_idea_file`, que solo abre archivos adjuntos (el frontend no tiene un "abrir cualquier ruta").
 - 2026-11-17 (2b): arrastrar y soltar con HTML5 nativo; `dragDropEnabled: false` en la ventana (si no, Tauri intercepta los arrastres en Windows). Omnyra no usa soltar archivos del sistema.
 
+- 2026-11-18 (2c): **decisión de alcance**: NO se reconstruyen los bucles existentes (sync de arranque, worker de subidas, muestreo de directos) sobre la tabla `jobs`. Se añade un **planificador periódico** ligero (`src-tauri/src/background.rs`) que reutiliza la lógica de obsolescencia ya probada (`sync::due_accounts`, `AUTO_SYNC_AFTER` = 6 h). La tabla `jobs` (ya creada en 0001) queda sin usar hasta que haya trabajos que necesiten persistir entre reinicios (render/publish del 3c). Las tablas `alerts`, `settings` y `reminders.notified_at` ya existían desde 0001; 2c no añade migración.
+- 2026-11-18 (2c): bandeja (`src-tauri/src/tray.rs`, feature `tauri` `tray-icon`+`image-png`): menú Abrir/Sincronizar todo/Salir, clic izquierdo muestra la ventana, etiquetas según `locale`. "Seguir en segundo plano al cerrar" (`close_to_tray`): el `CloseRequested` oculta la ventana en vez de salir (`install_close_handler` en `lib.rs`); los planificadores siguen. Con `single-instance`, un segundo lanzamiento vuelve a mostrar la ventana.
+- 2026-11-18 (2c): ajustes = repo key/value `settings` (`db/repo/settings.rs`, claves tipadas en `keys`); defaults: `close_to_tray=false`, `autostart=false`, `background_sync=true`, `notifications=true`, `locale="es"`. Comandos `get_settings`/`update_settings`/`set_locale`. Autostart vía `tauri-plugin-autostart` (el plugin es la fuente de verdad del SO; se guarda el estado logrado para la UI). Pantalla: `PreferencesSection` en Ajustes.
+- 2026-11-18 (2c): notificaciones (`tauri-plugin-notification`) disparadas desde Rust, no desde JS → mensajes localizados a mano en `src-tauri/src/notify.rs` (ES/EN) porque el OS las pinta fuera del webview; el frontend espeja su idioma con `set_locale` (en `setLang` y al arrancar). Permiso `notification:default` en capabilities.
+- 2026-11-18 (2c): alertas (`omnyra-core/src/alerts.rs`, probado): hitos de seguidores (`{1,5}·10^k`, k≥2) comparando los dos últimos días (una sola jornada → nada, para no disparar por la reconstrucción histórica) y **rendimiento** por z-score (|z|≥2, muestra ≥8) de `views_7d` (ya normalizado por antigüedad) frente a los contenidos del mismo tipo; solo para contenidos publicados en los últimos 21 días. Dedup: hito por (cuenta, umbral), rendimiento 1 por contenido. `evaluate_account` se llama tras cada sync (manual y en segundo plano) desde `sync::run`; emite `AlertsChanged` y notifica las nuevas. La caída de engagement (media móvil de 4 semanas) se aplaza: hacen falta semanas de datos diarios continuos que la app apenas empieza a recopilar.
+- 2026-11-18 (2c): recordatorios → notificación: bucle cada 60 s (`spawn_reminder_notifier`) que busca `reminders` con `at <= now` y `notified_at IS NULL`, notifica y marca. El planificador de snapshots corre cada 30 min pero solo sincroniza cuentas realmente obsoletas. La publicación programada automática real (A5) es del 3c; de momento solo se notifica el recordatorio.
+- 2026-11-18 (2c): campana de alertas en una cabecera nueva del `Layout` (`src/features/alerts/AlertsBell.tsx`): contador de no leídas, panel con las últimas 30, marcar leída al pulsar y "marcar todo como leído".
+
 ## Problemas pendientes
 
 - R1: la CI no se ha ejecutado nunca: la cuenta de GitHub sigue suspendida y el repo no tiene remoto. Revisar la primera ejecución al subirlo (no se pudo pasar `actionlint` en local).
@@ -110,6 +118,8 @@
 - [VERIFICAR] los estrenos (premieres) también tienen `liveStreamingDetails` y ahora cuentan como `stream`.
 - [VERIFICAR] Shorts privados u ocultos: la comprobación sin cookies puede dar 404 y quedarse sin clasificar.
 - Falta `rustup`/toolchain fijada: se usa el Rust del sistema (1.100).
+- 2026-11-18 (2c): la bandeja en Linux necesita `libayatana-appindicator3` (o `libappindicator3`) en tiempo de ejecución y un servidor StatusNotifierItem (H11). Añadir la dependencia al `.deb` (`Depends`) y al `PKGBUILD` en el 7c; en Wayland/Hyprland del usuario existe (`org.kde.StatusNotifierWatcher` de quickshell). Para `cargo tauri dev` en local puede hacer falta instalar el paquete del sistema.
+- 2026-11-18 (2c): autostart no reconciliado al arrancar (el SO mantiene su propio estado); si el usuario desactiva el autostart por fuera, el ajuste mostrado puede quedar desincronizado hasta que lo togglee. Aceptable.
 
 ## Checklist manual (pruebas reales por sistema)
 
@@ -120,6 +130,10 @@
 - [x] Subida real a gh0stymc (1d): permiso incremental, vídeo corto con miniatura, cancelar a mitad, reanudar tras cerrar la app
 - [x] Twitch real (2a): conexión con código y sincronización (1 VOD, 41 clips) (2026-11-17)
 - [ ] Twitch: abrir la app durante un directo y ver la sesión con espectadores
+- [ ] 2c: bandeja del sistema (mostrar/ocultar, menú Sincronizar/Salir) en Linux (GNOME y KDE) y Windows
+- [ ] 2c: "seguir en segundo plano al cerrar" (la ventana se oculta, los planificadores siguen)
+- [ ] 2c: autostart (abrir al iniciar sesión) en Linux y Windows
+- [ ] 2c: notificaciones del sistema (recordatorio vencido, hito, rendimiento) en GNOME/KDE y Windows
 - [ ] Llavero (Credential Manager) en Windows
 - [ ] Rutas de `app_data_dir` en Windows
 - [ ] Instalar y abrir el `.msi`/`.exe` en Windows (VM)

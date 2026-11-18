@@ -46,6 +46,11 @@ pub struct UploadChanged {
     pub status: String,
 }
 
+/// New alerts were created (after a sync) or an alert was read. The frontend refreshes the
+/// bell and the alerts list.
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type, tauri_specta::Event)]
+pub struct AlertsChanged;
+
 /// Device flow (Twitch): show this code; the user confirms it at `verification_uri`
 /// (already opened in the browser).
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type, tauri_specta::Event)]

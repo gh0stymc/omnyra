@@ -251,7 +251,8 @@
     }
   },
   "common": {
-    "loading": "Loading…"
+    "loading": "Loading…",
+    "error": "Something went wrong"
   },
   "contents": {
     "title": "Contents",
@@ -360,5 +361,25 @@
     "delete": "Delete",
     "confirmDelete": "Delete this idea?",
     "save": "Save"
+  },
+  "prefs": {
+    "title": "Background & notifications",
+    "tray": "Keep running when the window is closed",
+    "trayHint": "Closing the window keeps Omnyra in the system tray.",
+    "autostart": "Launch at login",
+    "autostartHint": "Start Omnyra automatically when you sign in.",
+    "backgroundSync": "Automatic sync",
+    "backgroundSyncHint": "Refresh metrics periodically while the app is open.",
+    "notifications": "System notifications",
+    "notificationsHint": "Reminders, milestones and video performance alerts."
+  },
+  "alerts": {
+    "title": "Alerts",
+    "empty": "No alerts",
+    "markAllRead": "Mark all as read",
+    "milestone": "You passed {{value}} followers",
+    "overperforming": "“{{title}}” is outperforming your usual numbers",
+    "underperforming": "“{{title}}” is below your usual numbers",
+    "generic": "You have a new alert"
   }
 }

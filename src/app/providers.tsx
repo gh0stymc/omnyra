@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect, type ReactNode } from "react";
-import "../i18n";
+import i18n, { syncLocaleToBackend } from "../i18n";
 import { events } from "../lib/bindings";
 import { queryKeys } from "../lib/queryKeys";
 import { applyTheme } from "../stores/ui";
@@ -37,6 +37,10 @@ function useBackendEvents() {
           void queryClient.invalidateQueries({ queryKey: ["top"] });
         }
       }),
+      events.alertsChanged.listen(() => {
+        void queryClient.invalidateQueries({ queryKey: queryKeys.alerts });
+        void queryClient.invalidateQueries({ queryKey: queryKeys.alertsUnread });
+      }),
     ].map((p) => p.catch(() => undefined)); // not running inside Tauri (tests, plain browser)
     return () => subs.forEach((p) => void p.then((f) => f?.()));
   }, []);
@@ -45,6 +49,7 @@ function useBackendEvents() {
 export function Providers({ children }: { children: ReactNode }) {
   const theme = useUi((s) => s.theme);
   useEffect(() => applyTheme(theme), [theme]);
+  useEffect(() => syncLocaleToBackend(i18n.language), []);
   useBackendEvents();
   return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
 }

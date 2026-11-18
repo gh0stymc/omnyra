@@ -1,6 +1,8 @@
 pub mod accounts;
+pub mod alerts;
 pub mod dashboard;
 pub mod live;
 pub mod planning;
 pub mod platforms;
+pub mod settings;
 pub mod uploads;

@@ -58,7 +58,11 @@ pub async fn run(app: &AppHandle, account_id: &str) -> Result<SyncReport, AppErr
     )
     .await;
     match &result {
-        Ok(_) => emit(app, account_id, SyncState::Done, None),
+        Ok(_) => {
+            emit(app, account_id, SyncState::Done, None);
+            // Compute performance/milestone alerts and notify (manual and background syncs).
+            crate::background::after_sync(app, account_id);
+        }
         Err(e) => {
             tracing::warn!(error = %e, "sync failed");
             if account_service::handle_auth_error(&state.db, account_id, e) {
@@ -81,22 +85,26 @@ fn is_stale(last_sync_at: Option<&str>, now: OffsetDateTime) -> bool {
     }
 }
 
+/// Active accounts whose last sync is older than [`AUTO_SYNC_AFTER`].
+pub fn due_accounts(app: &AppHandle) -> Vec<String> {
+    let state = app.state::<AppState>();
+    let now = state.clock.now();
+    let Ok(conn) = state.db.lock() else {
+        return Vec::new();
+    };
+    accounts::list(&conn)
+        .unwrap_or_default()
+        .into_iter()
+        .filter(|a| a.status == AccountStatus::Active)
+        .filter(|a| is_stale(a.last_sync_at.as_deref(), now))
+        .map(|a| a.id)
+        .collect()
+}
+
 /// Syncs, one after another, the active accounts that have not been synced recently.
 pub fn spawn_startup_sync(app: AppHandle) {
     tauri::async_runtime::spawn(async move {
-        let due: Vec<String> = {
-            let state = app.state::<AppState>();
-            let now = state.clock.now();
-            let Ok(conn) = state.db.lock() else { return };
-            accounts::list(&conn)
-                .unwrap_or_default()
-                .into_iter()
-                .filter(|a| a.status == AccountStatus::Active)
-                .filter(|a| is_stale(a.last_sync_at.as_deref(), now))
-                .map(|a| a.id)
-                .collect()
-        };
-        for id in due {
+        for id in due_accounts(&app) {
             // Errors are already reported through the event.
             let _ = run(&app, &id).await;
         }

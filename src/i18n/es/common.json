@@ -251,7 +251,8 @@
     }
   },
   "common": {
-    "loading": "Cargando…"
+    "loading": "Cargando…",
+    "error": "Algo ha fallado"
   },
   "contents": {
     "title": "Contenidos",
@@ -360,5 +361,25 @@
     "delete": "Borrar",
     "confirmDelete": "¿Borrar la idea?",
     "save": "Guardar"
+  },
+  "prefs": {
+    "title": "Segundo plano y notificaciones",
+    "tray": "Seguir en segundo plano al cerrar",
+    "trayHint": "Al cerrar la ventana, Omnyra sigue en la bandeja del sistema.",
+    "autostart": "Abrir al iniciar sesión",
+    "autostartHint": "Omnyra se inicia automáticamente al encender el equipo.",
+    "backgroundSync": "Sincronización automática",
+    "backgroundSyncHint": "Actualiza las métricas cada cierto tiempo mientras la app está abierta.",
+    "notifications": "Notificaciones del sistema",
+    "notificationsHint": "Avisos de recordatorios, hitos y rendimiento de los vídeos."
+  },
+  "alerts": {
+    "title": "Alertas",
+    "empty": "No hay alertas",
+    "markAllRead": "Marcar todo como leído",
+    "milestone": "Has superado los {{value}} seguidores",
+    "overperforming": "«{{title}}» rinde muy por encima de lo habitual",
+    "underperforming": "«{{title}}» está por debajo de lo habitual",
+    "generic": "Tienes una alerta nueva"
   }
 }

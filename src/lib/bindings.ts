@@ -73,11 +73,24 @@ export const commands = {
 	moveCalendarEvent: (kind: EventKind, id: string, at: string, options?: InvokeOptions) => __TAURI_INVOKE<null>("move_calendar_event", { kind, id, at }, options),
 	createReminder: (input: ReminderInput_Deserialize, options?: InvokeOptions) => __TAURI_INVOKE<string>("create_reminder", { input }, options),
 	deleteReminder: (id: string, options?: InvokeOptions) => __TAURI_INVOKE<null>("delete_reminder", { id }, options),
+	getSettings: (options?: InvokeOptions) => __TAURI_INVOKE<AppSettings>("get_settings", undefined, options),
+	/**  Persists all settings and reconciles the OS autostart entry with the plugin. */
+	updateSettings: (settings: AppSettings, options?: InvokeOptions) => __TAURI_INVOKE<AppSettings>("update_settings", { settings }, options),
+	/**
+	 *  Mirrors the UI language so Rust can localise system notifications. Called by the
+	 *  frontend whenever the language changes (and once on startup).
+	 */
+	setLocale: (locale: string, options?: InvokeOptions) => __TAURI_INVOKE<null>("set_locale", { locale }, options),
+	listAlerts: (limit: number, options?: InvokeOptions) => __TAURI_INVOKE<Alert_Serialize[]>("list_alerts", { limit }, options),
+	unreadAlertsCount: (options?: InvokeOptions) => __TAURI_INVOKE<number>("unread_alerts_count", undefined, options),
+	markAlertRead: (id: string, options?: InvokeOptions) => __TAURI_INVOKE<null>("mark_alert_read", { id }, options),
+	markAllAlertsRead: (options?: InvokeOptions) => __TAURI_INVOKE<null>("mark_all_alerts_read", undefined, options),
 };
 
 /** Events */
 export const events = {
 	accountChanged: makeEvent<AccountChanged, AccountChanged>("account-changed"),
+	alertsChanged: makeEvent<AlertsChanged, AlertsChanged>("alerts-changed"),
 	deviceCodeIssued: makeEvent<DeviceCodeIssued, DeviceCodeIssued>("device-code-issued"),
 	syncStatus: makeEvent<SyncStatus_Serialize, SyncStatus_Deserialize>("sync-status"),
 	uploadChanged: makeEvent<UploadChanged, UploadChanged>("upload-changed"),
@@ -180,6 +193,76 @@ export type Account_Serialize = {
 	lastSyncAt: string | null,
 };
 
+export type Alert = Alert_Serialize | Alert_Deserialize;
+
+/**
+ *  Typed payload. `serde_json::Value` is not exposed because `specta` has no JSON feature
+ *  here; optional fields keep it flexible and still typed on the frontend.
+ */
+export type AlertPayload = AlertPayload_Serialize | AlertPayload_Deserialize;
+
+/**
+ *  Typed payload. `serde_json::Value` is not exposed because `specta` has no JSON feature
+ *  here; optional fields keep it flexible and still typed on the frontend.
+ */
+export type AlertPayload_Deserialize = {
+	/**  Milestone: the metric that crossed a threshold (`"followers"`). */
+	metric?: string | null,
+	/**  Milestone: the threshold crossed. Performance: the content's early views. */
+	value?: number | null,
+	/**  Performance: title of the content, for the message. */
+	contentTitle?: string | null,
+	/**  Performance: z-score against the same-kind baseline. */
+	z?: number | null,
+	/**  Performance: `"video" | "short" | ...`. */
+	contentKind?: string | null,
+};
+
+/**
+ *  Typed payload. `serde_json::Value` is not exposed because `specta` has no JSON feature
+ *  here; optional fields keep it flexible and still typed on the frontend.
+ */
+export type AlertPayload_Serialize = {
+	/**  Milestone: the metric that crossed a threshold (`"followers"`). */
+	metric: string | null,
+	/**  Milestone: the threshold crossed. Performance: the content's early views. */
+	value: number | null,
+	/**  Performance: title of the content, for the message. */
+	contentTitle: string | null,
+	/**  Performance: z-score against the same-kind baseline. */
+	z: number | null,
+	/**  Performance: `"video" | "short" | ...`. */
+	contentKind: string | null,
+};
+
+export type Alert_Deserialize = {
+	id: string,
+	kind: string,
+	severity: string,
+	accountId?: string | null,
+	contentId?: string | null,
+	payload: AlertPayload_Deserialize,
+	createdAt: string,
+	read: boolean,
+};
+
+export type Alert_Serialize = {
+	id: string,
+	kind: string,
+	severity: string,
+	accountId: string | null,
+	contentId: string | null,
+	payload: AlertPayload_Serialize,
+	createdAt: string,
+	read: boolean,
+};
+
+/**
+ *  New alerts were created (after a sync) or an alert was read. The frontend refreshes the
+ *  bell and the alerts list.
+ */
+export type AlertsChanged = null;
+
 /**
  *  Single serializable error with a stable `code` the frontend maps to an i18n message.
  *  Technical messages must never include tokens or secrets.
@@ -214,6 +297,19 @@ export type AppError = { code: "TOKEN_EXPIRED" } | { code: "QUOTA_EXCEEDED" } | 
 { code: "UPLOAD_SESSION_EXPIRED" } | 
 /**  The file changed or disappeared since it was queued. */
 { code: "FILE_UNAVAILABLE" };
+
+export type AppSettings = {
+	/**  Keep running in the tray when the window is closed. */
+	closeToTray: boolean,
+	/**  Launch at login. */
+	autostart: boolean,
+	/**  Run periodic background syncs. */
+	backgroundSync: boolean,
+	/**  Raise system notifications. */
+	notifications: boolean,
+	/**  UI language (`"es"` | `"en"`). */
+	locale: string,
+};
 
 export type AuthKind = 
 /**  No login (mock). */

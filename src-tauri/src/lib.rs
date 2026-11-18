@@ -1,8 +1,11 @@
+mod background;
 mod commands;
 mod events;
 mod live;
+mod notify;
 mod state;
 mod sync;
+mod tray;
 mod uploads;
 
 use omnyra_core::{
@@ -58,13 +61,21 @@ fn specta_builder() -> Builder<tauri::Wry> {
             commands::planning::move_calendar_event,
             commands::planning::create_reminder,
             commands::planning::delete_reminder,
+            commands::settings::get_settings,
+            commands::settings::update_settings,
+            commands::settings::set_locale,
+            commands::alerts::list_alerts,
+            commands::alerts::unread_alerts_count,
+            commands::alerts::mark_alert_read,
+            commands::alerts::mark_all_alerts_read,
         ])
         .events(collect_events![
             events::AccountChanged,
             events::SyncStatus,
             events::UploadProgress,
             events::UploadChanged,
-            events::DeviceCodeIssued
+            events::DeviceCodeIssued,
+            events::AlertsChanged
         ])
 }
 
@@ -81,6 +92,31 @@ fn credentials() -> Credentials {
 
 #[cfg(any(debug_assertions, test))]
 const BINDINGS_PATH: &str = "../src/lib/bindings.ts";
+
+/// When "keep running in the background" is on, closing the window hides it to the tray
+/// instead of quitting; the background scheduler keeps running.
+fn install_close_handler(app: &tauri::AppHandle) {
+    use omnyra_core::db::repo::settings::{self, keys};
+    let Some(window) = app.get_webview_window("main") else {
+        return;
+    };
+    let handle = app.clone();
+    window.clone().on_window_event(move |event| {
+        if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+            let keep = handle
+                .state::<AppState>()
+                .db
+                .lock()
+                .ok()
+                .and_then(|c| settings::get_bool(&c, keys::CLOSE_TO_TRAY, false).ok())
+                .unwrap_or(false);
+            if keep {
+                api.prevent_close();
+                let _ = window.hide();
+            }
+        }
+    });
+}
 
 pub fn run() {
     // Logs to stderr; filter with RUST_LOG (default: warnings and above).
@@ -109,6 +145,11 @@ pub fn run() {
         }))
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_notification::init())
+        .plugin(tauri_plugin_autostart::init(
+            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+            None,
+        ))
         .plugin(tauri_plugin_window_state::Builder::default().build())
         .invoke_handler(builder.invoke_handler())
         .setup(move |app| {
@@ -132,9 +173,14 @@ pub fn run() {
                 upload_wake: Default::default(),
                 upload_cancel: Mutex::new(None),
             });
+            tray::create(app.handle())?;
+            install_close_handler(app.handle());
+
             sync::spawn_startup_sync(app.handle().clone());
             uploads::spawn_worker(app.handle().clone());
             live::spawn_sampler(app.handle().clone());
+            background::spawn_scheduler(app.handle().clone());
+            background::spawn_reminder_notifier(app.handle().clone());
             Ok(())
         })
         .run(tauri::generate_context!())

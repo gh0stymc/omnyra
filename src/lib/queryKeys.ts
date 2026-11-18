@@ -13,4 +13,7 @@ export const queryKeys = {
   live: (accountId: string, from: string | null) => ["live", accountId, from] as const,
   bestTime: (accountId: string, format: string, includeUnlisted: boolean, tz: string) =>
     ["bestTime", accountId, format, includeUnlisted, tz] as const,
+  settings: ["settings"] as const,
+  alerts: ["alerts"] as const,
+  alertsUnread: ["alertsUnread"] as const,
 };

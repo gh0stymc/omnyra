@@ -2,6 +2,7 @@ import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import es from "./es/common.json";
 import en from "./en/common.json";
+import { commands } from "../lib/bindings";
 
 const LANG_KEY = "omnyra.lang";
 
@@ -21,9 +22,15 @@ void i18n.use(initReactI18next).init({
   interpolation: { escapeValue: false },
 });
 
+/** Mirror the language to the backend so system notifications are localised too. */
+export function syncLocaleToBackend(lang: string) {
+  commands.setLocale(lang).catch(() => undefined); // no-op outside Tauri
+}
+
 export function setLang(lang: Lang) {
   localStorage.setItem(LANG_KEY, lang);
   void i18n.changeLanguage(lang);
+  syncLocaleToBackend(lang);
 }
 
 export default i18n;
