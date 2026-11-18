@@ -11,6 +11,7 @@ import {
   Handshake,
   Radar,
   Upload,
+  Lightbulb,
 } from "lucide-react";
 import { commands } from "../../lib/bindings";
 import { queryKeys } from "../../lib/queryKeys";
@@ -19,6 +20,7 @@ const sections = [
   { to: "/", key: "dashboard", icon: LayoutDashboard },
   { to: "/uploads", key: "uploads", icon: Upload },
   { to: "/calendar", key: "calendar", icon: Calendar },
+  { to: "/ideas", key: "ideas", icon: Lightbulb },
   { to: "/community", key: "community", icon: MessageSquare },
   { to: "/creation", key: "creation", icon: Palette },
   { to: "/sponsors", key: "sponsors", icon: Handshake },

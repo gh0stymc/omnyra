@@ -11,7 +11,14 @@
   },
   "app": {
     "windows": [
-      { "title": "Omnyra", "width": 1280, "height": 800, "minWidth": 900, "minHeight": 600 }
+      {
+        "title": "Omnyra",
+        "width": 1280,
+        "height": 800,
+        "minWidth": 900,
+        "minHeight": 600,
+        "dragDropEnabled": false
+      }
     ],
     "security": {
       "csp": "default-src 'self'; img-src 'self' asset: data:; style-src 'self' 'unsafe-inline'; connect-src 'self' ipc: http://ipc.localhost"

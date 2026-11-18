@@ -24,7 +24,7 @@ function useBackendEvents() {
           void queryClient.invalidateQueries({ queryKey: queryKeys.contents(payload.accountId) });
           void queryClient.invalidateQueries({ queryKey: queryKeys.quota });
           void queryClient.invalidateQueries({ queryKey: ["bestTime", payload.accountId] });
-          for (const k of ["summary", "combined", "top", "live"]) {
+          for (const k of ["summary", "combined", "top", "live", "calendar"]) {
             void queryClient.invalidateQueries({ queryKey: [k] });
           }
         }

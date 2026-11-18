@@ -12,7 +12,8 @@
     "security": "Security",
     "settings": "Settings",
     "accounts": "Accounts",
-    "uploads": "Uploads"
+    "uploads": "Uploads",
+    "ideas": "Ideas"
   },
   "dashboard": {
     "title": "Global dashboard",
@@ -297,5 +298,67 @@
       "avg": "Average",
       "peak": "Peak"
     }
+  },
+  "calendar": {
+    "prev": "Previous",
+    "next": "Next",
+    "today": "Today",
+    "view": {
+      "month": "Month",
+      "week": "Week"
+    },
+    "filter": "Network",
+    "allNetworks": "All networks",
+    "noNetwork": "No network (reminders and ideas)",
+    "reminderTitle": "New reminder…",
+    "addReminder": "Add reminder",
+    "hint": "Click a day (or an hour, in week view) to set the reminder's date. Drag reminders, ideas and scheduled publications to reschedule them; published content cannot be moved.",
+    "kind": {
+      "content": "Published",
+      "publication": "Scheduled publication",
+      "reminder": "Reminder",
+      "idea": "Idea due date"
+    },
+    "detail": {
+      "video": "video",
+      "short": "Short",
+      "stream": "stream",
+      "vod": "VOD",
+      "clip": "clip",
+      "idea": "Idea",
+      "script": "Script",
+      "recorded": "Recorded",
+      "edited": "Edited",
+      "published": "Published"
+    },
+    "open": "Open",
+    "openIdea": "Open the idea",
+    "deleteReminder": "Delete reminder",
+    "more": "+{{count}} more"
+  },
+  "ideas": {
+    "pageTitle": "Ideas",
+    "stage": {
+      "idea": "Idea",
+      "script": "Script",
+      "recorded": "Recorded",
+      "edited": "Edited",
+      "published": "Published"
+    },
+    "add": "Add",
+    "newPlaceholder": "Idea title",
+    "edit": "Edit idea",
+    "title": "Title",
+    "notes": "Notes (Markdown)",
+    "targets": "Target networks",
+    "due": "Date",
+    "files": "Files",
+    "attach": "Attach",
+    "detach": "remove",
+    "noFiles": "No files.",
+    "filesNote": "Files are not copied: Omnyra only stores their path and never deletes them.",
+    "delete": "Delete",
+    "confirmDelete": "Delete this idea?",
+    "save": "Save"
   }
 }

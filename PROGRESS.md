@@ -2,7 +2,7 @@
 
 > Estado del proyecto para cualquier sesión nueva (tras `/clear`). Ver `OMNYRA_SPEC.md` sección 9.
 
-**Paso actual:** 2b — Calendario y tablero de ideas (`claude-sonnet-5-5`). El 2a está hecho y probado con gh0stymc_ (Twitch).
+**Paso actual:** 2c — Segundo plano y notificaciones (hecho con Opus). El 2b (calendario y tablero de ideas) quedó implementado, con tests y commiteado; el usuario optó por confiar en los tests y pasar a 2c sin prueba manual.
 
 ## Pasos
 
@@ -16,7 +16,7 @@
 - [x] 1d — Subida de vídeos a YouTube
 - [x] 1e — Pantallas del MVP
 - [x] 2a — Conector de Twitch
-- [ ] 2b — Calendario y tablero de ideas
+- [x] 2b — Calendario y tablero de ideas
 - [ ] 2c — Segundo plano y notificaciones
 - [ ] 3a — Estrategia de autenticación Meta y TikTok
 - [ ] 3b — Conectores de Instagram y TikTok
@@ -89,6 +89,11 @@
 - 2026-11-17 (2a): vista propia de Twitch (`src/platforms/twitch/TwitchView.tsx`, registrada como `AnalyticsView`): seguidores, directos, horas, espectadores medios/pico (observados), gráfica de seguidores, tabla de directos vistos y tabla de VODs/clips. Sin botón de subida (`upload: none`). Cabecera de cuenta extraída a `AccountHeader`.
 
 - 2026-11-17 (2a): la API de Twitch solo expone los VODs que Twitch aún guarda (7/14/60 días según el tipo de cuenta, y solo con "Almacenar emisiones anteriores" activado). Omnyra conserva en `contents` los VODs que ha visto aunque Twitch los borre, así que el historial de directos se completa desde que se usa la app; lo anterior no es recuperable.
+
+- 2026-11-17 (2b): migración 0004: `ideas`, `idea_files`, `reminders` y `publications.idea_id` (decisión del 0b). `ideas.source_cluster_id` va sin FK porque `question_clusters` llega en el 4b. Lógica en `omnyra-core/src/planning.rs`.
+- 2026-11-17 (2b): calendario = unión de `contents.published_at` (no se puede mover), `publications.scheduled_at`, `reminders.at` e `ideas.due_at`; se consulta por instantes `[from, to)` que la UI calcula en hora local (comparación con `julianday` por las distintas precisiones). Mover conserva la hora local del día (vista de mes) o fija la hora (vista de semana). Filtro por red.
+- 2026-11-17 (2b): Kanban con posiciones fraccionarias (solo se escribe la tarjeta movida; si el hueco baja de 1e-9 se renumera la columna). Archivos de las ideas por referencia (no se copian ni se borran nunca del disco); se abren con `open_idea_file`, que solo abre archivos adjuntos (el frontend no tiene un "abrir cualquier ruta").
+- 2026-11-17 (2b): arrastrar y soltar con HTML5 nativo; `dragDropEnabled: false` en la ventana (si no, Tauri intercepta los arrastres en Windows). Omnyra no usa soltar archivos del sistema.
 
 ## Problemas pendientes
 

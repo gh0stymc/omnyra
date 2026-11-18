@@ -12,7 +12,8 @@
     "security": "Seguridad",
     "settings": "Ajustes",
     "accounts": "Cuentas",
-    "uploads": "Subidas"
+    "uploads": "Subidas",
+    "ideas": "Ideas"
   },
   "dashboard": {
     "title": "Panel global",
@@ -297,5 +298,67 @@
       "avg": "Media",
       "peak": "Pico"
     }
+  },
+  "calendar": {
+    "prev": "Anterior",
+    "next": "Siguiente",
+    "today": "Hoy",
+    "view": {
+      "month": "Mes",
+      "week": "Semana"
+    },
+    "filter": "Red",
+    "allNetworks": "Todas las redes",
+    "noNetwork": "Sin red (recordatorios e ideas)",
+    "reminderTitle": "Nuevo recordatorio…",
+    "addReminder": "Añadir recordatorio",
+    "hint": "Haz clic en un día (o una hora, en la vista de semana) para fijar la fecha del recordatorio. Arrastra recordatorios, ideas y publicaciones programadas para cambiarles la fecha; lo ya publicado no se puede mover.",
+    "kind": {
+      "content": "Publicado",
+      "publication": "Publicación programada",
+      "reminder": "Recordatorio",
+      "idea": "Fecha de una idea"
+    },
+    "detail": {
+      "video": "vídeo",
+      "short": "Short",
+      "stream": "directo",
+      "vod": "VOD",
+      "clip": "clip",
+      "idea": "Idea",
+      "script": "Guion",
+      "recorded": "Grabado",
+      "edited": "Editado",
+      "published": "Publicado"
+    },
+    "open": "Abrir",
+    "openIdea": "Abrir la idea",
+    "deleteReminder": "Borrar recordatorio",
+    "more": "+{{count}} más"
+  },
+  "ideas": {
+    "pageTitle": "Ideas",
+    "stage": {
+      "idea": "Idea",
+      "script": "Guion",
+      "recorded": "Grabado",
+      "edited": "Editado",
+      "published": "Publicado"
+    },
+    "add": "Añadir",
+    "newPlaceholder": "Título de la idea",
+    "edit": "Editar idea",
+    "title": "Título",
+    "notes": "Notas (Markdown)",
+    "targets": "Redes de destino",
+    "due": "Fecha",
+    "files": "Archivos",
+    "attach": "Adjuntar",
+    "detach": "quitar",
+    "noFiles": "Sin archivos.",
+    "filesNote": "Los archivos no se copian: Omnyra guarda solo su ruta y nunca los borra.",
+    "delete": "Borrar",
+    "confirmDelete": "¿Borrar la idea?",
+    "save": "Guardar"
   }
 }

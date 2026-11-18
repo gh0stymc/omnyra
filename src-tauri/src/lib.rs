@@ -46,6 +46,18 @@ fn specta_builder() -> Builder<tauri::Wry> {
             commands::dashboard::get_combined_series,
             commands::dashboard::get_top_contents,
             commands::live::get_live_overview,
+            commands::planning::list_ideas,
+            commands::planning::create_idea,
+            commands::planning::update_idea,
+            commands::planning::move_idea,
+            commands::planning::delete_idea,
+            commands::planning::attach_idea_file,
+            commands::planning::detach_idea_file,
+            commands::planning::open_idea_file,
+            commands::planning::get_calendar,
+            commands::planning::move_calendar_event,
+            commands::planning::create_reminder,
+            commands::planning::delete_reminder,
         ])
         .events(collect_events![
             events::AccountChanged,

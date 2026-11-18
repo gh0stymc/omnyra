@@ -10,6 +10,7 @@ pub mod db;
 pub mod error;
 pub mod live;
 pub mod media;
+pub mod planning;
 pub mod quota;
 pub mod sync;
 pub mod uploads;

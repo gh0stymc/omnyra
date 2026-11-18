@@ -54,6 +54,25 @@ export const commands = {
 	getTopContents: (from: string | null, limit: number, options?: InvokeOptions) => __TAURI_INVOKE<TopContent_Serialize[]>("get_top_contents", { from, limit }, options),
 	/**  Streams in the period (VODs plus what Omnyra observed live) for one account. */
 	getLiveOverview: (accountId: string, from: string | null, options?: InvokeOptions) => __TAURI_INVOKE<LiveOverview_Serialize>("get_live_overview", { accountId, from }, options),
+	listIdeas: (options?: InvokeOptions) => __TAURI_INVOKE<Idea_Serialize[]>("list_ideas", undefined, options),
+	createIdea: (stage: string, input: IdeaInput_Deserialize, options?: InvokeOptions) => __TAURI_INVOKE<Idea_Serialize>("create_idea", { stage, input }, options),
+	updateIdea: (id: string, input: IdeaInput_Deserialize, options?: InvokeOptions) => __TAURI_INVOKE<Idea_Serialize>("update_idea", { id, input }, options),
+	/**  Moves a card to `stage` at `index` (0 = top) among that column's other cards. */
+	moveIdea: (id: string, stage: string, index: number, options?: InvokeOptions) => __TAURI_INVOKE<null>("move_idea", { id, stage, index }, options),
+	deleteIdea: (id: string, options?: InvokeOptions) => __TAURI_INVOKE<null>("delete_idea", { id }, options),
+	/**  Attaches a local file (by reference: it is not copied). */
+	attachIdeaFile: (ideaId: string, path: string, options?: InvokeOptions) => __TAURI_INVOKE<Idea_Serialize>("attach_idea_file", { ideaId, path }, options),
+	detachIdeaFile: (ideaId: string, fileId: string, options?: InvokeOptions) => __TAURI_INVOKE<Idea_Serialize>("detach_idea_file", { ideaId, fileId }, options),
+	/**
+	 *  Opens an attached file with the system's default app. Only files attached to an idea
+	 *  can be opened this way (the frontend never gets a generic "open any path").
+	 */
+	openIdeaFile: (fileId: string, options?: InvokeOptions) => __TAURI_INVOKE<null>("open_idea_file", { fileId }, options),
+	/**  Events with `at` in `[from, to)` (RFC 3339). */
+	getCalendar: (from: string, to: string, options?: InvokeOptions) => __TAURI_INVOKE<CalendarEvent_Serialize[]>("get_calendar", { from, to }, options),
+	moveCalendarEvent: (kind: EventKind, id: string, at: string, options?: InvokeOptions) => __TAURI_INVOKE<null>("move_calendar_event", { kind, id, at }, options),
+	createReminder: (input: ReminderInput_Deserialize, options?: InvokeOptions) => __TAURI_INVOKE<string>("create_reminder", { input }, options),
+	deleteReminder: (id: string, options?: InvokeOptions) => __TAURI_INVOKE<null>("delete_reminder", { id }, options),
 };
 
 /** Events */
@@ -229,6 +248,38 @@ export type BestTimeQuery = {
 	timezone: string,
 };
 
+export type CalendarEvent = CalendarEvent_Serialize | CalendarEvent_Deserialize;
+
+export type CalendarEvent_Deserialize = {
+	kind: EventKind,
+	/**  ID of the content, publication, reminder or idea. */
+	id: string,
+	title: string,
+	/**  RFC 3339, UTC. */
+	at: string,
+	platform?: string | null,
+	accountId?: string | null,
+	/**  Content kind (video, short...), publication status or idea stage. */
+	detail?: string | null,
+	url?: string | null,
+	movable: boolean,
+};
+
+export type CalendarEvent_Serialize = {
+	kind: EventKind,
+	/**  ID of the content, publication, reminder or idea. */
+	id: string,
+	title: string,
+	/**  RFC 3339, UTC. */
+	at: string,
+	platform: string | null,
+	accountId: string | null,
+	/**  Content kind (video, short...), publication status or idea stage. */
+	detail: string | null,
+	url: string | null,
+	movable: boolean,
+};
+
 export type Capabilities = Capabilities_Serialize | Capabilities_Deserialize;
 
 export type Capabilities_Deserialize = {
@@ -324,7 +375,68 @@ export type DisconnectOutcome = {
 	revoked: boolean,
 };
 
+export type EventKind = 
+/**  Already published (read-only). */
+"content" | 
+/**  Scheduled publication. */
+"publication" | "reminder" | 
+/**  An idea's due date. */
+"idea";
+
 export type Format = "video" | "short";
+
+export type Idea = Idea_Serialize | Idea_Deserialize;
+
+export type IdeaFile = {
+	id: string,
+	name: string,
+	path: string,
+};
+
+/**  Editable fields of an idea (all of them at once: the form sends the whole card). */
+export type IdeaInput = IdeaInput_Serialize | IdeaInput_Deserialize;
+
+/**  Editable fields of an idea (all of them at once: the form sends the whole card). */
+export type IdeaInput_Deserialize = {
+	title: string,
+	notes?: string | null,
+	targetPlatforms: string[],
+	dueAt?: string | null,
+};
+
+/**  Editable fields of an idea (all of them at once: the form sends the whole card). */
+export type IdeaInput_Serialize = {
+	title: string,
+	notes: string | null,
+	targetPlatforms: string[],
+	dueAt: string | null,
+};
+
+export type Idea_Deserialize = {
+	id: string,
+	title: string,
+	notes?: string | null,
+	stage: string,
+	position: number | null,
+	targetPlatforms: string[],
+	dueAt?: string | null,
+	files: IdeaFile[],
+	createdAt: string,
+	updatedAt: string,
+};
+
+export type Idea_Serialize = {
+	id: string,
+	title: string,
+	notes: string | null,
+	stage: string,
+	position: number | null,
+	targetPlatforms: string[],
+	dueAt: string | null,
+	files: IdeaFile[],
+	createdAt: string,
+	updatedAt: string,
+};
 
 /**
  *  A validation finding. `code` is stable and translated by the frontend
@@ -506,6 +618,20 @@ export type QuotaUsage = {
 	dailyLimit: number,
 	/**  What syncing may use of `daily_limit`. */
 	syncBudget: number,
+};
+
+export type ReminderInput = ReminderInput_Serialize | ReminderInput_Deserialize;
+
+export type ReminderInput_Deserialize = {
+	title: string,
+	at: string,
+	platform?: string | null,
+};
+
+export type ReminderInput_Serialize = {
+	title: string,
+	at: string,
+	platform: string | null,
 };
 
 export type ScheduleSupport = "none" | "native" | "localOnly";
