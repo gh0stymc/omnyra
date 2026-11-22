@@ -46,8 +46,7 @@
     "linux": {
       "deb": {
         "depends": [
-          "ffmpeg",
-          "libayatana-appindicator3-1"
+          "ffmpeg"
         ],
         "section": "video",
         "recommends": [
