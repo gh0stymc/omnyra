@@ -96,6 +96,10 @@ fn specta_builder() -> Builder<tauri::Wry> {
             commands::creation::list_text_templates,
             commands::creation::save_text_template,
             commands::creation::delete_text_template,
+            commands::creation::llm_status,
+            commands::creation::set_llm_key,
+            commands::creation::clear_llm_key,
+            commands::creation::llm_generate,
         ])
         .events(collect_events![
             events::AccountChanged,

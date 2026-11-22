@@ -126,3 +126,60 @@ pub fn save_text_template(
 pub fn delete_text_template(state: State<'_, AppState>, id: String) -> Result<(), AppError> {
     creation::delete_text_template(&*lock_db(&state)?, &id)
 }
+
+/// Whether an LLM API key is saved in the keyring.
+#[tauri::command]
+#[specta::specta]
+pub async fn llm_status(state: State<'_, AppState>) -> Result<bool, AppError> {
+    Ok(state
+        .auth
+        .get_secret(omnyra_core::assistant::KEY_SECRET)
+        .await?
+        .is_some())
+}
+
+/// Saves the user's Anthropic API key in the OS keyring (never in the database).
+#[tauri::command]
+#[specta::specta]
+pub async fn set_llm_key(state: State<'_, AppState>, key: String) -> Result<(), AppError> {
+    if !omnyra_core::assistant::plausible_key(&key) {
+        return Err(AppError::Validation {
+            field: "key".into(),
+        });
+    }
+    state
+        .auth
+        .set_secret(omnyra_core::assistant::KEY_SECRET, key.trim())
+        .await
+}
+
+#[tauri::command]
+#[specta::specta]
+pub async fn clear_llm_key(state: State<'_, AppState>) -> Result<(), AppError> {
+    state
+        .auth
+        .delete_secret(omnyra_core::assistant::KEY_SECRET)
+        .await
+}
+
+/// Suggestions from the LLM. Only the fields of `req` are sent.
+#[tauri::command]
+#[specta::specta]
+pub async fn llm_generate(
+    state: State<'_, AppState>,
+    req: omnyra_core::assistant::AssistRequest,
+) -> Result<omnyra_core::assistant::AssistResult, AppError> {
+    let key = state
+        .auth
+        .get_secret(omnyra_core::assistant::KEY_SECRET)
+        .await?
+        .ok_or(AppError::LlmKeyMissing)?;
+    omnyra_core::assistant::generate(
+        state.auth.http(),
+        None,
+        &key,
+        omnyra_core::assistant::DEFAULT_MODEL,
+        &req,
+    )
+    .await
+}

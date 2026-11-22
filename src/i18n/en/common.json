@@ -100,7 +100,11 @@
     "unknown": "An unexpected error occurred.",
     "SYNC_IN_PROGRESS": "This account is already syncing.",
     "UPLOAD_SESSION_EXPIRED": "The upload session expired; it will start again.",
-    "FILE_UNAVAILABLE": "The file is no longer available or has changed."
+    "FILE_UNAVAILABLE": "The file is no longer available or has changed.",
+    "LLM_KEY_MISSING": "The assistant's API key is missing.",
+    "LLM_KEY_INVALID": "The API key is invalid or lacks permission.",
+    "LLM_REFUSED": "The model declined that request. Try rephrasing it.",
+    "LOCKED": "Omnyra is locked."
   },
   "accounts": {
     "title": "Connected accounts",
@@ -570,5 +574,42 @@
       "square": "Square (Instagram)",
       "twitch": "Twitch / 1080p"
     }
+  },
+  "texts": {
+    "platform": {
+      "youtube": "YouTube",
+      "tiktok": "TikTok",
+      "instagram": "Instagram",
+      "twitch": "Twitch"
+    },
+    "var": {
+      "tema": "Video topic",
+      "juego": "Game",
+      "serie": "Series",
+      "episodio": "Episode",
+      "canal": "Channel",
+      "palabras": "Keywords (comma-separated)"
+    },
+    "field": {
+      "title": "Titles",
+      "description": "Description / caption",
+      "hashtags": "Hashtags"
+    },
+    "noTitleHere": "(this network has no title: use it as the first line)",
+    "tooLong": "too long",
+    "copy": "Copy",
+    "hashtagRange": "Recommended on this network: {{min}} to {{max}}.",
+    "newTemplate": "New template",
+    "templateName": "Name",
+    "placeholders": "Variables in double braces: tema, juego, serie, episodio, canal, fecha, hashtags. Written in upper case (TEMA) they write the value in upper case.",
+    "allNetworks": "For every network",
+    "saveTemplate": "Save template",
+    "llmTitle": "AI assistant (optional)",
+    "llmHint": "Uses your own Anthropic (Claude) API key. It is stored in the system keyring, never in the database. Only what you see is sent, when you press the button.",
+    "llmWillSend": "Exactly this will be sent to Anthropic:",
+    "generateAi": "Generate with AI",
+    "generating": "Generating…",
+    "saveKey": "Save key",
+    "removeKey": "Remove key"
   }
 }

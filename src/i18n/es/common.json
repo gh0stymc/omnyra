@@ -100,7 +100,11 @@
     "unknown": "Ha ocurrido un error inesperado.",
     "SYNC_IN_PROGRESS": "Esta cuenta ya se está sincronizando.",
     "UPLOAD_SESSION_EXPIRED": "La sesión de subida caducó; se empezará de nuevo.",
-    "FILE_UNAVAILABLE": "El archivo ya no está disponible o ha cambiado."
+    "FILE_UNAVAILABLE": "El archivo ya no está disponible o ha cambiado.",
+    "LLM_KEY_MISSING": "Falta la clave de API del asistente.",
+    "LLM_KEY_INVALID": "La clave de API no es válida o no tiene permiso.",
+    "LLM_REFUSED": "El modelo no ha querido responder a esa petición. Prueba a reformularla.",
+    "LOCKED": "Omnyra está bloqueada."
   },
   "accounts": {
     "title": "Cuentas conectadas",
@@ -570,5 +574,42 @@
       "square": "Cuadrado (Instagram)",
       "twitch": "Twitch / 1080p"
     }
+  },
+  "texts": {
+    "platform": {
+      "youtube": "YouTube",
+      "tiktok": "TikTok",
+      "instagram": "Instagram",
+      "twitch": "Twitch"
+    },
+    "var": {
+      "tema": "Tema del vídeo",
+      "juego": "Juego",
+      "serie": "Serie",
+      "episodio": "Episodio",
+      "canal": "Canal",
+      "palabras": "Palabras clave (separadas por comas)"
+    },
+    "field": {
+      "title": "Títulos",
+      "description": "Descripción / pie",
+      "hashtags": "Hashtags"
+    },
+    "noTitleHere": "(esta red no tiene título: úsalo como primera línea)",
+    "tooLong": "demasiado largo",
+    "copy": "Copiar",
+    "hashtagRange": "Recomendado en esta red: entre {{min}} y {{max}}.",
+    "newTemplate": "Nueva plantilla",
+    "templateName": "Nombre",
+    "placeholders": "Variables entre llaves dobles: tema, juego, serie, episodio, canal, fecha, hashtags. Escritas en mayúsculas (TEMA) ponen el valor en mayúsculas.",
+    "allNetworks": "Para todas las redes",
+    "saveTemplate": "Guardar plantilla",
+    "llmTitle": "Asistente con IA (opcional)",
+    "llmHint": "Usa tu propia clave de API de Anthropic (Claude). Se guarda en el llavero del sistema, nunca en la base de datos. Solo se envía lo que ves antes de pulsar el botón.",
+    "llmWillSend": "Se enviará a Anthropic exactamente esto:",
+    "generateAi": "Generar con IA",
+    "generating": "Generando…",
+    "saveKey": "Guardar clave",
+    "removeKey": "Borrar clave"
   }
 }

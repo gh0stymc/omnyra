@@ -62,6 +62,18 @@ pub enum AppError {
     /// The file changed or disappeared since it was queued.
     #[error("file not available")]
     FileUnavailable,
+    /// No LLM API key saved (text assistant, 5b).
+    #[error("no LLM API key")]
+    LlmKeyMissing,
+    /// The LLM provider rejected the API key.
+    #[error("LLM API key rejected")]
+    LlmKeyInvalid,
+    /// The model declined the request.
+    #[error("LLM declined the request")]
+    LlmRefused,
+    /// The app is locked with a PIN (6c).
+    #[error("app locked")]
+    Locked,
 }
 
 impl From<rusqlite::Error> for AppError {

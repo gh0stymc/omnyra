@@ -2,11 +2,12 @@ import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router";
 import { AssetLibrary } from "./AssetLibrary";
 import { ThumbnailEditor } from "./thumbnails/ThumbnailEditor";
+import { TextAssistant } from "./texts/TextAssistant";
 
-const TABS = ["thumbnails", "library"] as const;
+const TABS = ["thumbnails", "library", "texts"] as const;
 type Tab = (typeof TABS)[number];
 
-/** Creation tools: thumbnail editor and asset library. */
+/** Creation tools: thumbnail editor, asset library, text assistant and moments. */
 export function CreationPage() {
   const { t } = useTranslation();
   const [params, setParams] = useSearchParams();
@@ -31,6 +32,7 @@ export function CreationPage() {
       </div>
       {tab === "thumbnails" && <ThumbnailEditor />}
       {tab === "library" && <AssetLibrary />}
+      {tab === "texts" && <TextAssistant />}
     </div>
   );
 }

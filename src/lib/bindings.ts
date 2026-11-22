@@ -134,6 +134,13 @@ export const commands = {
 	listTextTemplates: (options?: InvokeOptions) => __TAURI_INVOKE<TextTemplate_Serialize[]>("list_text_templates", undefined, options),
 	saveTextTemplate: (input: TextTemplateInput_Deserialize, options?: InvokeOptions) => __TAURI_INVOKE<TextTemplate_Serialize>("save_text_template", { input }, options),
 	deleteTextTemplate: (id: string, options?: InvokeOptions) => __TAURI_INVOKE<null>("delete_text_template", { id }, options),
+	/**  Whether an LLM API key is saved in the keyring. */
+	llmStatus: (options?: InvokeOptions) => __TAURI_INVOKE<boolean>("llm_status", undefined, options),
+	/**  Saves the user's Anthropic API key in the OS keyring (never in the database). */
+	setLlmKey: (key: string, options?: InvokeOptions) => __TAURI_INVOKE<null>("set_llm_key", { key }, options),
+	clearLlmKey: (options?: InvokeOptions) => __TAURI_INVOKE<null>("clear_llm_key", undefined, options),
+	/**  Suggestions from the LLM. Only the fields of `req` are sent. */
+	llmGenerate: (req: AssistRequest, options?: InvokeOptions) => __TAURI_INVOKE<AssistResult>("llm_generate", { req }, options),
 };
 
 /** Events */
@@ -347,7 +354,15 @@ export type AppError = { code: "TOKEN_EXPIRED" } | { code: "QUOTA_EXCEEDED" } | 
 /**  The resumable upload session expired or is unknown: start a new one. */
 { code: "UPLOAD_SESSION_EXPIRED" } | 
 /**  The file changed or disappeared since it was queued. */
-{ code: "FILE_UNAVAILABLE" };
+{ code: "FILE_UNAVAILABLE" } | 
+/**  No LLM API key saved (text assistant, 5b). */
+{ code: "LLM_KEY_MISSING" } | 
+/**  The LLM provider rejected the API key. */
+{ code: "LLM_KEY_INVALID" } | 
+/**  The model declined the request. */
+{ code: "LLM_REFUSED" } | 
+/**  The app is locked with a PIN (6c). */
+{ code: "LOCKED" };
 
 export type AppSettings = {
 	/**  Keep running in the tray when the window is closed. */
@@ -406,6 +421,23 @@ export type Asset_Serialize = {
 	mime: string,
 	sizeBytes: number | null,
 	createdAt: string,
+};
+
+export type AssistRequest = {
+	/**  youtube | tiktok | instagram | twitch */
+	platform: string,
+	/**  What the video is about, as the user wrote it. */
+	topic: string,
+	/**  Extra notes (game, series, tone...). Optional. */
+	notes: string,
+	/**  `es` | `en`: language of the suggestions. */
+	language: string,
+};
+
+export type AssistResult = {
+	titles: string[],
+	description: string,
+	hashtags: string[],
 };
 
 export type AuthKind = 
