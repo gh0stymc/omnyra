@@ -486,6 +486,13 @@
     "markReplied": "Mark replied",
     "needsScope": "Replying needs one more permission.",
     "replyPlaceholder": "Write your reply…",
-    "send": "Send reply"
+    "send": "Send reply",
+    "clustersTitle": "Repeated questions",
+    "clusterSize_one": "{{count}} time",
+    "clusterSize_other": "{{count}} times",
+    "seeQuestions": "See questions",
+    "toIdea": "Send to the idea board",
+    "openIdea": "Open idea",
+    "changeCategory": "Change category"
   }
 }

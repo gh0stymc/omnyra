@@ -53,6 +53,13 @@ function CommentCard({ c, account }: { c: CommentRow; account?: Account }) {
     mutationFn: (s: string) => commands.setCommentStatus(c.id, s),
     onSettled: refresh,
   });
+  const category = useMutation({
+    mutationFn: (k: string) => commands.setCommentCategory(c.id, k),
+    onSettled: () => {
+      refresh();
+      void qc.invalidateQueries({ queryKey: queryKeys.clusters });
+    },
+  });
   const suspicious = (c.phishingScore ?? 0) >= 0.5;
 
   return (
@@ -119,6 +126,18 @@ function CommentCard({ c, account }: { c: CommentRow; account?: Account }) {
             {t("community.unarchive")}
           </button>
         )}
+        <select
+          className={btn}
+          aria-label={t("community.changeCategory")}
+          value={c.category ?? ""}
+          onChange={(e) => category.mutate(e.target.value)}
+        >
+          {CATEGORIES.map((k) => (
+            <option key={k} value={k}>
+              {t(`community.category.${k}`)}
+            </option>
+          ))}
+        </select>
         {c.status === "pending" && (
           <button className={btn} onClick={() => status.mutate("replied")}>
             {t("community.markReplied")}

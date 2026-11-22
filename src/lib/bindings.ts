@@ -109,6 +109,12 @@ export const commands = {
 	commentScopes: (accountId: string, options?: InvokeOptions) => __TAURI_INVOKE<string[]>("comment_scopes", { accountId }, options),
 	/**  Incremental authorization for comments (YouTube `force-ssl`, Instagram comments). */
 	authorizeComments: (accountId: string, options?: InvokeOptions) => __TAURI_INVOKE<Account_Serialize>("authorize_comments", { accountId }, options),
+	/**  Groups of similar questions (2+), biggest first. */
+	listQuestionClusters: (options?: InvokeOptions) => __TAURI_INVOKE<QuestionCluster_Serialize[]>("list_question_clusters", undefined, options),
+	/**  "Send to the idea board". Returns the idea ID. */
+	clusterToIdea: (clusterId: string, options?: InvokeOptions) => __TAURI_INVOKE<string>("cluster_to_idea", { clusterId }, options),
+	/**  Manual category; it sticks across syncs. Clusters are rebuilt (questions may change). */
+	setCommentCategory: (id: string, category: string, options?: InvokeOptions) => __TAURI_INVOKE<null>("set_comment_category", { id, category }, options),
 };
 
 /** Events */
@@ -852,6 +858,26 @@ export type PublishTarget_Serialize = {
 	render: RenditionSpec_Serialize | null,
 	/**  RFC 3339; `None` = right away. */
 	scheduledAt: string | null,
+};
+
+export type QuestionCluster = QuestionCluster_Serialize | QuestionCluster_Deserialize;
+
+export type QuestionCluster_Deserialize = {
+	id: string,
+	label: string,
+	size: number,
+	ideaId?: string | null,
+	/**  A few of the questions, most liked first. */
+	samples: string[],
+};
+
+export type QuestionCluster_Serialize = {
+	id: string,
+	label: string,
+	size: number,
+	ideaId: string | null,
+	/**  A few of the questions, most liked first. */
+	samples: string[],
 };
 
 export type QuotaUsage = {

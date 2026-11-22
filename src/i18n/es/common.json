@@ -486,6 +486,13 @@
     "markReplied": "Marcar respondido",
     "needsScope": "Para responder hace falta un permiso más.",
     "replyPlaceholder": "Escribe tu respuesta…",
-    "send": "Enviar respuesta"
+    "send": "Enviar respuesta",
+    "clustersTitle": "Preguntas repetidas",
+    "clusterSize_one": "{{count}} vez",
+    "clusterSize_other": "{{count}} veces",
+    "seeQuestions": "Ver preguntas",
+    "toIdea": "Enviar al tablero de ideas",
+    "openIdea": "Abrir idea",
+    "changeCategory": "Cambiar categoría"
   }
 }

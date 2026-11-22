@@ -115,3 +115,32 @@ pub async fn authorize_comments(
     }
     Ok(connected)
 }
+
+/// Groups of similar questions (2+), biggest first.
+#[tauri::command]
+#[specta::specta]
+pub fn list_question_clusters(
+    state: State<'_, AppState>,
+) -> Result<Vec<community::cluster::QuestionCluster>, AppError> {
+    community::cluster::list(&*lock_db(&state)?)
+}
+
+/// "Send to the idea board". Returns the idea ID.
+#[tauri::command]
+#[specta::specta]
+pub fn cluster_to_idea(state: State<'_, AppState>, cluster_id: String) -> Result<String, AppError> {
+    community::cluster::to_idea(&*lock_db(&state)?, &cluster_id, &state.clock.now_iso())
+}
+
+/// Manual category; it sticks across syncs. Clusters are rebuilt (questions may change).
+#[tauri::command]
+#[specta::specta]
+pub fn set_comment_category(
+    state: State<'_, AppState>,
+    id: String,
+    category: String,
+) -> Result<(), AppError> {
+    let conn = lock_db(&state)?;
+    community::classify::set_manual(&conn, &id, &category)?;
+    community::cluster::rebuild(&conn, &state.clock.now_iso())
+}

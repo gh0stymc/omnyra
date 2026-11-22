@@ -80,6 +80,9 @@ fn specta_builder() -> Builder<tauri::Wry> {
             commands::community::reply_to_comment,
             commands::community::comment_scopes,
             commands::community::authorize_comments,
+            commands::community::list_question_clusters,
+            commands::community::cluster_to_idea,
+            commands::community::set_comment_category,
         ])
         .events(collect_events![
             events::AccountChanged,
