@@ -20,7 +20,7 @@
 - [x] 2c — Segundo plano y notificaciones
 - [x] 3a — Estrategia de autenticación Meta y TikTok
 - [x] 3b — Conectores de Instagram y TikTok
-- [ ] 3c — Publicación multi-red
+- [x] 3c — Publicación multi-red
 - [ ] 4a — Bandeja de comentarios unificada
 - [ ] 4b — Clasificación y preguntas repetidas
 - [ ] 5a — Editor de miniaturas
@@ -104,6 +104,7 @@
 - 2026-11-22: el usuario pidió terminar todos los pasos restantes en una sola sesión con `claude-opus-5-5` (sin cambiar a Fable en 3a/7a ni parar entre fases). Cada paso lleva su commit; lo que depende de cuentas o credenciales del usuario queda en "Problemas pendientes" y en la checklist manual.
 - 2026-11-22 (3a): `docs/AUTH_STRATEGY.md`: **token broker** sin estado en Cloudflare Workers (`broker/`, con tests `node --test`) que guarda los secretos de Meta y TikTok, hace el intercambio y el refresco, y para Instagram sirve el `redirect_uri` HTTPS y reenvía al loopback (puerto dentro de `state`, siempre `127.0.0.1`). La app nunca lleva esos secretos.
 - 2026-11-22 (3b): `OAuthConfig` gana `client_id_param` (TikTok `client_key`), `scope_separator` (`,`), `pkce_hex` (TikTok desktop, [VERIFICAR]) y `redirect_broker`. Conectores `instagram` (perfil, `reach` y seguidores nuevos de los últimos 30 días, Reels/posts con vistas/likes/comentarios, publicación de Reels con `rupload`, comentarios) y `tiktok` (perfil y totales, vídeos con vistas/likes/comentarios/compartidos, Direct Post por trozos con caída a `SELF_ONLY`). Reglas comunes de vídeo corto en `connectors/rules.rs` (el pie = título + descripción + etiquetas como hashtags). Vista compartida `src/platforms/shortform/ShortFormView.tsx`. El formulario de subida oculta los campos de YouTube en estas redes. Sin probar contra las APIs reales (faltan las apps).
+- 2026-11-22 (3c): pipeline FFmpeg en `omnyra-core/src/media/ffmpeg.rs` (argumentos puros y probados + `render` con progreso `-progress pipe:1`; test real con FFmpeg marcado `#[ignore]`): 16:9 / 9:16 / 1:1 con recorte, bandas o fondo difuminado, sin escalar por encima de 1080 en el lado corto; recorte de inicio/fin y duración máxima de la red; tope de bitrate para caber en el límite de tamaño (si no, CRF 23). Presets: Instagram y TikTok en vertical. Migración 0005: `publications.render_spec`; estado `rendering` → trabajador FFmpeg (`src-tauri/src/renders.rs`, de uno en uno) → archivo gestionado en `app_data_dir/renders/` → `queued`. La subida usa la versión si existe. Programación local real (A5): `scheduled_at` en la cola, el trabajador de subidas espera a esa hora. Asistente en `/publish` (texto común o propio por red, formato, recorte, programación) y "Preparar y descargar" (exporta a la ruta elegida y copia el texto). Los tests del adaptador los escribí en la sesión principal (no se delegó a `test-writer`).
 - 2026-11-18 (2c): campana de alertas en una cabecera nueva del `Layout` (`src/features/alerts/AlertsBell.tsx`): contador de no leídas, panel con las últimas 30, marcar leída al pulsar y "marcar todo como leído".
 
 ## Problemas pendientes

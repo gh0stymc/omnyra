@@ -15,7 +15,7 @@ fn ffprobe_bin() -> String {
 
 const TIMEOUT: Duration = Duration::from_secs(30);
 
-#[derive(Debug, Clone, Serialize, Type, PartialEq)]
+#[derive(Debug, Clone, Serialize, serde::Deserialize, Type, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct MediaInfo {
     pub duration_s: Option<f64>,

@@ -13,7 +13,8 @@
     "settings": "Settings",
     "accounts": "Accounts",
     "uploads": "Uploads",
-    "ideas": "Ideas"
+    "ideas": "Ideas",
+    "publish": "Publish to several networks"
   },
   "dashboard": {
     "title": "Global dashboard",
@@ -205,7 +206,9 @@
       "uploading": "Uploading",
       "published": "Uploaded",
       "failed": "Failed",
-      "cancelled": "Cancelled"
+      "cancelled": "Cancelled",
+      "rendering": "Preparing version",
+      "exported": "Exported"
     },
     "retryAt": "Will retry at {{at}} ({{reason}}).",
     "open": "Open on YouTube",
@@ -271,7 +274,8 @@
       }
     },
     "captionTitle": "Text (first line)",
-    "captionHint": "This network has no title: text, description and tags (as hashtags) make up the caption."
+    "captionHint": "This network has no title: text, description and tags (as hashtags) make up the caption.",
+    "scheduledFor": "Scheduled for {{at}} (Omnyra must be open or in the tray)."
   },
   "common": {
     "loading": "Loading…",
@@ -415,5 +419,38 @@
     "reach": "Daily reach",
     "noteInstagram": "Instagram only serves 30 days of daily insights: history fills in while you use Omnyra. Views, likes and comments are those of the posts in the period.",
     "noteTiktok": "TikTok has no history: followers are recorded daily since you connected the account. Figures are those of the videos published in the period."
+  },
+  "publish": {
+    "pageTitle": "Publish to several networks",
+    "intro": "Pick the video once, add the target accounts and adjust each version. Omnyra renders every format with FFmpeg and uploads it in the background.",
+    "destinations": "Destinations",
+    "removeTarget": "Remove",
+    "customText": "Own text for this network",
+    "emptyCaption": "(no text)",
+    "aspect": "Format",
+    "aspectOption": {
+      "original": "Original",
+      "landscape": "16:9 landscape",
+      "vertical": "9:16 vertical",
+      "square": "1:1 square"
+    },
+    "fit": "Fit",
+    "fitOption": {
+      "crop": "Crop",
+      "pad": "Black bars",
+      "blur": "Blurred background"
+    },
+    "start": "Start (s)",
+    "end": "End (s)",
+    "schedule": "Schedule (empty = now)",
+    "publish_one": "Publish to {{count}} network",
+    "publish_other": "Publish to {{count}} networks",
+    "exportTitle": "Prepare and download",
+    "exportHint": "For networks without API upload (or to upload by hand): render the file in the chosen format and copy the text to the clipboard.",
+    "export": "Prepare and save…",
+    "exporting": "Preparing… {{pct}} %",
+    "exported": "File saved.",
+    "copyCaption": "Copy text",
+    "copied": "Copied"
   }
 }

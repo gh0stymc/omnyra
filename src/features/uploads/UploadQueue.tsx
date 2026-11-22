@@ -17,7 +17,15 @@ function useLiveProgress() {
         })),
       )
       .catch(() => undefined);
-    return () => void sub.then((f) => f?.());
+    // FFmpeg progress of renditions (3c) uses the same map: a publication is either
+    // rendering or uploading, never both.
+    const render = events.renderProgress
+      .listen(({ payload }) => setProgress((p) => ({ ...p, [payload.key]: payload.progress ?? 0 })))
+      .catch(() => undefined);
+    return () => {
+      void sub.then((f) => f?.());
+      void render.then((f) => f?.());
+    };
   }, []);
   return progress;
 }
@@ -27,6 +35,11 @@ export function UploadQueue() {
   const qc = useQueryClient();
   const uploads = useQuery({ queryKey: queryKeys.uploads, queryFn: () => commands.listUploads() });
   const live = useLiveProgress();
+  const accounts = useQuery({
+    queryKey: queryKeys.accounts,
+    queryFn: () => commands.listAccounts(),
+  });
+  const platformOf = (id: string) => accounts.data?.find((a) => a.id === id)?.platform;
   const refresh = () => void qc.invalidateQueries({ queryKey: queryKeys.uploads });
   const act = useMutation({
     mutationFn: ({ action, id }: { action: "cancel" | "retry" | "remove"; id: string }) =>
@@ -51,6 +64,11 @@ export function UploadQueue() {
         reason: t(`errors.${u.errorCode}`, { defaultValue: u.errorCode ?? "" }),
       });
     }
+    if (u.status === "queued" && u.scheduledAt && new Date(u.scheduledAt) > new Date()) {
+      return t("upload.scheduledFor", {
+        at: new Date(u.scheduledAt).toLocaleString(i18n.language),
+      });
+    }
     if (u.status === "failed" && u.errorCode) {
       return t(`errors.${u.errorCode}`, { defaultValue: t("errors.unknown") });
     }
@@ -60,7 +78,8 @@ export function UploadQueue() {
   return (
     <ul className="space-y-2">
       {uploads.data.map((u) => {
-        const p = u.status === "uploading" ? (live[u.id] ?? u.progress ?? 0) : (u.progress ?? 0);
+        const active = u.status === "uploading" || u.status === "rendering";
+        const p = active ? (live[u.id] ?? u.progress ?? 0) : (u.progress ?? 0);
         const note = describe(u);
         return (
           <li
@@ -72,19 +91,22 @@ export function UploadQueue() {
                 <p className="truncate text-sm font-medium">{u.title || t("upload.untitled")}</p>
                 <p className="text-xs text-[var(--muted)]">
                   {t(`upload.status.${u.status}`)}
-                  {u.status === "uploading" && ` · ${Math.floor(p * 100)} %`}
+                  {active && ` · ${Math.floor(p * 100)} %`}
+                  {platformOf(u.accountId) && ` · ${platformOf(u.accountId)}`}
                 </p>
               </div>
               <div className="flex gap-1">
-                {u.status === "published" && u.externalId && (
-                  <button
-                    className={btn}
-                    onClick={() => void openUrl(`https://youtu.be/${u.externalId}`)}
-                  >
-                    {t("upload.open")}
-                  </button>
-                )}
-                {(u.status === "queued" || u.status === "uploading") && (
+                {u.status === "published" &&
+                  u.externalId &&
+                  platformOf(u.accountId) === "youtube" && (
+                    <button
+                      className={btn}
+                      onClick={() => void openUrl(`https://youtu.be/${u.externalId}`)}
+                    >
+                      {t("upload.open")}
+                    </button>
+                  )}
+                {(u.status === "queued" || active) && (
                   <button
                     className={btn}
                     onClick={() => act.mutate({ action: "cancel", id: u.id })}
@@ -107,7 +129,7 @@ export function UploadQueue() {
                 )}
               </div>
             </div>
-            {(u.status === "uploading" || (u.status === "queued" && p > 0)) && (
+            {(active || (u.status === "queued" && p > 0)) && (
               <div
                 className="h-1.5 overflow-hidden rounded-full bg-[var(--border)]"
                 role="progressbar"

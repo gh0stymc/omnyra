@@ -28,4 +28,5 @@ serde_json.workspace = true
 time.workspace = true
 tracing = "0.1"
 tokio.workspace = true
+uuid.workspace = true
 tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt", "env-filter", "ansi"] }

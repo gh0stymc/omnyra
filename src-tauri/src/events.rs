@@ -60,3 +60,12 @@ pub struct DeviceCodeIssued {
     pub user_code: String,
     pub verification_uri: String,
 }
+
+/// FFmpeg progress (0..1) of a publication's rendition, or of a "prepare and download"
+/// export (`key` chosen by the frontend).
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type, tauri_specta::Event)]
+#[serde(rename_all = "camelCase")]
+pub struct RenderProgress {
+    pub key: String,
+    pub progress: f64,
+}

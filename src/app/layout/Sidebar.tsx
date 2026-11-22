@@ -12,6 +12,7 @@ import {
   Radar,
   Upload,
   Lightbulb,
+  Send,
 } from "lucide-react";
 import { commands } from "../../lib/bindings";
 import { queryKeys } from "../../lib/queryKeys";
@@ -19,6 +20,7 @@ import { queryKeys } from "../../lib/queryKeys";
 const sections = [
   { to: "/", key: "dashboard", icon: LayoutDashboard },
   { to: "/uploads", key: "uploads", icon: Upload },
+  { to: "/publish", key: "publish", icon: Send },
   { to: "/calendar", key: "calendar", icon: Calendar },
   { to: "/ideas", key: "ideas", icon: Lightbulb },
   { to: "/community", key: "community", icon: MessageSquare },

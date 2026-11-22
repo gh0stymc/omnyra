@@ -85,6 +85,21 @@ export const commands = {
 	unreadAlertsCount: (options?: InvokeOptions) => __TAURI_INVOKE<number>("unread_alerts_count", undefined, options),
 	markAlertRead: (id: string, options?: InvokeOptions) => __TAURI_INVOKE<null>("mark_alert_read", { id }, options),
 	markAllAlertsRead: (options?: InvokeOptions) => __TAURI_INVOKE<null>("mark_all_alerts_read", undefined, options),
+	/**  Default adaptation (aspect, limits) for a network. */
+	renditionPreset: (platform: string, options?: InvokeOptions) => __TAURI_INVOKE<RenditionSpec_Serialize>("rendition_preset", { platform }, options),
+	/**  Validates one target as it will be after rendering. */
+	validateTarget: (target: PublishTarget_Deserialize, options?: InvokeOptions) => __TAURI_INVOKE<ValidationReport_Serialize>("validate_target", { target }, options),
+	/**
+	 *  Queues every target under one batch. All targets are validated first: nothing is
+	 *  queued if one fails (`VALIDATION` with field `<accountId>:<field>`).
+	 */
+	publishBatch: (targets: PublishTarget_Deserialize[], options?: InvokeOptions) => __TAURI_INVOKE<string[]>("publish_batch", { targets }, options),
+	/**
+	 *  "Prepare and download": renders `spec` from `source` into `dest` (chosen by the user
+	 *  in a save dialog) for networks without API upload. Progress comes as
+	 *  `RenderProgress { key }`.
+	 */
+	exportRendition: (source: string, spec: RenditionSpec_Deserialize, dest: string, key: string, options?: InvokeOptions) => __TAURI_INVOKE<null>("export_rendition", { source, spec, dest, key }, options),
 };
 
 /** Events */
@@ -92,6 +107,7 @@ export const events = {
 	accountChanged: makeEvent<AccountChanged, AccountChanged>("account-changed"),
 	alertsChanged: makeEvent<AlertsChanged, AlertsChanged>("alerts-changed"),
 	deviceCodeIssued: makeEvent<DeviceCodeIssued, DeviceCodeIssued>("device-code-issued"),
+	renderProgress: makeEvent<RenderProgress, RenderProgress>("render-progress"),
 	syncStatus: makeEvent<SyncStatus_Serialize, SyncStatus_Deserialize>("sync-status"),
 	uploadChanged: makeEvent<UploadChanged, UploadChanged>("upload-changed"),
 	uploadProgress: makeEvent<UploadProgress, UploadProgress>("upload-progress"),
@@ -311,6 +327,10 @@ export type AppSettings = {
 	locale: string,
 };
 
+export type Aspect = 
+/**  Keep the source frame (only trim/compress). */
+"original" | "landscape" | "vertical" | "square";
+
 export type AuthKind = 
 /**  No login (mock). */
 "none" | 
@@ -478,6 +498,14 @@ export type EventKind =
 "publication" | "reminder" | 
 /**  An idea's due date. */
 "idea";
+
+export type Fit = 
+/**  Fill the frame and cut what overflows (centre crop). */
+"crop" | 
+/**  Fit the whole frame and fill the rest with black bars. */
+"pad" | 
+/**  Fit the whole frame over a blurred, zoomed copy of itself. */
+"blur";
 
 export type Format = "video" | "short";
 
@@ -705,6 +733,27 @@ export type PlatformInfo_Serialize = {
 	authConfigured: boolean,
 };
 
+/**  One destination of a multi-network post. */
+export type PublishTarget = PublishTarget_Serialize | PublishTarget_Deserialize;
+
+/**  One destination of a multi-network post. */
+export type PublishTarget_Deserialize = {
+	accountId: string,
+	draft: UploadDraft_Deserialize,
+	render?: RenditionSpec_Deserialize | null,
+	/**  RFC 3339; `None` = right away. */
+	scheduledAt?: string | null,
+};
+
+/**  One destination of a multi-network post. */
+export type PublishTarget_Serialize = {
+	accountId: string,
+	draft: UploadDraft_Serialize,
+	render: RenditionSpec_Serialize | null,
+	/**  RFC 3339; `None` = right away. */
+	scheduledAt: string | null,
+};
+
 export type QuotaUsage = {
 	/**  Bucket: `youtube` (Data API units) or `youtube.upload` (uploads). */
 	bucket: string,
@@ -728,6 +777,46 @@ export type ReminderInput_Serialize = {
 	title: string,
 	at: string,
 	platform: string | null,
+};
+
+/**
+ *  FFmpeg progress (0..1) of a publication's rendition, or of a "prepare and download"
+ *  export (`key` chosen by the frontend).
+ */
+export type RenderProgress = {
+	key: string,
+	progress: number | null,
+};
+
+/**  How to adapt one video for one network. */
+export type RenditionSpec = RenditionSpec_Serialize | RenditionSpec_Deserialize;
+
+/**  How to adapt one video for one network. */
+export type RenditionSpec_Deserialize = {
+	aspect: Aspect,
+	fit: Fit,
+	/**  Start of the kept part, in seconds. */
+	startS?: number | null,
+	/**  End of the kept part, in seconds (exclusive). */
+	endS?: number | null,
+	/**  Longest duration the network accepts: the end is cut there. */
+	maxDurationS?: number | null,
+	/**  Size limit: the video bitrate is capped so the file fits (with a 5 % margin). */
+	maxSizeMb?: number | null,
+};
+
+/**  How to adapt one video for one network. */
+export type RenditionSpec_Serialize = {
+	aspect: Aspect,
+	fit: Fit,
+	/**  Start of the kept part, in seconds. */
+	startS: number | null,
+	/**  End of the kept part, in seconds (exclusive). */
+	endS: number | null,
+	/**  Longest duration the network accepts: the end is cut there. */
+	maxDurationS: number | null,
+	/**  Size limit: the video bitrate is capped so the file fits (with a 5 % margin). */
+	maxSizeMb: number | null,
 };
 
 export type ScheduleSupport = "none" | "native" | "localOnly";
@@ -890,6 +979,10 @@ export type UploadRow_Deserialize = {
 	warnings: string[],
 	externalId?: string | null,
 	createdAt: string,
+	/**  Groups the publications of one multi-network post (3c). */
+	batchId?: string | null,
+	/**  Local scheduling: the worker publishes it at this time (A5). */
+	scheduledAt?: string | null,
 };
 
 export type UploadRow_Serialize = {
@@ -905,6 +998,10 @@ export type UploadRow_Serialize = {
 	warnings: string[],
 	externalId: string | null,
 	createdAt: string,
+	/**  Groups the publications of one multi-network post (3c). */
+	batchId: string | null,
+	/**  Local scheduling: the worker publishes it at this time (A5). */
+	scheduledAt: string | null,
 };
 
 export type UploadSupport = "none" | "direct" | "draftOnly" | "privateOnlyUnaudited";

@@ -15,6 +15,7 @@ use crate::connectors::{
     UploadRequest, UploadSink,
 };
 use crate::db::repo::{accounts, contents};
+use crate::media::ffmpeg::{self, RenditionSpec};
 use crate::media::{self, MediaInfo};
 use crate::quota::{DbQuota, Purpose};
 use crate::{AppError, Result};
@@ -82,6 +83,16 @@ impl ValidationReport {
 
 /// Checks the files (existence, size, ffprobe) and then the platform's rules.
 pub async fn validate(connector: &dyn Connector, draft: &UploadDraft) -> ValidationReport {
+    validate_with(connector, draft, None).await
+}
+
+/// Like [`validate`], but checks what the FFmpeg rendition `render` will be (frame,
+/// duration, MP4, size limit) instead of the source file.
+pub async fn validate_with(
+    connector: &dyn Connector,
+    draft: &UploadDraft,
+    render: Option<&RenditionSpec>,
+) -> ValidationReport {
     let meta = match tokio::fs::metadata(&draft.file_path).await {
         Ok(m) if m.is_file() => m,
         _ => {
@@ -115,12 +126,19 @@ pub async fn validate(connector: &dyn Connector, draft: &UploadDraft) -> Validat
         },
         None => None,
     };
-    let facts = FileFacts {
+    let mut facts = FileFacts {
         size_bytes: meta.len(),
         extension: extension(&draft.file_path),
         media: media.clone(),
         thumbnail,
     };
+    if let Some(spec) = render.filter(|s| !s.is_noop()) {
+        facts.extension = "mp4".into();
+        facts.media = media.as_ref().map(|m| ffmpeg::projected_media(spec, m));
+        if let Some(mb) = spec.max_size_mb {
+            facts.size_bytes = facts.size_bytes.min((mb * 1024.0 * 1024.0) as u64);
+        }
+    }
     let unreadable = !issues.is_empty() && media.is_none();
     issues.extend(
         connector
@@ -153,6 +171,10 @@ pub struct UploadRow {
     pub warnings: Vec<String>,
     pub external_id: Option<String>,
     pub created_at: String,
+    /// Groups the publications of one multi-network post (3c).
+    pub batch_id: Option<String>,
+    /// Local scheduling: the worker publishes it at this time (A5).
+    pub scheduled_at: Option<String>,
 }
 
 fn insert_file(
@@ -183,6 +205,16 @@ fn insert_file(
     Ok(id)
 }
 
+/// Extra settings of a queued publication (multi-network publishing, 3c).
+#[derive(Debug, Clone, Default)]
+pub struct EnqueueOptions {
+    pub batch_id: Option<String>,
+    /// FFmpeg adaptation to render before uploading (`None` or a no-op: upload as is).
+    pub render: Option<RenditionSpec>,
+    /// RFC 3339: publish at this time instead of right away.
+    pub scheduled_at: Option<String>,
+}
+
 /// Validates again (the form may be stale) and queues the upload.
 pub async fn enqueue(
     db: &Mutex<Connection>,
@@ -191,6 +223,31 @@ pub async fn enqueue(
     account_id: &str,
     draft: &UploadDraft,
 ) -> Result<String> {
+    enqueue_with(
+        db,
+        clock,
+        connector,
+        account_id,
+        draft,
+        &EnqueueOptions::default(),
+    )
+    .await
+}
+
+pub async fn enqueue_with(
+    db: &Mutex<Connection>,
+    clock: &dyn Clock,
+    connector: &dyn Connector,
+    account_id: &str,
+    draft: &UploadDraft,
+    opts: &EnqueueOptions,
+) -> Result<String> {
+    if let Some(at) = &opts.scheduled_at {
+        OffsetDateTime::parse(at, &Rfc3339).map_err(|_| AppError::Validation {
+            field: "scheduledAt".into(),
+        })?;
+    }
+    let render = opts.render.as_ref().filter(|s| !s.is_noop());
     let account = accounts::get(&*lock(db)?, account_id)?;
     if account.status != accounts::AccountStatus::Active {
         return Err(AppError::NotConnected);
@@ -199,7 +256,7 @@ pub async fn enqueue(
     if !needed.iter().all(|s| account.granted_scopes.contains(s)) {
         return Err(AppError::ScopesDenied);
     }
-    let report = validate(connector, draft).await;
+    let report = validate_with(connector, draft, render).await;
     if let Some(e) = report.issues.iter().find(|i| i.severity == Severity::Error) {
         return Err(AppError::Validation {
             field: e.field.clone(),
@@ -223,11 +280,22 @@ pub async fn enqueue(
         "playlistId": draft.playlist_id,
         "madeForKids": draft.made_for_kids,
     });
+    let status = if render.is_some() {
+        "rendering"
+    } else {
+        "queued"
+    };
+    let mode = if opts.scheduled_at.is_some() {
+        "local"
+    } else {
+        "now"
+    };
     tx.execute(
         "INSERT INTO publications (id, account_id, source_file_id, thumbnail_file_id, title,
                                    description, tags, visibility, platform_options, status,
-                                   schedule_mode, created_at, updated_at)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, 'queued', 'now', ?10, ?10)",
+                                   schedule_mode, created_at, updated_at, batch_id,
+                                   scheduled_at, render_spec)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?11, ?12, ?10, ?10, ?13, ?14, ?15)",
         params![
             id,
             account_id,
@@ -238,7 +306,15 @@ pub async fn enqueue(
             serde_json::to_string(&draft.tags).map_err(|_| AppError::Internal)?,
             draft.visibility,
             options.to_string(),
-            now
+            now,
+            status,
+            mode,
+            opts.batch_id,
+            opts.scheduled_at,
+            render
+                .map(serde_json::to_string)
+                .transpose()
+                .map_err(|_| AppError::Internal)?,
         ],
     )?;
     tx.commit()?;
@@ -246,7 +322,8 @@ pub async fn enqueue(
 }
 
 const ROW_COLUMNS: &str = "id, account_id, title, visibility, status, progress, attempts,
-                           retry_at, error_code, warnings, external_id, created_at";
+                           retry_at, error_code, warnings, external_id, created_at,
+                           batch_id, scheduled_at";
 
 fn row(r: &rusqlite::Row) -> rusqlite::Result<UploadRow> {
     let warnings: String = r.get(9)?;
@@ -263,6 +340,8 @@ fn row(r: &rusqlite::Row) -> rusqlite::Result<UploadRow> {
         warnings: serde_json::from_str(&warnings).unwrap_or_default(),
         external_id: r.get(10)?,
         created_at: r.get(11)?,
+        batch_id: r.get(12)?,
+        scheduled_at: r.get(13)?,
     })
 }
 
@@ -301,6 +380,7 @@ pub fn next_due(conn: &Connection, now: &str) -> Result<Option<String>> {
         .query_row(
             "SELECT id FROM publications
              WHERE status = 'queued' AND (retry_at IS NULL OR retry_at <= ?1)
+               AND (scheduled_at IS NULL OR julianday(scheduled_at) <= julianday(?1))
              ORDER BY created_at LIMIT 1",
             params![now],
             |r| r.get(0),
@@ -308,10 +388,11 @@ pub fn next_due(conn: &Connection, now: &str) -> Result<Option<String>> {
         .optional()?)
 }
 
-/// Earliest pending retry, so the runner knows how long it may sleep.
+/// Earliest pending retry or scheduled time, so the runner knows how long it may sleep.
 pub fn next_retry_at(conn: &Connection) -> Result<Option<String>> {
     Ok(conn.query_row(
-        "SELECT MIN(retry_at) FROM publications WHERE status = 'queued' AND retry_at IS NOT NULL",
+        "SELECT MIN(COALESCE(retry_at, scheduled_at)) FROM publications
+         WHERE status = 'queued' AND COALESCE(retry_at, scheduled_at) IS NOT NULL",
         [],
         |r| r.get(0),
     )?)
@@ -338,7 +419,7 @@ pub fn set_progress(conn: &Connection, id: &str, progress: f64) -> Result<()> {
 pub fn cancel(conn: &Connection, id: &str, now: &str) -> Result<bool> {
     Ok(conn.execute(
         "UPDATE publications SET status = 'cancelled', updated_at = ?2
-         WHERE id = ?1 AND status IN ('queued', 'uploading')",
+         WHERE id = ?1 AND status IN ('queued', 'uploading', 'rendering')",
         params![id, now],
     )? > 0)
 }
@@ -346,8 +427,10 @@ pub fn cancel(conn: &Connection, id: &str, now: &str) -> Result<bool> {
 /// Failed or cancelled uploads go back to the queue with a fresh attempt count.
 pub fn retry(conn: &Connection, id: &str, now: &str) -> Result<bool> {
     Ok(conn.execute(
-        "UPDATE publications SET status = 'queued', attempts = 0, retry_at = NULL,
-                error_code = NULL, updated_at = ?2
+        "UPDATE publications SET attempts = 0, retry_at = NULL, error_code = NULL,
+                updated_at = ?2,
+                status = CASE WHEN render_spec IS NOT NULL AND rendition_file_id IS NULL
+                              THEN 'rendering' ELSE 'queued' END
          WHERE id = ?1 AND status IN ('failed', 'cancelled')",
         params![id, now],
     )? > 0)
@@ -355,12 +438,105 @@ pub fn retry(conn: &Connection, id: &str, now: &str) -> Result<bool> {
 
 /// Removes a finished, failed or cancelled upload from the list (the video file is never
 /// touched).
+/// A rendition Omnyra made for it (managed file) is deleted too.
 pub fn remove(conn: &Connection, id: &str) -> Result<bool> {
-    Ok(conn.execute(
+    let rendition: Option<(String, String)> = conn
+        .query_row(
+            "SELECT f.id, f.path FROM publications p JOIN files f ON f.id = p.rendition_file_id
+             WHERE p.id = ?1 AND f.managed = 1",
+            params![id],
+            |r| Ok((r.get(0)?, r.get(1)?)),
+        )
+        .optional()?;
+    let removed = conn.execute(
         "DELETE FROM publications WHERE id = ?1
-         AND status IN ('published', 'failed', 'cancelled')",
+         AND status IN ('published', 'failed', 'cancelled', 'exported')",
         params![id],
-    )? > 0)
+    )? > 0;
+    if removed {
+        if let Some((file_id, path)) = rendition {
+            conn.execute("DELETE FROM files WHERE id = ?1", params![file_id])?;
+            let _ = std::fs::remove_file(path);
+        }
+    }
+    Ok(removed)
+}
+
+// ---- renditions (3c) -----------------------------------------------------------------
+
+/// A publication waiting for its FFmpeg rendition.
+#[derive(Debug, Clone)]
+pub struct RenderJob {
+    pub id: String,
+    pub source_path: String,
+    pub spec: RenditionSpec,
+    pub media: Option<MediaInfo>,
+}
+
+/// Oldest publication waiting to be rendered.
+pub fn next_render(conn: &Connection) -> Result<Option<RenderJob>> {
+    let row: Option<(String, String, String, Option<String>)> = conn
+        .query_row(
+            "SELECT p.id, f.path, p.render_spec, f.media_info FROM publications p
+             JOIN files f ON f.id = p.source_file_id
+             WHERE p.status = 'rendering' AND p.render_spec IS NOT NULL
+             ORDER BY p.created_at LIMIT 1",
+            [],
+            |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?)),
+        )
+        .optional()?;
+    let Some((id, source_path, spec, media)) = row else {
+        return Ok(None);
+    };
+    let spec = serde_json::from_str(&spec).map_err(|_| AppError::Internal)?;
+    Ok(Some(RenderJob {
+        id,
+        source_path,
+        spec,
+        media: media.and_then(|m| serde_json::from_str(&m).ok()),
+    }))
+}
+
+/// Stores the rendition (a managed file) and queues the upload — unless the user
+/// cancelled meanwhile, in which case the file is dropped.
+pub fn finish_render(conn: &mut Connection, id: &str, output: &str, now: &str) -> Result<bool> {
+    let size = std::fs::metadata(output)
+        .map(|m| m.len())
+        .map_err(|_| AppError::FileUnavailable)?;
+    let tx = conn.transaction()?;
+    let status: Option<String> = tx
+        .query_row(
+            "SELECT status FROM publications WHERE id = ?1",
+            params![id],
+            |r| r.get(0),
+        )
+        .optional()?;
+    if status.as_deref() != Some("rendering") {
+        drop(tx);
+        let _ = std::fs::remove_file(output);
+        return Ok(false);
+    }
+    let file_id = insert_file(&tx, output, size, None, now)?;
+    tx.execute(
+        "UPDATE files SET managed = 1 WHERE id = ?1",
+        params![file_id],
+    )?;
+    tx.execute(
+        "UPDATE publications SET rendition_file_id = ?2, status = 'queued', progress = NULL,
+                updated_at = ?3 WHERE id = ?1",
+        params![id, file_id, now],
+    )?;
+    tx.commit()?;
+    Ok(true)
+}
+
+pub fn fail_render(conn: &Connection, id: &str, e: &AppError, now: &str) -> Result<()> {
+    conn.execute(
+        "UPDATE publications SET status = 'failed', error_code = ?2, updated_at = ?3
+         WHERE id = ?1 AND status = 'rendering'",
+        params![id, error_code(e), now],
+    )?;
+    Ok(())
 }
 
 // ---- runner --------------------------------------------------------------------------
@@ -414,7 +590,7 @@ fn load(conn: &Connection, id: &str) -> Result<Loaded> {
         "SELECT p.account_id, p.title, p.description, p.tags, p.visibility,
                 p.platform_options, p.attempts, f.path, f.size_bytes, t.path
          FROM publications p
-         JOIN files f ON f.id = p.source_file_id
+         JOIN files f ON f.id = COALESCE(p.rendition_file_id, p.source_file_id)
          LEFT JOIN files t ON t.id = p.thumbnail_file_id
          WHERE p.id = ?1",
         params![id],
@@ -538,9 +714,13 @@ pub async fn run(
             let mut conn = lock(db)?;
             let tx = conn.transaction()?;
             // Show it among the account's contents right away; the next sync completes it.
+            let k = match account.platform.as_str() {
+                "instagram" => kind::REEL,
+                _ => kind::VIDEO,
+            };
             let content = Content {
                 external_id: out.external_id.clone(),
-                kind: kind::VIDEO.into(),
+                kind: k.into(),
                 title: Some(loaded.req.draft.title.trim().to_owned()),
                 description: Some(loaded.req.draft.description.clone()),
                 url: None,
@@ -550,8 +730,7 @@ pub async fn run(
                 visibility: Some(loaded.req.draft.visibility.clone()),
                 extra: Default::default(),
             };
-            let content_id =
-                contents::upsert(&tx, &account.id, &content, kind::VIDEO, false, &now_iso)?;
+            let content_id = contents::upsert(&tx, &account.id, &content, k, false, &now_iso)?;
             tx.execute(
                 "UPDATE publications SET status = 'published', progress = 1, error_code = NULL,
                         external_id = ?2, published_content_id = ?3, warnings = ?4,
@@ -864,6 +1043,75 @@ mod tests {
         set_status(&conn, &e.id, "uploading", "t1").unwrap();
         assert_eq!(recover(&conn, "t2").unwrap(), 1);
         assert_eq!(next_due(&conn, "t9").unwrap().as_deref(), Some("pub-1"));
+    }
+
+    #[test]
+    fn scheduled_uploads_wait_for_their_time() {
+        let e = env();
+        let conn = e.db.lock().unwrap();
+        conn.execute(
+            "UPDATE publications SET scheduled_at = '2026-11-17T13:00:00Z' WHERE id = 'pub-1'",
+            [],
+        )
+        .unwrap();
+        assert_eq!(next_due(&conn, "2026-11-17T12:00:00Z").unwrap(), None);
+        assert_eq!(
+            next_retry_at(&conn).unwrap().as_deref(),
+            Some("2026-11-17T13:00:00Z")
+        );
+        assert_eq!(
+            next_due(&conn, "2026-11-17T13:00:01Z").unwrap().as_deref(),
+            Some("pub-1")
+        );
+    }
+
+    #[test]
+    fn rendition_is_rendered_then_uploaded_instead_of_the_source() {
+        let e = env();
+        let mut conn = e.db.lock().unwrap();
+        let spec = ffmpeg::preset("tiktok");
+        conn.execute(
+            "UPDATE publications SET status = 'rendering', render_spec = ?1 WHERE id = 'pub-1'",
+            params![serde_json::to_string(&spec).unwrap()],
+        )
+        .unwrap();
+        assert_eq!(next_due(&conn, "2030-01-01T00:00:00Z").unwrap(), None);
+        let job = next_render(&conn).unwrap().unwrap();
+        assert_eq!(job.spec, spec);
+        let out = std::env::temp_dir().join(format!("omnyra-r-{}.mp4", uuid::Uuid::now_v7()));
+        std::fs::write(&out, b"rendered").unwrap();
+        assert!(finish_render(&mut conn, "pub-1", &out.to_string_lossy(), "t1").unwrap());
+        assert_eq!(get(&conn, "pub-1").unwrap().status, "queued");
+        let loaded = load(&conn, "pub-1").unwrap();
+        assert_eq!(loaded.req.draft.file_path, out.to_string_lossy());
+        assert_eq!(loaded.req.size_bytes, 8);
+        // Removing the finished publication deletes the managed rendition.
+        conn.execute(
+            "UPDATE publications SET status = 'published' WHERE id = 'pub-1'",
+            [],
+        )
+        .unwrap();
+        assert!(remove(&conn, "pub-1").unwrap());
+        assert!(!out.exists());
+    }
+
+    #[test]
+    fn failed_render_retries_by_rendering_again() {
+        let e = env();
+        let conn = e.db.lock().unwrap();
+        conn.execute(
+            "UPDATE publications SET status = 'rendering', render_spec = '{}' WHERE id = 'pub-1'",
+            [],
+        )
+        .unwrap();
+        fail_render(&conn, "pub-1", &AppError::NotSupported, "t1").unwrap();
+        let r = get(&conn, "pub-1").unwrap();
+        assert_eq!(
+            (r.status.as_str(), r.error_code.as_deref()),
+            ("failed", Some("NOT_SUPPORTED"))
+        );
+        assert!(retry(&conn, "pub-1", "t2").unwrap());
+        assert_eq!(get(&conn, "pub-1").unwrap().status, "rendering");
     }
 
     #[tokio::test]

@@ -124,6 +124,7 @@ pub fn cancel_upload(state: State<'_, AppState>, id: String) -> Result<(), AppEr
 pub fn retry_upload(state: State<'_, AppState>, id: String) -> Result<(), AppError> {
     uploads::retry(&*lock_db(&state)?, &id, &state.clock.now_iso())?;
     state.upload_wake.notify_one();
+    state.render_wake.notify_one();
     Ok(())
 }
 

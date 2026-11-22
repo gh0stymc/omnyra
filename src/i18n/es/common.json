@@ -13,7 +13,8 @@
     "settings": "Ajustes",
     "accounts": "Cuentas",
     "uploads": "Subidas",
-    "ideas": "Ideas"
+    "ideas": "Ideas",
+    "publish": "Publicar en varias redes"
   },
   "dashboard": {
     "title": "Panel global",
@@ -205,7 +206,9 @@
       "uploading": "Subiendo",
       "published": "Subido",
       "failed": "Error",
-      "cancelled": "Cancelado"
+      "cancelled": "Cancelado",
+      "rendering": "Preparando versión",
+      "exported": "Exportado"
     },
     "retryAt": "Se reintentará a las {{at}} ({{reason}}).",
     "open": "Abrir en YouTube",
@@ -271,7 +274,8 @@
       }
     },
     "captionTitle": "Texto (primera línea)",
-    "captionHint": "En esta red no hay título: el texto, la descripción y las etiquetas (como hashtags) forman el pie del vídeo."
+    "captionHint": "En esta red no hay título: el texto, la descripción y las etiquetas (como hashtags) forman el pie del vídeo.",
+    "scheduledFor": "Programado para {{at}} (Omnyra debe estar abierta o en la bandeja)."
   },
   "common": {
     "loading": "Cargando…",
@@ -415,5 +419,38 @@
     "reach": "Alcance diario",
     "noteInstagram": "Instagram solo da 30 días de estadísticas diarias: el histórico se completa mientras uses Omnyra. Las cifras de vistas, me gusta y comentarios son de las publicaciones del periodo.",
     "noteTiktok": "TikTok no ofrece histórico: los seguidores se apuntan cada día desde que conectaste la cuenta. Las cifras son de los vídeos publicados en el periodo."
+  },
+  "publish": {
+    "pageTitle": "Publicar en varias redes",
+    "intro": "Elige el vídeo una vez, añade las cuentas de destino y ajusta cada versión. Omnyra prepara cada formato con FFmpeg y lo sube en segundo plano.",
+    "destinations": "Destinos",
+    "removeTarget": "Quitar",
+    "customText": "Texto propio para esta red",
+    "emptyCaption": "(sin texto)",
+    "aspect": "Formato",
+    "aspectOption": {
+      "original": "Original",
+      "landscape": "16:9 horizontal",
+      "vertical": "9:16 vertical",
+      "square": "1:1 cuadrado"
+    },
+    "fit": "Ajuste",
+    "fitOption": {
+      "crop": "Recortar",
+      "pad": "Bandas negras",
+      "blur": "Fondo difuminado"
+    },
+    "start": "Inicio (s)",
+    "end": "Fin (s)",
+    "schedule": "Programar (vacío = ahora)",
+    "publish_one": "Publicar en {{count}} red",
+    "publish_other": "Publicar en {{count}} redes",
+    "exportTitle": "Preparar y descargar",
+    "exportHint": "Para redes sin subida por API (o si prefieres subirlo a mano): genera el archivo en el formato elegido y copia el texto al portapapeles.",
+    "export": "Preparar y guardar…",
+    "exporting": "Preparando… {{pct}} %",
+    "exported": "Archivo guardado.",
+    "copyCaption": "Copiar texto",
+    "copied": "Copiado"
   }
 }

@@ -3,6 +3,7 @@ mod commands;
 mod events;
 mod live;
 mod notify;
+mod renders;
 mod state;
 mod sync;
 mod tray;
@@ -68,6 +69,10 @@ fn specta_builder() -> Builder<tauri::Wry> {
             commands::alerts::unread_alerts_count,
             commands::alerts::mark_alert_read,
             commands::alerts::mark_all_alerts_read,
+            commands::publish::rendition_preset,
+            commands::publish::validate_target,
+            commands::publish::publish_batch,
+            commands::publish::export_rendition,
         ])
         .events(collect_events![
             events::AccountChanged,
@@ -75,7 +80,8 @@ fn specta_builder() -> Builder<tauri::Wry> {
             events::UploadProgress,
             events::UploadChanged,
             events::DeviceCodeIssued,
-            events::AlertsChanged
+            events::AlertsChanged,
+            events::RenderProgress
         ])
 }
 
@@ -179,12 +185,15 @@ pub fn run() {
                 sync_locks: Default::default(),
                 upload_wake: Default::default(),
                 upload_cancel: Mutex::new(None),
+                render_wake: Default::default(),
+                data_dir: dir.clone(),
             });
             tray::create(app.handle())?;
             install_close_handler(app.handle());
 
             sync::spawn_startup_sync(app.handle().clone());
             uploads::spawn_worker(app.handle().clone());
+            renders::spawn_worker(app.handle().clone());
             live::spawn_sampler(app.handle().clone());
             background::spawn_scheduler(app.handle().clone());
             background::spawn_reminder_notifier(app.handle().clone());

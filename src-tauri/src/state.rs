@@ -17,4 +17,8 @@ pub struct AppState {
     pub upload_wake: tokio::sync::Notify,
     /// The upload being sent, and how to abort it.
     pub upload_cancel: Mutex<Option<(String, oneshot::Sender<()>)>>,
+    /// Wakes the FFmpeg worker when a publication needs a rendition (3c).
+    pub render_wake: tokio::sync::Notify,
+    /// `app_data_dir`: renditions, managed files.
+    pub data_dir: std::path::PathBuf,
 }
