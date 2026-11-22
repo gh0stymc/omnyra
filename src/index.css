@@ -1,53 +1,299 @@
 @import "tailwindcss";
+@import "@fontsource-variable/plus-jakarta-sans";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Softer, rounder geometry everywhere (Tailwind reads these for rounded-*). */
+@theme {
+  --radius-md: 0.65rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.35rem;
+  --font-sans: "Plus Jakarta Sans Variable", system-ui, sans-serif;
+}
+
+/* ---- Tokens ----------------------------------------------------------------------------
+   Pages only use these variables, so the whole look is defined here.
+   --panel is translucent (glass over the background glow); --panel-solid is for things
+   that must stay opaque (native <option>s, tooltips). */
 :root {
-  --bg: #f7f7f9;
-  --panel: #ffffff;
-  --border: #e4e4ec;
-  --text: #16161d;
-  --muted: #6b6b7b;
-  --accent: #7c3aed;
+  --bg: #f6f4fb;
+  --bg-glow-1: rgba(167, 139, 250, 0.28);
+  --bg-glow-2: rgba(244, 114, 182, 0.18);
+  --bg-glow-3: rgba(56, 189, 248, 0.14);
+  --panel: rgba(255, 255, 255, 0.72);
+  --panel-solid: #ffffff;
+  --panel-hover: rgba(255, 255, 255, 0.92);
+  --border: rgba(91, 76, 140, 0.13);
+  --border-strong: rgba(91, 76, 140, 0.24);
+  --text: #1b1730;
+  --muted: #736d8c;
+  --accent: #7c5cff;
+  --accent-2: #e45bd8;
+  --accent-soft: rgba(124, 92, 255, 0.12);
+  --shadow: 0 1px 2px rgba(40, 20, 90, 0.05), 0 8px 28px -12px rgba(40, 20, 90, 0.18);
+  --glow: 0 6px 22px -6px rgba(124, 92, 255, 0.55);
   /* Diverging scale (best-time heatmap): better / as usual / worse than usual. */
-  --div-pos: #2a78d6;
-  --div-mid: #f0efec;
-  --div-neg: #e34948;
+  --div-pos: #4f6ff0;
+  --div-mid: #efedf5;
+  --div-neg: #e5536e;
   color-scheme: light;
 }
 .dark {
-  --bg: #0e0e13;
-  --panel: #16161d;
-  --border: #272733;
-  --text: #ececf3;
-  --muted: #9a9aad;
-  --accent: #a78bfa;
-  --div-pos: #3987e5;
-  --div-mid: #383835;
-  --div-neg: #e66767;
+  --bg: #0b0a12;
+  --bg-glow-1: rgba(124, 92, 255, 0.22);
+  --bg-glow-2: rgba(228, 91, 216, 0.12);
+  --bg-glow-3: rgba(56, 189, 248, 0.08);
+  --panel: rgba(23, 21, 36, 0.62);
+  --panel-solid: #171524;
+  --panel-hover: rgba(34, 31, 52, 0.8);
+  --border: rgba(186, 172, 255, 0.09);
+  --border-strong: rgba(186, 172, 255, 0.18);
+  --text: #eeeaff;
+  --muted: #958fb0;
+  --accent: #9b80ff;
+  --accent-2: #f07ae4;
+  --accent-soft: rgba(155, 128, 255, 0.14);
+  --shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 12px 32px -16px rgba(0, 0, 0, 0.7);
+  --glow: 0 6px 24px -6px rgba(155, 128, 255, 0.55);
+  --div-pos: #6f8bff;
+  --div-mid: #2a2740;
+  --div-neg: #ef6b86;
   color-scheme: dark;
 }
 
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: system-ui, sans-serif;
-}
-
-/* WebKitGTK draws native <select>s with the GTK theme (white, ignoring our background),
-   which made them unreadable in dark mode. Draw them ourselves. */
+/* ---- Base ------------------------------------------------------------------------------ */
 @layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    margin: 0;
+    color: var(--text);
+    background-color: var(--bg);
+    /* Soft aurora behind the glass panels. */
+    background-image:
+      radial-gradient(60rem 40rem at 105% -10%, var(--bg-glow-1), transparent 60%),
+      radial-gradient(45rem 35rem at -10% 110%, var(--bg-glow-2), transparent 60%),
+      radial-gradient(35rem 25rem at 40% 40%, var(--bg-glow-3), transparent 70%);
+    background-attachment: fixed;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    word-spacing: 0.06em;
+    text-rendering: optimizeLegibility;
+  }
+  ::selection {
+    background: var(--accent-soft);
+    color: var(--text);
+  }
+  h1 {
+    letter-spacing: -0.025em;
+  }
+  h2,
+  h3 {
+    letter-spacing: -0.01em;
+  }
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    transition:
+      background-color 0.15s ease,
+      border-color 0.15s ease,
+      color 0.15s ease,
+      box-shadow 0.15s ease,
+      opacity 0.15s ease,
+      transform 0.15s ease;
+  }
+  button:not(:disabled) {
+    cursor: pointer;
+  }
+  button:not(:disabled):active {
+    transform: translateY(1px);
+  }
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  input,
+  textarea,
+  select {
+    color: var(--text);
+  }
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--muted);
+    opacity: 0.8;
+  }
+  input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):focus,
+  textarea:focus,
+  select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+  input[type="checkbox"],
+  input[type="radio"] {
+    accent-color: var(--accent);
+  }
+  input[type="color"] {
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    background: transparent;
+    padding: 2px;
+  }
+
+  /* WebKitGTK draws native <select>s with the GTK theme (white, ignoring our background),
+     which made them unreadable in dark mode. Draw them ourselves. */
   select {
     appearance: none;
-    background-color: var(--panel);
-    color: var(--text);
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%239a9aad' stroke-width='1.5'/%3E%3C/svg%3E");
+    background-color: var(--panel-solid);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23958fb0' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
-    background-position: right 0.6rem center;
+    background-position: right 0.65rem center;
     padding-right: 2rem;
   }
   option {
-    background-color: var(--panel);
+    background-color: var(--panel-solid);
     color: var(--text);
   }
+
+  table {
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+  thead th {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  tbody tr {
+    transition: background-color 0.15s ease;
+  }
+  tbody tr:hover {
+    background: var(--accent-soft);
+  }
+
+  /* Thin, quiet scrollbars. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) transparent;
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border-strong);
+    border-radius: 999px;
+    border: 3px solid transparent;
+    background-clip: padding-box;
+  }
+}
+
+/* ---- Global component polish ------------------------------------------------------------
+   The screens are built from a few repeated utility patterns; style those patterns once
+   instead of touching every page. */
+/* Unlayered on purpose: these must win over Tailwind's utilities. */
+/* Glass surfaces: every panel/card. */
+[class*="bg-[var(--panel)]"] {
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  box-shadow: var(--shadow);
+}
+/* Primary actions and active pills: accent gradient with a soft glow. */
+[class*="bg-[var(--accent)]"] {
+  background-image: linear-gradient(135deg, var(--accent), var(--accent-2));
+  box-shadow: var(--glow);
+  border-color: transparent;
+}
+button[class*="bg-[var(--accent)]"]:not(:disabled):hover,
+a[class*="bg-[var(--accent)]"]:hover {
+  filter: brightness(1.08);
+  opacity: 1;
+}
+/* Outline buttons and links that look like buttons. */
+button[class*="border-[var(--border)]"]:not(:disabled):hover,
+a[class*="border-[var(--border)]"]:hover,
+label[class*="border-[var(--border)]"]:hover {
+  border-color: var(--border-strong);
+  background-color: var(--accent-soft);
+}
+/* Hover rows/items that used the border colour as a hover background. */
+[class*="hover:bg-[var(--border)]"]:hover {
+  background-color: var(--accent-soft) !important;
+}
+/* Selected rows/tabs that used the border colour as background. */
+.bg-\[var\(--border\)\] {
+  background-color: var(--accent-soft);
+}
+/* Text inputs on panels: a touch of depth. */
+input[class*="border-[var(--border)]"]:not([type="checkbox"]):not([type="radio"]),
+textarea[class*="border-[var(--border)]"],
+select[class*="border-[var(--border)]"] {
+  background-color: var(--panel-solid);
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.page-enter {
+  animation: page-in 0.28s ease both;
+}
+
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-enter {
+    animation: none;
+  }
+}
+
+/* Page titles: one consistent, bolder size everywhere. */
+main h1 {
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+  font-weight: 700;
+}
+
+/* Data tables as glass cards. */
+main table {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--panel);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  box-shadow: var(--shadow);
+}
+main table th,
+main table td {
+  padding: 0.6rem 0.9rem;
+}
+main table thead th {
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+}
+main table tbody tr + tr td {
+  border-top: 1px solid var(--border);
+}
+
+/* Keep room for the chevron even on selects styled like small buttons. */
+select {
+  padding-right: 1.9rem !important;
 }

@@ -53,7 +53,8 @@
     "dataUntil": "Las analíticas de YouTube llevan 2–3 días de retraso: datos diarios hasta el {{day}}.",
     "combinedNote": "Suma de todas las cuentas.",
     "topContents": "Más vistos del periodo",
-    "noTopContents": "Nada publicado en este periodo."
+    "noTopContents": "Nada publicado en este periodo.",
+    "subtitle": "Todas tus redes de un vistazo"
   },
   "platform": {
     "title": "Vista de {{name}}",
@@ -101,7 +102,10 @@
     "LLM_KEY_MISSING": "Falta la clave de API del asistente.",
     "LLM_KEY_INVALID": "La clave de API no es válida o no tiene permiso.",
     "LLM_REFUSED": "El modelo no ha querido responder a esa petición. Prueba a reformularla.",
-    "LOCKED": "Omnyra está bloqueada."
+    "LOCKED": "Omnyra está bloqueada.",
+    "pageTitle": "Esta pantalla no se ha podido cargar",
+    "pageHint": "Suele pasar justo después de actualizar Omnyra. Recargar lo arregla.",
+    "reload": "Recargar"
   },
   "accounts": {
     "title": "Cuentas conectadas",

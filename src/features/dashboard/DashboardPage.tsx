@@ -45,7 +45,7 @@ export function DashboardPage() {
   const btn =
     "rounded-md bg-[var(--accent)] px-3 py-1.5 text-sm font-medium text-white hover:opacity-90";
   const pill = (active: boolean) =>
-    `rounded-md px-2 py-1 text-xs ${active ? "bg-[var(--accent)] text-white" : "border border-[var(--border)]"}`;
+    `rounded-[10px] px-3 py-1 text-xs font-medium ${active ? "bg-[var(--accent)] text-white" : "text-[var(--muted)] hover:text-[var(--text)]"}`;
   const dataUntil = accounts
     .map((a) => a.dataUntil)
     .filter(Boolean)
@@ -79,7 +79,10 @@ export function DashboardPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold">{t("dashboard.title")}</h1>
+        <div>
+          <h1 className="text-3xl font-bold">{t("dashboard.title")}</h1>
+          <p className="mt-1 text-sm text-[var(--muted)]">{t("dashboard.subtitle")}</p>
+        </div>
         <div className="flex items-center gap-3">
           <RangePicker />
           <SyncButton
@@ -112,8 +115,11 @@ export function DashboardPage() {
         </p>
       )}
 
-      <section className="space-y-3 rounded-lg border border-[var(--border)] bg-[var(--panel)] p-4">
-        <div className="flex gap-1" role="tablist">
+      <section className="space-y-4 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-5">
+        <div
+          className="inline-flex gap-0.5 rounded-xl border border-[var(--border)] p-0.5"
+          role="tablist"
+        >
           {CHARTS.map((m) => (
             <button
               key={m}
@@ -133,22 +139,27 @@ export function DashboardPage() {
       </section>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <section className="space-y-2">
-          <h2 className="font-medium">{t("dashboard.topContents")}</h2>
+        <section className="space-y-3 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-5">
+          <h2 className="font-semibold">{t("dashboard.topContents")}</h2>
           {top.data?.length ? (
             <ol className="space-y-1 text-sm">
               {top.data.map((c, i) => (
                 <li
                   key={c.content.id}
-                  className="flex justify-between gap-2 border-b border-[var(--border)] py-1"
+                  className="flex items-center justify-between gap-3 rounded-xl px-2 py-2 hover:bg-[var(--accent-soft)]"
                 >
-                  <span className="truncate">
-                    {i + 1}. {c.content.title || t("upload.untitled")}
+                  <span className="flex min-w-0 items-center gap-3">
+                    <span
+                      className={`grid size-7 shrink-0 place-items-center rounded-lg text-xs font-bold ${i === 0 ? "bg-[var(--accent)] text-white" : "bg-[var(--accent-soft)] text-[var(--accent)]"}`}
+                    >
+                      {i + 1}
+                    </span>
+                    <span className="truncate">{c.content.title || t("upload.untitled")}</span>
                     {accounts.length > 1 && (
-                      <span className="text-xs text-[var(--muted)]"> · {c.accountName}</span>
+                      <span className="shrink-0 text-xs text-[var(--muted)]">{c.accountName}</span>
                     )}
                   </span>
-                  <span className="shrink-0 tabular-nums">
+                  <span className="shrink-0 font-semibold tabular-nums">
                     {fmtNumber(c.content.views, lang, true)}
                   </span>
                 </li>
@@ -159,19 +170,22 @@ export function DashboardPage() {
           )}
         </section>
 
-        <section className="space-y-2">
-          <h2 className="font-medium">{t("nav.accounts")}</h2>
+        <section className="space-y-3 rounded-2xl border border-[var(--border)] bg-[var(--panel)] p-5">
+          <h2 className="font-semibold">{t("nav.accounts")}</h2>
           <ul className="space-y-1 text-sm">
             {accounts.map((a) => (
               <li
                 key={a.accountId}
-                className="flex items-center justify-between gap-2 border-b border-[var(--border)] py-1"
+                className="flex items-center justify-between gap-2 rounded-xl px-2 py-2 hover:bg-[var(--accent-soft)]"
               >
                 <Link
                   to={`/platform/${a.platform}/${a.accountId}`}
-                  className="truncate hover:underline"
+                  className="flex min-w-0 items-center gap-2.5 font-medium"
                 >
-                  {a.displayName}
+                  <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-[var(--accent-soft)] text-xs font-bold uppercase text-[var(--accent)]">
+                    {a.platform.slice(0, 2)}
+                  </span>
+                  <span className="truncate">{a.displayName}</span>
                 </Link>
                 <span className="shrink-0 text-xs text-[var(--muted)]">
                   {a.status === "needs_reauth"

@@ -53,7 +53,8 @@
     "dataUntil": "YouTube analytics lag 2–3 days behind: daily data up to {{day}}.",
     "combinedNote": "Sum of all accounts.",
     "topContents": "Most viewed in the period",
-    "noTopContents": "Nothing published in this period."
+    "noTopContents": "Nothing published in this period.",
+    "subtitle": "All your networks at a glance"
   },
   "platform": {
     "title": "{{name}} view",
@@ -101,7 +102,10 @@
     "LLM_KEY_MISSING": "The assistant's API key is missing.",
     "LLM_KEY_INVALID": "The API key is invalid or lacks permission.",
     "LLM_REFUSED": "The model declined that request. Try rephrasing it.",
-    "LOCKED": "Omnyra is locked."
+    "LOCKED": "Omnyra is locked.",
+    "pageTitle": "This screen could not be loaded",
+    "pageHint": "It usually happens right after Omnyra is updated. Reloading fixes it.",
+    "reload": "Reload"
   },
   "accounts": {
     "title": "Connected accounts",

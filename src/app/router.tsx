@@ -1,6 +1,7 @@
 import { lazy, type ComponentType } from "react";
 import { createBrowserRouter } from "react-router";
 import { Layout } from "./layout/Layout";
+import { RouteError } from "./RouteError";
 import { DashboardPage } from "../features/dashboard/DashboardPage";
 
 /** Code-split page (REVIEW P1): loaded the first time its route opens. */
@@ -12,6 +13,7 @@ function page<K extends string>(load: () => Promise<Record<K, ComponentType>>, n
 export const router = createBrowserRouter([
   {
     element: <Layout />,
+    errorElement: <RouteError />,
     children: [
       { path: "/", element: <DashboardPage /> },
       {
