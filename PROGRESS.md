@@ -2,7 +2,7 @@
 
 > Estado del proyecto para cualquier sesión nueva (tras `/clear`). Ver `OMNYRA_SPEC.md` sección 9.
 
-**Paso actual:** 2c — Segundo plano y notificaciones (hecho con Opus). Implementado y con tests; bandeja, cerrar-a-bandeja, autostart, notificaciones (recordatorios + alertas) y planificador periódico. Falta prueba manual real (bandeja/notificaciones en GNOME/KDE y Windows). Después: 3a.
+**Paso actual:** 7b — Aplicar mejoras (en curso, sesión del 2026-11-22 con Opus haciendo todos los pasos seguidos).
 
 ## Pasos
 
@@ -29,7 +29,7 @@
 - [x] 6a — Patrocinios y media kit
 - [x] 6b — Competencia y tendencias
 - [x] 6c — Módulo de seguridad
-- [ ] 7a — Revisión global
+- [x] 7a — Revisión global
 - [ ] 7b — Aplicar mejoras
 - [ ] 7c — Distribución
 - [ ] 7d — Documentación final
