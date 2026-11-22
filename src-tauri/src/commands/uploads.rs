@@ -54,6 +54,7 @@ pub async fn enqueue_upload(
     account_id: String,
     draft: UploadDraft,
 ) -> Result<String, AppError> {
+    super::security::ensure_unlocked(&state)?;
     let (_, c) = connector_for(&state, &account_id)?;
     let id = uploads::enqueue(
         &state.db,

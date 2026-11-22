@@ -63,6 +63,33 @@ pub fn verify_chain(conn: &Connection) -> Result<bool> {
     Ok(true)
 }
 
+#[derive(Debug, Clone, serde::Serialize, specta::Type, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct AuditEntry {
+    pub id: f64,
+    pub ts: String,
+    pub action: String,
+    pub account_id: Option<String>,
+    pub detail: String,
+}
+
+/// Last `limit` entries, newest first (security screen).
+pub fn recent(conn: &Connection, limit: u32) -> Result<Vec<AuditEntry>> {
+    let mut stmt = conn.prepare(
+        "SELECT id, ts, action, account_id, detail FROM audit_log ORDER BY id DESC LIMIT ?1",
+    )?;
+    let rows = stmt.query_map(params![limit], |r| {
+        Ok(AuditEntry {
+            id: r.get::<_, i64>(0)? as f64,
+            ts: r.get(1)?,
+            action: r.get(2)?,
+            account_id: r.get(3)?,
+            detail: r.get(4)?,
+        })
+    })?;
+    Ok(rows.collect::<std::result::Result<_, _>>()?)
+}
+
 /// Last entries, newest first (for tests and, later, the security screen).
 pub fn recent_actions(conn: &Connection, limit: u32) -> Result<Vec<(String, Option<String>)>> {
     let mut stmt =

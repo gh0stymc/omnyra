@@ -174,6 +174,22 @@ export const commands = {
 	removeTrendKeyword: (id: string, options?: InvokeOptions) => __TAURI_INVOKE<null>("remove_trend_keyword", { id }, options),
 	/**  Searches the keywords not searched today (about 101 quota units each). */
 	refreshTrends: (options?: InvokeOptions) => __TAURI_INVOKE<number>("refresh_trends", undefined, options),
+	lockStatus: (options?: InvokeOptions) => __TAURI_INVOKE<LockStatus>("lock_status", undefined, options),
+	unlock: (pin: string, options?: InvokeOptions) => __TAURI_INVOKE<boolean>("unlock", { pin }, options),
+	lockNow: (options?: InvokeOptions) => __TAURI_INVOKE<null>("lock_now", undefined, options),
+	/**  Sets or changes the PIN (`current` is required when one is already set). */
+	setPin: (current: string | null, newPin: string, options?: InvokeOptions) => __TAURI_INVOKE<null>("set_pin", { current, newPin }, options),
+	removePin: (pin: string, options?: InvokeOptions) => __TAURI_INVOKE<null>("remove_pin", { pin }, options),
+	setLockIdle: (minutes: number, options?: InvokeOptions) => __TAURI_INVOKE<null>("set_lock_idle", { minutes }, options),
+	auditLogView: (limit: number, options?: InvokeOptions) => __TAURI_INVOKE<AuditView_Serialize>("audit_log_view", { limit }, options),
+	securityChecklist: (options?: InvokeOptions) => __TAURI_INVOKE<AccountChecklist_Serialize[]>("security_checklist", undefined, options),
+	setChecklistItem: (accountId: string, item: string, value: string, options?: InvokeOptions) => __TAURI_INVOKE<null>("set_checklist_item", { accountId, item, value }, options),
+	listSuspects: (options?: InvokeOptions) => __TAURI_INVOKE<Suspect_Serialize[]>("list_suspects", undefined, options),
+	/**  Checks comment authors of every account (free) and returns how many new suspects. */
+	scanImpersonation: (options?: InvokeOptions) => __TAURI_INVOKE<number>("scan_impersonation", undefined, options),
+	/**  YouTube channel search for lookalikes of the first YouTube account (100+ units). */
+	searchImpersonators: (options?: InvokeOptions) => __TAURI_INVOKE<number>("search_impersonators", undefined, options),
+	setSuspectStatus: (id: string, status: string, options?: InvokeOptions) => __TAURI_INVOKE<null>("set_suspect_status", { id, status }, options),
 };
 
 /** Events */
@@ -198,6 +214,26 @@ export type Account = Account_Serialize | Account_Deserialize;
 export type AccountChanged = {
 	accountId: string,
 	status: AccountStatus,
+};
+
+export type AccountChecklist = AccountChecklist_Serialize | AccountChecklist_Deserialize;
+
+export type AccountChecklist_Deserialize = {
+	accountId: string,
+	platform: string,
+	displayName: string,
+	items: ChecklistItem_Deserialize[],
+	/**  Share of applicable items marked `ok` (0..1). */
+	score: number | null,
+};
+
+export type AccountChecklist_Serialize = {
+	accountId: string,
+	platform: string,
+	displayName: string,
+	items: ChecklistItem_Serialize[],
+	/**  Share of applicable items marked `ok` (0..1). */
+	score: number | null,
 };
 
 export type AccountStatus = "active" | 
@@ -473,6 +509,38 @@ export type AssistResult = {
 	hashtags: string[],
 };
 
+export type AuditEntry = AuditEntry_Serialize | AuditEntry_Deserialize;
+
+export type AuditEntry_Deserialize = {
+	id: number | null,
+	ts: string,
+	action: string,
+	accountId?: string | null,
+	detail: string,
+};
+
+export type AuditEntry_Serialize = {
+	id: number | null,
+	ts: string,
+	action: string,
+	accountId: string | null,
+	detail: string,
+};
+
+export type AuditView = AuditView_Serialize | AuditView_Deserialize;
+
+export type AuditView_Deserialize = {
+	entries: AuditEntry_Deserialize[],
+	/**  False if a row was edited or deleted outside the app. */
+	chainOk: boolean,
+};
+
+export type AuditView_Serialize = {
+	entries: AuditEntry_Serialize[],
+	/**  False if a row was edited or deleted outside the app. */
+	chainOk: boolean,
+};
+
 export type AuthKind = 
 /**  No login (mock). */
 "none" | 
@@ -577,6 +645,22 @@ export type Cell = {
 	/**  Contents published in exactly this hour. */
 	contents: number,
 	enoughData: boolean,
+};
+
+export type ChecklistItem = ChecklistItem_Serialize | ChecklistItem_Deserialize;
+
+export type ChecklistItem_Deserialize = {
+	item: string,
+	url: string,
+	state: string,
+	checkedAt?: string | null,
+};
+
+export type ChecklistItem_Serialize = {
+	item: string,
+	url: string,
+	state: string,
+	checkedAt: string | null,
 };
 
 export type CommentFilter = CommentFilter_Serialize | CommentFilter_Deserialize;
@@ -913,6 +997,14 @@ export type LiveStats_Serialize = {
 	avgViewers: number | null,
 	peakViewers: number | null,
 	liveNow: boolean,
+};
+
+export type LockStatus = {
+	enabled: boolean,
+	locked: boolean,
+	/**  Seconds to wait before another try (after repeated wrong PINs). */
+	retryAfterS: number,
+	idleMinutes: number,
 };
 
 export type MediaInfo = MediaInfo_Serialize | MediaInfo_Deserialize;
@@ -1309,6 +1401,32 @@ export type Summary_Serialize = {
 	to: string,
 	accounts: AccountSummary_Serialize[],
 	totals: Totals_Serialize,
+};
+
+export type Suspect = Suspect_Serialize | Suspect_Deserialize;
+
+export type Suspect_Deserialize = {
+	id: string,
+	accountId: string,
+	platform: string,
+	suspectExternalId: string,
+	suspectName?: string | null,
+	nameScore: number | null,
+	foundIn: string,
+	status: string,
+	foundAt: string,
+};
+
+export type Suspect_Serialize = {
+	id: string,
+	accountId: string,
+	platform: string,
+	suspectExternalId: string,
+	suspectName: string | null,
+	nameScore: number | null,
+	foundIn: string,
+	status: string,
+	foundAt: string,
 };
 
 export type SyncReport = {

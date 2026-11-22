@@ -121,6 +121,19 @@ fn specta_builder() -> Builder<tauri::Wry> {
             commands::competitors::add_trend_keyword,
             commands::competitors::remove_trend_keyword,
             commands::competitors::refresh_trends,
+            commands::security::lock_status,
+            commands::security::unlock,
+            commands::security::lock_now,
+            commands::security::set_pin,
+            commands::security::remove_pin,
+            commands::security::set_lock_idle,
+            commands::security::audit_log_view,
+            commands::security::security_checklist,
+            commands::security::set_checklist_item,
+            commands::security::list_suspects,
+            commands::security::scan_impersonation,
+            commands::security::search_impersonators,
+            commands::security::set_suspect_status,
         ])
         .events(collect_events![
             events::AccountChanged,
@@ -225,6 +238,12 @@ pub fn run() {
                 default_http_client(),
                 clock.clone(),
             ));
+            let pin_set = tauri::async_runtime::block_on(
+                auth.get_secret(omnyra_core::security::lock::SECRET_KEY),
+            )
+            .ok()
+            .flatten()
+            .is_some();
             app.manage(AppState {
                 db: Arc::new(Mutex::new(conn)),
                 registry: Registry::new(credentials()),
@@ -236,6 +255,9 @@ pub fn run() {
                 upload_cancel: Mutex::new(None),
                 render_wake: Default::default(),
                 data_dir: dir.clone(),
+                // Locked from the start when a PIN is set.
+                locked: std::sync::atomic::AtomicBool::new(pin_set),
+                lock_failures: Mutex::new((0, None)),
             });
             tray::create(app.handle())?;
             install_close_handler(app.handle());

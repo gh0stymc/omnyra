@@ -75,6 +75,7 @@ pub async fn reply_to_comment(
     id: String,
     text: String,
 ) -> Result<(), AppError> {
+    super::security::ensure_unlocked(&state)?;
     let account_id: String = lock_db(&state)?
         .query_row(
             "SELECT account_id FROM comments WHERE id = ?1",

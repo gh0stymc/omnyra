@@ -21,4 +21,8 @@ pub struct AppState {
     pub render_wake: tokio::sync::Notify,
     /// `app_data_dir`: renditions, managed files.
     pub data_dir: std::path::PathBuf,
+    /// PIN lock (6c): set at startup when a PIN exists, cleared by `unlock`.
+    pub locked: std::sync::atomic::AtomicBool,
+    /// Wrong PIN attempts and when the last one happened.
+    pub lock_failures: Mutex<(u32, Option<std::time::Instant>)>,
 }

@@ -75,9 +75,6 @@
     "light": "Claro",
     "general": "General"
   },
-  "placeholder": {
-    "soon": "Esta sección llegará en una fase posterior."
-  },
   "errors": {
     "TOKEN_EXPIRED": "La sesión ha caducado. Vuelve a conectar la cuenta.",
     "QUOTA_EXCEEDED": "Se ha agotado la cuota de la API. Inténtalo más tarde.",
@@ -703,5 +700,91 @@
     "addKeyword": "Añadir",
     "searchNow": "Buscar ahora",
     "notSearched": "sin buscar"
+  },
+  "security": {
+    "noAccounts": "Conecta una cuenta para revisar su seguridad.",
+    "checklist": "Revisión de cuentas",
+    "openSettings": "Abrir ajustes",
+    "state": {
+      "unknown": "Sin revisar",
+      "ok": "Hecho",
+      "warning": "Pendiente",
+      "not_applicable": "No aplica"
+    },
+    "item": {
+      "2fa": "Verificación en dos pasos",
+      "passkeys": "Llaves de acceso (passkeys)",
+      "recovery": "Correo y teléfono de recuperación",
+      "third_party_apps": "Apps de terceros con acceso",
+      "devices": "Dispositivos con sesión abierta",
+      "channel_permissions": "Permisos del canal (gestores)",
+      "security_checkup": "Revisión de seguridad de Google",
+      "editors_mods": "Editores y moderadores",
+      "stream_key": "Clave de retransmisión (no compartida)",
+      "login_alerts": "Alertas de inicio de sesión"
+    },
+    "phishing": "Estafas en comentarios",
+    "phishingCount_one": "{{count}} comentario sospechoso sin archivar.",
+    "phishingCount_other": "{{count}} comentarios sospechosos sin archivar.",
+    "review": "Revisar en Comunidad",
+    "phishingHint": "Omnyra revisa enlaces (dominios que imitan marcas, acortadores, enlaces camuflados, IPs, dominios internacionalizados), sorteos falsos, criptomonedas, monedas gratis, peticiones de contacto por fuera y autores que imitan tu nombre.",
+    "reason": {
+      "lookalike_domain": "dominio que imita una marca",
+      "punycode": "dominio internacionalizado (xn--)",
+      "obfuscated_link": "enlace camuflado",
+      "shortener": "acortador de enlaces",
+      "risky_tld": "dominio de riesgo",
+      "ip_link": "enlace a una IP",
+      "contact_offsite": "pide contacto por Telegram/WhatsApp",
+      "prize": "premio o sorteo falso",
+      "crypto": "inversión o criptomonedas",
+      "free_currency": "monedas o regalos gratis",
+      "credentials": "pide verificar la cuenta",
+      "impersonation": "el autor imita tu nombre",
+      "urgency": "metiendo prisa"
+    },
+    "impersonation": "Suplantación",
+    "impersonationHint": "Busca cuentas con un nombre parecido al tuyo entre los autores de comentarios (gratis) o en YouTube (unas 100 unidades de cuota). Solo se comparan nombres: las APIs no permiten comparar avatares de forma fiable.",
+    "scanComments": "Revisar autores de comentarios",
+    "searchYoutube": "Buscar en YouTube",
+    "found_one": "{{count}} nueva",
+    "found_other": "{{count}} nuevas",
+    "foundIn": {
+      "comments": "en comentarios",
+      "search": "en la búsqueda"
+    },
+    "view": "Ver",
+    "reported": "Denunciada",
+    "dismiss": "Descartar",
+    "noSuspects": "Sin sospechosos.",
+    "audit": "Registro de acciones sensibles",
+    "chainOk": "Íntegro",
+    "chainBroken": "¡Modificado fuera de la app!",
+    "action": {
+      "account.connect": "Cuenta conectada",
+      "account.disconnect": "Cuenta desconectada",
+      "reply": "Respuesta enviada",
+      "lock.change": "Bloqueo cambiado",
+      "lock.failed": "PIN incorrecto"
+    },
+    "lock": {
+      "title": "Bloqueo con PIN",
+      "uiOnly": "El PIN protege la interfaz de Omnyra, no cifra la base de datos: alguien con acceso a tu usuario del sistema podría leer los archivos. El PIN se guarda cifrado en el llavero del sistema.",
+      "current": "PIN actual",
+      "new": "PIN nuevo (4–32)",
+      "repeat": "Repite el PIN",
+      "enable": "Activar bloqueo",
+      "change": "Cambiar PIN",
+      "disable": "Quitar bloqueo",
+      "mismatch": "Los PIN no coinciden.",
+      "idle": "Bloquear tras inactividad:",
+      "minutes": "{{m}} min",
+      "never": "nunca",
+      "lockNow": "Bloquear ahora",
+      "locked": "Omnyra está bloqueada.",
+      "unlock": "Desbloquear",
+      "wrong": "PIN incorrecto.",
+      "wait": "Demasiados intentos: espera {{s}} s."
+    }
   }
 }

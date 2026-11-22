@@ -48,6 +48,8 @@ pub mod keys {
     /// UI language (`"es"` | `"en"`), mirrored from the frontend so Rust can localise
     /// system notifications, which are rendered outside the webview.
     pub const LOCALE: &str = "locale";
+    /// Lock the app after this many idle minutes when a PIN is set (0 = never).
+    pub const LOCK_IDLE_MINUTES: &str = "lock_idle_minutes";
 }
 
 #[cfg(test)]

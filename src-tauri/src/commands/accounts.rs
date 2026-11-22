@@ -175,6 +175,7 @@ pub async fn disconnect_account(
     state: State<'_, AppState>,
     account_id: String,
 ) -> Result<DisconnectOutcome, AppError> {
+    super::security::ensure_unlocked(&state)?;
     let platform = accounts::get(&*lock_db(&state)?, &account_id)?.platform;
     let connector = state.registry.get(&platform);
     let out = account_service::disconnect(

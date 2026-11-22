@@ -75,9 +75,6 @@
     "light": "Light",
     "general": "General"
   },
-  "placeholder": {
-    "soon": "This section will arrive in a later phase."
-  },
   "errors": {
     "TOKEN_EXPIRED": "The session has expired. Reconnect the account.",
     "QUOTA_EXCEEDED": "The API quota is exhausted. Try again later.",
@@ -703,5 +700,91 @@
     "addKeyword": "Add",
     "searchNow": "Search now",
     "notSearched": "not searched"
+  },
+  "security": {
+    "noAccounts": "Connect an account to review its security.",
+    "checklist": "Account review",
+    "openSettings": "Open settings",
+    "state": {
+      "unknown": "Not reviewed",
+      "ok": "Done",
+      "warning": "To do",
+      "not_applicable": "N/A"
+    },
+    "item": {
+      "2fa": "Two-step verification",
+      "passkeys": "Passkeys",
+      "recovery": "Recovery email and phone",
+      "third_party_apps": "Third-party apps with access",
+      "devices": "Signed-in devices",
+      "channel_permissions": "Channel permissions (managers)",
+      "security_checkup": "Google Security Checkup",
+      "editors_mods": "Editors and moderators",
+      "stream_key": "Stream key (not shared)",
+      "login_alerts": "Login alerts"
+    },
+    "phishing": "Scams in comments",
+    "phishingCount_one": "{{count}} suspicious comment not archived.",
+    "phishingCount_other": "{{count}} suspicious comments not archived.",
+    "review": "Review in Community",
+    "phishingHint": "Omnyra checks links (domains imitating brands, shorteners, disguised links, IPs, internationalised domains), fake giveaways, crypto, free currency, off-platform contact requests and authors imitating your name.",
+    "reason": {
+      "lookalike_domain": "domain imitating a brand",
+      "punycode": "internationalised domain (xn--)",
+      "obfuscated_link": "disguised link",
+      "shortener": "link shortener",
+      "risky_tld": "risky domain",
+      "ip_link": "link to an IP",
+      "contact_offsite": "asks for Telegram/WhatsApp contact",
+      "prize": "fake prize or giveaway",
+      "crypto": "investment or crypto",
+      "free_currency": "free currency or gifts",
+      "credentials": "asks to verify the account",
+      "impersonation": "author imitates your name",
+      "urgency": "pushing urgency"
+    },
+    "impersonation": "Impersonation",
+    "impersonationHint": "Looks for accounts named like you among comment authors (free) or on YouTube (about 100 quota units). Only names are compared: the APIs give no reliable way to compare avatars.",
+    "scanComments": "Check comment authors",
+    "searchYoutube": "Search YouTube",
+    "found_one": "{{count}} new",
+    "found_other": "{{count}} new",
+    "foundIn": {
+      "comments": "in comments",
+      "search": "in search"
+    },
+    "view": "View",
+    "reported": "Reported",
+    "dismiss": "Dismiss",
+    "noSuspects": "No suspects.",
+    "audit": "Sensitive actions log",
+    "chainOk": "Intact",
+    "chainBroken": "Modified outside the app!",
+    "action": {
+      "account.connect": "Account connected",
+      "account.disconnect": "Account disconnected",
+      "reply": "Reply sent",
+      "lock.change": "Lock changed",
+      "lock.failed": "Wrong PIN"
+    },
+    "lock": {
+      "title": "PIN lock",
+      "uiOnly": "The PIN protects Omnyra's interface; it does not encrypt the database: someone with access to your system user could read the files. The PIN is stored hashed in the system keyring.",
+      "current": "Current PIN",
+      "new": "New PIN (4–32)",
+      "repeat": "Repeat the PIN",
+      "enable": "Enable lock",
+      "change": "Change PIN",
+      "disable": "Remove lock",
+      "mismatch": "The PINs do not match.",
+      "idle": "Lock after inactivity:",
+      "minutes": "{{m}} min",
+      "never": "never",
+      "lockNow": "Lock now",
+      "locked": "Omnyra is locked.",
+      "unlock": "Unlock",
+      "wrong": "Wrong PIN.",
+      "wait": "Too many tries: wait {{s}} s."
+    }
   }
 }

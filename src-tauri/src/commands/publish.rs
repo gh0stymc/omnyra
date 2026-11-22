@@ -58,6 +58,7 @@ pub async fn publish_batch(
     state: State<'_, AppState>,
     targets: Vec<PublishTarget>,
 ) -> Result<Vec<String>, AppError> {
+    super::security::ensure_unlocked(&state)?;
     if targets.is_empty() {
         return Err(AppError::Validation {
             field: "targets".into(),

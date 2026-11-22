@@ -9,6 +9,7 @@ pub mod moments;
 pub mod planning;
 pub mod platforms;
 pub mod publish;
+pub mod security;
 pub mod settings;
 pub mod sponsors;
 pub mod uploads;
