@@ -9,6 +9,7 @@ import { IdeasPage } from "../features/ideas/IdeasPage";
 import { PublishPage } from "../features/publish/PublishPage";
 import { CommunityPage } from "../features/community/CommunityPage";
 import { CreationPage } from "../features/creation/CreationPage";
+import { SponsorsPage } from "../features/sponsors/SponsorsPage";
 import { PlaceholderPage } from "../features/placeholder/PlaceholderPage";
 
 export const router = createBrowserRouter([
@@ -24,7 +25,7 @@ export const router = createBrowserRouter([
       { path: "/ideas", element: <IdeasPage /> },
       { path: "/community", element: <CommunityPage /> },
       { path: "/creation", element: <CreationPage /> },
-      { path: "/sponsors", element: <PlaceholderPage section="sponsors" /> },
+      { path: "/sponsors", element: <SponsorsPage /> },
       { path: "/competitors", element: <PlaceholderPage section="competitors" /> },
       { path: "/security", element: <PlaceholderPage section="security" /> },
     ],

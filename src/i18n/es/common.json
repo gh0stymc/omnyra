@@ -627,5 +627,57 @@
     "score": "intensidad {{score}}",
     "cut": "Recortar en vertical y publicar",
     "cutting": "Recortando con FFmpeg…"
+  },
+  "sponsors": {
+    "tab": {
+      "deals": "Patrocinios",
+      "kit": "Media kit"
+    },
+    "new": "Nuevo patrocinio",
+    "brand": "Marca",
+    "contactName": "Contacto",
+    "contactEmail": "Email de contacto",
+    "statusLabel": "Estado",
+    "status": {
+      "prospect": "Posible",
+      "negotiating": "Negociando",
+      "signed": "Firmado",
+      "in_progress": "En curso",
+      "delivered": "Entregado",
+      "cancelled": "Cancelado"
+    },
+    "amount": "Importe",
+    "paymentLabel": "Pago",
+    "payment": {
+      "pending": "Pendiente",
+      "invoiced": "Facturado",
+      "paid": "Cobrado"
+    },
+    "paymentDue": "Vencimiento del pago",
+    "start": "Inicio",
+    "end": "Fin",
+    "dates": "Fechas",
+    "deliverables": "Entregables",
+    "addDeliverable": "Añadir entregable",
+    "overdue": "vencido",
+    "totals": "Firmado {{signed}} · cobrado {{paid}} · pendiente {{pending}}",
+    "overdueTotal": "({{amount}} vencido)",
+    "empty": "Aún no hay patrocinios.",
+    "kit": {
+      "bio": "Quién eres y qué haces (aparece arriba)",
+      "accounts": "Cuentas",
+      "metrics": "Cifras",
+      "metric": {
+        "followers": "Seguidores",
+        "views30": "Vistas en 30 días",
+        "avgViews": "Vistas medias por vídeo",
+        "engagement": "Interacción (me gusta + comentarios / vistas)",
+        "topContents": "Lo más visto"
+      },
+      "accent": "Color",
+      "saveHtml": "Guardar HTML…",
+      "print": "Imprimir / PDF…",
+      "printHint": "Para PDF, elige «Guardar como PDF» en el diálogo de impresión."
+    }
   }
 }

@@ -151,6 +151,17 @@ export const commands = {
 	 *  `app_data_dir/clips/` and returns the path (then handed to multi-network publishing).
 	 */
 	cutMoment: (source: string, startS: number | null, endS: number | null, fit: Fit, options?: InvokeOptions) => __TAURI_INVOKE<string>("cut_moment", { source, startS, endS, fit }, options),
+	listSponsorships: (options?: InvokeOptions) => __TAURI_INVOKE<SponsorOverview_Serialize>("list_sponsorships", undefined, options),
+	createSponsorship: (input: SponsorshipInput_Deserialize, options?: InvokeOptions) => __TAURI_INVOKE<Sponsorship_Serialize>("create_sponsorship", { input }, options),
+	updateSponsorship: (id: string, input: SponsorshipInput_Deserialize, options?: InvokeOptions) => __TAURI_INVOKE<Sponsorship_Serialize>("update_sponsorship", { id, input }, options),
+	deleteSponsorship: (id: string, options?: InvokeOptions) => __TAURI_INVOKE<null>("delete_sponsorship", { id }, options),
+	attachSponsorshipFile: (id: string, path: string, options?: InvokeOptions) => __TAURI_INVOKE<Sponsorship_Serialize>("attach_sponsorship_file", { id, path }, options),
+	detachSponsorshipFile: (id: string, fileId: string, options?: InvokeOptions) => __TAURI_INVOKE<Sponsorship_Serialize>("detach_sponsorship_file", { id, fileId }, options),
+	openSponsorshipFile: (fileId: string, options?: InvokeOptions) => __TAURI_INVOKE<null>("open_sponsorship_file", { fileId }, options),
+	/**  Media kit as self-contained HTML (preview, print to PDF). */
+	mediaKitHtml: (config: MediaKitConfig, options?: InvokeOptions) => __TAURI_INVOKE<string>("media_kit_html", { config }, options),
+	/**  Saves the media kit HTML where the user chose. */
+	saveMediaKit: (config: MediaKitConfig, dest: string, options?: InvokeOptions) => __TAURI_INVOKE<null>("save_media_kit", { config, dest }, options),
 };
 
 /** Events */
@@ -676,6 +687,28 @@ export type ContentRow_Serialize = {
 	comments: number | null,
 };
 
+export type Deliverable = Deliverable_Serialize | Deliverable_Deserialize;
+
+export type Deliverable_Deserialize = {
+	/**  `None` on input = new. */
+	id?: string | null,
+	description: string,
+	platform?: string | null,
+	/**  `YYYY-MM-DD`. */
+	dueAt?: string | null,
+	done: boolean,
+};
+
+export type Deliverable_Serialize = {
+	/**  `None` on input = new. */
+	id: string | null,
+	description: string,
+	platform: string | null,
+	/**  `YYYY-MM-DD`. */
+	dueAt: string | null,
+	done: boolean,
+};
+
 /**
  *  Device flow (Twitch): show this code; the user confirms it at `verification_uri`
  *  (already opened in the browser).
@@ -887,6 +920,20 @@ export type MediaInfo_Serialize = {
 	container: string | null,
 };
 
+export type MediaKitConfig = {
+	title: string,
+	bio: string,
+	contactEmail: string,
+	/**  Accounts to include. */
+	accountIds: string[],
+	/**  Which figures: `followers`, `views30`, `avgViews`, `engagement`, `topContents`. */
+	metrics: string[],
+	/**  `#rrggbb`. */
+	accent: string,
+	/**  `es` | `en`. */
+	language: string,
+};
+
 export type MediaLimits = MediaLimits_Serialize | MediaLimits_Deserialize;
 
 export type MediaLimits_Deserialize = {
@@ -941,6 +988,14 @@ export type MomentsReport_Serialize = {
 	/**  The analysed series: (seconds, value). */
 	series: ([number | null, number | null])[],
 	moments: Moment[],
+};
+
+export type MoneyTotals = {
+	currency: string,
+	signedCents: number | null,
+	paidCents: number | null,
+	pendingCents: number | null,
+	overdueCents: number | null,
 };
 
 export type NamedOption = {
@@ -1097,6 +1152,100 @@ export type ReplyRow_Serialize = {
 export type ScheduleSupport = "none" | "native" | "localOnly";
 
 export type Severity = "error" | "warning";
+
+export type SponsorFile = {
+	id: string,
+	name: string,
+	path: string,
+};
+
+export type SponsorOverview = SponsorOverview_Serialize | SponsorOverview_Deserialize;
+
+export type SponsorOverview_Deserialize = {
+	items: Sponsorship_Deserialize[],
+	totals: MoneyTotals[],
+};
+
+export type SponsorOverview_Serialize = {
+	items: Sponsorship_Serialize[],
+	totals: MoneyTotals[],
+};
+
+export type Sponsorship = Sponsorship_Serialize | Sponsorship_Deserialize;
+
+export type SponsorshipInput = SponsorshipInput_Serialize | SponsorshipInput_Deserialize;
+
+export type SponsorshipInput_Deserialize = {
+	brand: string,
+	contactName?: string | null,
+	contactEmail?: string | null,
+	status: string,
+	amountCents?: number | null,
+	currency?: string | null,
+	paymentStatus: string,
+	paymentDue?: string | null,
+	startDate?: string | null,
+	endDate?: string | null,
+	notes?: string | null,
+	deliverables: Deliverable_Deserialize[],
+};
+
+export type SponsorshipInput_Serialize = {
+	brand: string,
+	contactName: string | null,
+	contactEmail: string | null,
+	status: string,
+	amountCents: number | null,
+	currency: string | null,
+	paymentStatus: string,
+	paymentDue: string | null,
+	startDate: string | null,
+	endDate: string | null,
+	notes: string | null,
+	deliverables: Deliverable_Serialize[],
+};
+
+export type Sponsorship_Deserialize = {
+	id: string,
+	brand: string,
+	contactName?: string | null,
+	contactEmail?: string | null,
+	status: string,
+	/**  Cents (f64 for TypeScript). */
+	amountCents?: number | null,
+	currency?: string | null,
+	paymentStatus: string,
+	paymentDue?: string | null,
+	/**  Payment pending/invoiced and `payment_due` already past. */
+	overdue: boolean,
+	startDate?: string | null,
+	endDate?: string | null,
+	notes?: string | null,
+	deliverables: Deliverable_Deserialize[],
+	files: SponsorFile[],
+	updatedAt: string,
+};
+
+export type Sponsorship_Serialize = {
+	id: string,
+	brand: string,
+	contactName: string | null,
+	contactEmail: string | null,
+	status: string,
+	/**  Cents (f64 for TypeScript). */
+	amountCents: number | null,
+	currency: string | null,
+	paymentStatus: string,
+	paymentDue: string | null,
+	/**  Payment pending/invoiced and `payment_due` already past. */
+	overdue: boolean,
+	startDate: string | null,
+	endDate: string | null,
+	notes: string | null,
+	deliverables: Deliverable_Serialize[],
+	files: SponsorFile[],
+	updatedAt: string,
+};
 
 export type Summary = Summary_Serialize | Summary_Deserialize;
 

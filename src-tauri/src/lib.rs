@@ -102,6 +102,15 @@ fn specta_builder() -> Builder<tauri::Wry> {
             commands::creation::llm_generate,
             commands::moments::get_moments,
             commands::moments::cut_moment,
+            commands::sponsors::list_sponsorships,
+            commands::sponsors::create_sponsorship,
+            commands::sponsors::update_sponsorship,
+            commands::sponsors::delete_sponsorship,
+            commands::sponsors::attach_sponsorship_file,
+            commands::sponsors::detach_sponsorship_file,
+            commands::sponsors::open_sponsorship_file,
+            commands::sponsors::media_kit_html,
+            commands::sponsors::save_media_kit,
         ])
         .events(collect_events![
             events::AccountChanged,

@@ -18,6 +18,7 @@ pub mod moments;
 pub mod planning;
 pub mod quota;
 pub mod security;
+pub mod sponsors;
 pub mod sync;
 pub mod uploads;
 

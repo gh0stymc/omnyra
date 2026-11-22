@@ -627,5 +627,57 @@
     "score": "intensity {{score}}",
     "cut": "Cut vertical and publish",
     "cutting": "Cutting with FFmpeg…"
+  },
+  "sponsors": {
+    "tab": {
+      "deals": "Sponsorships",
+      "kit": "Media kit"
+    },
+    "new": "New sponsorship",
+    "brand": "Brand",
+    "contactName": "Contact",
+    "contactEmail": "Contact email",
+    "statusLabel": "Status",
+    "status": {
+      "prospect": "Prospect",
+      "negotiating": "Negotiating",
+      "signed": "Signed",
+      "in_progress": "In progress",
+      "delivered": "Delivered",
+      "cancelled": "Cancelled"
+    },
+    "amount": "Amount",
+    "paymentLabel": "Payment",
+    "payment": {
+      "pending": "Pending",
+      "invoiced": "Invoiced",
+      "paid": "Paid"
+    },
+    "paymentDue": "Payment due",
+    "start": "Start",
+    "end": "End",
+    "dates": "Dates",
+    "deliverables": "Deliverables",
+    "addDeliverable": "Add deliverable",
+    "overdue": "overdue",
+    "totals": "Signed {{signed}} · paid {{paid}} · pending {{pending}}",
+    "overdueTotal": "({{amount}} overdue)",
+    "empty": "No sponsorships yet.",
+    "kit": {
+      "bio": "Who you are and what you do (shown at the top)",
+      "accounts": "Accounts",
+      "metrics": "Figures",
+      "metric": {
+        "followers": "Followers",
+        "views30": "Views in 30 days",
+        "avgViews": "Average views per video",
+        "engagement": "Engagement (likes + comments / views)",
+        "topContents": "Top content"
+      },
+      "accent": "Colour",
+      "saveHtml": "Save HTML…",
+      "print": "Print / PDF…",
+      "printHint": "For a PDF, choose “Save as PDF” in the print dialog."
+    }
   }
 }
