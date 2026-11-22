@@ -2,18 +2,19 @@
 # Builds Omnyra from a source tarball of a release tag.
 # CI (.github/workflows/ci.yml, job "arch") drops a `git archive` tarball with the
 # same name next to this file, so makepkg uses it instead of downloading.
-# TODO(7c): set _owner and replace SKIP with the real checksum before publishing to AUR.
+# Publishing to AUR (docs/DISTRIBUTION.md): set _owner to the GitHub account, then after
+# tagging run `updpkgsums && makepkg --printsrcinfo > .SRCINFO` and push to the AUR repo.
 
 _owner=OWNER
 pkgname=omnyra
-pkgver=0.1.0
+pkgver=1.0.0
 pkgrel=1
 pkgdesc='Desktop app for content creators: unified analytics, calendar and publishing'
 arch=('x86_64')
 url="https://github.com/${_owner}/omnyra"
 license=('MIT')
 depends=('webkit2gtk-4.1' 'gtk3' 'glib2' 'cairo' 'gdk-pixbuf2' 'pango' 'libsoup3'
-         'hicolor-icon-theme' 'gcc-libs' 'glibc' 'ffmpeg')
+         'hicolor-icon-theme' 'gcc-libs' 'glibc' 'ffmpeg' 'libayatana-appindicator')
 optdepends=('org.freedesktop.secrets: keyring to store account tokens (gnome-keyring, kwallet, keepassxc)')
 makedepends=('cargo' 'nodejs' 'npm')
 options=('!lto')

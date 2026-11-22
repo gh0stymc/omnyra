@@ -1,0 +1,101 @@
+# Release: on a `v*` tag, build signed bundles for Linux and Windows, generate the updater
+# manifest (latest.json) and publish everything as a GitHub release (docs/DISTRIBUTION.md).
+#
+# Secrets: TAURI_SIGNING_PRIVATE_KEY, TAURI_SIGNING_PRIVATE_KEY_PASSWORD (updater key pair),
+# OMNYRA_UPDATER_PUBKEY (its public key), and the build-time IDs of .env.example
+# (OMNYRA_GOOGLE_CLIENT_ID, OMNYRA_GOOGLE_CLIENT_SECRET, OMNYRA_TWITCH_CLIENT_ID,
+# OMNYRA_BROKER_URL, OMNYRA_INSTAGRAM_CLIENT_ID, OMNYRA_TIKTOK_CLIENT_KEY).
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+  UBUNTU_DEPS: >-
+    libwebkit2gtk-4.1-dev build-essential libssl-dev libayatana-appindicator3-dev
+    librsvg2-dev patchelf file
+
+jobs:
+  bundle:
+    name: Bundle (${{ matrix.name }})
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - name: Linux
+            os: ubuntu-22.04
+            bundles: deb,appimage
+          - name: Windows
+            os: windows-2025
+            bundles: msi,nsis
+    runs-on: ${{ matrix.os }}
+    env:
+      TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+      TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+      OMNYRA_UPDATER_PUBKEY: ${{ secrets.OMNYRA_UPDATER_PUBKEY }}
+      OMNYRA_UPDATER_ENDPOINT: https://github.com/${{ github.repository }}/releases/latest/download/latest.json
+      OMNYRA_GOOGLE_CLIENT_ID: ${{ secrets.OMNYRA_GOOGLE_CLIENT_ID }}
+      OMNYRA_GOOGLE_CLIENT_SECRET: ${{ secrets.OMNYRA_GOOGLE_CLIENT_SECRET }}
+      OMNYRA_TWITCH_CLIENT_ID: ${{ secrets.OMNYRA_TWITCH_CLIENT_ID }}
+      OMNYRA_BROKER_URL: ${{ secrets.OMNYRA_BROKER_URL }}
+      OMNYRA_INSTAGRAM_CLIENT_ID: ${{ secrets.OMNYRA_INSTAGRAM_CLIENT_ID }}
+      OMNYRA_TIKTOK_CLIENT_KEY: ${{ secrets.OMNYRA_TIKTOK_CLIENT_KEY }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Check the tag matches the app version
+        shell: bash
+        run: |
+          v=$(node -p "require('./src-tauri/tauri.conf.json').version")
+          [[ "v$v" == "$GITHUB_REF_NAME" ]] || { echo "::error::tag $GITHUB_REF_NAME != version $v"; exit 1; }
+      - name: Install system dependencies
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends $UBUNTU_DEPS
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
+        with:
+          toolchain: stable
+      - name: Build signed bundles
+        shell: bash
+        env:
+          # Produce the .sig files the updater needs.
+          OMNYRA_UPDATER_ARTIFACTS: "1"
+        run: scripts/ci/bundle.sh ${{ matrix.bundles }}
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-${{ matrix.name }}
+          path: artifacts/
+          if-no-files-found: error
+          retention-days: 3
+
+  publish:
+    name: Publish release
+    needs: bundle
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          path: dist-release
+          merge-multiple: true
+      - name: Updater manifest and checksums
+        run: |
+          node scripts/release/latest-json.mjs dist-release "$GITHUB_REF_NAME" \
+            "https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}" > dist-release/latest.json
+          cd dist-release && rm -f SHA256SUMS && sha256sum -- *.deb *.AppImage *.msi *.exe > SHA256SUMS
+      - name: Create the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          notes=$(awk -v v="${GITHUB_REF_NAME#v}" '$0 ~ "^## \\[" v "\\]" {f=1; next} /^## \[/ {f=0} f' CHANGELOG.md)
+          gh release create "$GITHUB_REF_NAME" dist-release/* --title "Omnyra ${GITHUB_REF_NAME}" --notes "${notes:-Omnyra $GITHUB_REF_NAME}"

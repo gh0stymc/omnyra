@@ -190,6 +190,12 @@ export const commands = {
 	/**  YouTube channel search for lookalikes of the first YouTube account (100+ units). */
 	searchImpersonators: (options?: InvokeOptions) => __TAURI_INVOKE<number>("search_impersonators", undefined, options),
 	setSuspectStatus: (id: string, status: string, options?: InvokeOptions) => __TAURI_INVOKE<null>("set_suspect_status", { id, status }, options),
+	/**  Whether this build can update itself (signed releases only). */
+	updaterAvailable: (options?: InvokeOptions) => __TAURI_INVOKE<boolean>("updater_available", undefined, options),
+	/**  Looks for a newer signed release. */
+	checkUpdate: (options?: InvokeOptions) => __TAURI_INVOKE<UpdateInfo_Serialize | null>("check_update", undefined, options),
+	/**  Downloads, verifies the signature, installs and restarts. */
+	installUpdate: (options?: InvokeOptions) => __TAURI_INVOKE<null>("install_update", undefined, options),
 };
 
 /** Events */
@@ -1628,6 +1634,18 @@ export type TrendKeyword_Serialize = {
 	videos: PublicVideo_Serialize[],
 	/**  Total views of the top results per day (trend line). */
 	history: DayValue[],
+};
+
+export type UpdateInfo = UpdateInfo_Serialize | UpdateInfo_Deserialize;
+
+export type UpdateInfo_Deserialize = {
+	version: string,
+	notes?: string | null,
+};
+
+export type UpdateInfo_Serialize = {
+	version: string,
+	notes: string | null,
 };
 
 /**  An upload changed status (`queued`, `uploading`, `published`, `failed`, `cancelled`). */

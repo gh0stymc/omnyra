@@ -786,5 +786,16 @@
       "wrong": "PIN incorrecto.",
       "wait": "Demasiados intentos: espera {{s}} s."
     }
+  },
+  "updates": {
+    "title": "Actualizaciones",
+    "version": "Versión {{version}}",
+    "check": "Buscar actualizaciones",
+    "checking": "Buscando…",
+    "upToDate": "Tienes la última versión.",
+    "found": "Hay una versión nueva: {{version}}",
+    "install": "Instalar y reiniciar",
+    "installing": "Instalando…",
+    "devBuild": "Esta compilación no tiene actualizaciones automáticas (solo las versiones publicadas y firmadas)."
   }
 }

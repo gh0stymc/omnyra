@@ -9,6 +9,8 @@ const KEYS: &[&str] = &[
     "OMNYRA_INSTAGRAM_CLIENT_ID",
     "OMNYRA_TIKTOK_CLIENT_KEY",
     "OMNYRA_BROKER_URL",
+    "OMNYRA_UPDATER_PUBKEY",
+    "OMNYRA_UPDATER_ENDPOINT",
 ];
 
 fn main() {

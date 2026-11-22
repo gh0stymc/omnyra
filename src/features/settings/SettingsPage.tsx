@@ -3,6 +3,7 @@ import { SUPPORTED_LANGS, setLang } from "../../i18n";
 import { useUi } from "../../stores/ui";
 import { AccountsSection } from "./AccountsSection";
 import { PreferencesSection } from "./PreferencesSection";
+import { UpdatesSection } from "./UpdatesSection";
 
 export function SettingsPage() {
   const { t, i18n } = useTranslation();
@@ -41,6 +42,7 @@ export function SettingsPage() {
         </label>
       </section>
       <PreferencesSection />
+      <UpdatesSection />
     </div>
   );
 }

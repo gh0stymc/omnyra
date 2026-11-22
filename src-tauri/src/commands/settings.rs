@@ -91,3 +91,64 @@ fn reconcile_autostart(app: &AppHandle, want: bool) -> bool {
     }
     mgr.is_enabled().unwrap_or(want)
 }
+
+/// Whether this build can update itself (signed releases only).
+#[tauri::command]
+#[specta::specta]
+pub fn updater_available() -> bool {
+    crate::updater_config().is_some()
+}
+
+#[derive(Debug, Clone, serde::Serialize, specta::Type)]
+#[serde(rename_all = "camelCase")]
+pub struct UpdateInfo {
+    pub version: String,
+    pub notes: Option<String>,
+}
+
+fn updater(app: &tauri::AppHandle) -> Result<tauri_plugin_updater::Updater, AppError> {
+    use tauri_plugin_updater::UpdaterExt;
+    let (_, url) = crate::updater_config().ok_or(AppError::NotSupported)?;
+    let url = url.parse().map_err(|_| AppError::Internal)?;
+    app.updater_builder()
+        .endpoints(vec![url])
+        .and_then(|b| b.build())
+        .map_err(|e| {
+            tracing::warn!(error = %e, "updater not available");
+            AppError::Internal
+        })
+}
+
+/// Looks for a newer signed release.
+#[tauri::command]
+#[specta::specta]
+pub async fn check_update(app: tauri::AppHandle) -> Result<Option<UpdateInfo>, AppError> {
+    let u = updater(&app)?.check().await.map_err(|e| {
+        tracing::warn!(error = %e, "update check failed");
+        AppError::Network
+    })?;
+    Ok(u.map(|u| UpdateInfo {
+        version: u.version,
+        notes: u.body,
+    }))
+}
+
+/// Downloads, verifies the signature, installs and restarts.
+#[tauri::command]
+#[specta::specta]
+pub async fn install_update(app: tauri::AppHandle) -> Result<(), AppError> {
+    let Some(u) = updater(&app)?
+        .check()
+        .await
+        .map_err(|_| AppError::Network)?
+    else {
+        return Ok(());
+    };
+    u.download_and_install(|_, _| {}, || {})
+        .await
+        .map_err(|e| {
+            tracing::warn!(error = %e, "update install failed");
+            AppError::Network
+        })?;
+    app.restart();
+}

@@ -134,6 +134,9 @@ fn specta_builder() -> Builder<tauri::Wry> {
             commands::security::scan_impersonation,
             commands::security::search_impersonators,
             commands::security::set_suspect_status,
+            commands::settings::updater_available,
+            commands::settings::check_update,
+            commands::settings::install_update,
         ])
         .events(collect_events![
             events::AccountChanged,
@@ -163,6 +166,19 @@ fn credentials() -> Credentials {
             .filter(|s| !s.is_empty())
             .map(str::to_owned),
     }
+}
+
+/// Updater public key and endpoint baked in at build time (release CI secrets).
+pub(crate) fn updater_config() -> Option<(&'static str, &'static str)> {
+    let key = option_env!("OMNYRA_UPDATER_PUBKEY").filter(|s| !s.trim().is_empty())?;
+    let url = option_env!("OMNYRA_UPDATER_ENDPOINT").filter(|s| !s.trim().is_empty())?;
+    Some((key, url))
+}
+
+fn updater_plugin() -> Option<tauri::plugin::TauriPlugin<tauri::Wry, tauri_plugin_updater::Config>>
+{
+    let (key, _) = updater_config()?;
+    Some(tauri_plugin_updater::Builder::new().pubkey(key).build())
 }
 
 #[cfg(any(debug_assertions, test))]
@@ -211,7 +227,7 @@ pub fn run() {
         .export(specta_typescript::Typescript::default(), BINDINGS_PATH)
         .expect("failed to export TypeScript bindings");
 
-    tauri::Builder::default()
+    let app = tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
             if let Some(w) = app.get_webview_window("main") {
                 let _ = w.show();
@@ -225,8 +241,13 @@ pub fn run() {
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
             None,
         ))
-        .plugin(tauri_plugin_window_state::Builder::default().build())
-        .invoke_handler(builder.invoke_handler())
+        .plugin(tauri_plugin_window_state::Builder::default().build());
+    // Signed auto-updates only in builds that carry the public key (release CI, 7c).
+    let app = match updater_plugin() {
+        Some(p) => app.plugin(p),
+        None => app,
+    };
+    app.invoke_handler(builder.invoke_handler())
         .setup(move |app| {
             builder.mount_events(app);
             let dir = app.path().app_data_dir()?;

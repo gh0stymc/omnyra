@@ -786,5 +786,16 @@
       "wrong": "Wrong PIN.",
       "wait": "Too many tries: wait {{s}} s."
     }
+  },
+  "updates": {
+    "title": "Updates",
+    "version": "Version {{version}}",
+    "check": "Check for updates",
+    "checking": "Checking…",
+    "upToDate": "You have the latest version.",
+    "found": "A new version is available: {{version}}",
+    "install": "Install and restart",
+    "installing": "Installing…",
+    "devBuild": "This build has no automatic updates (only signed published releases do)."
   }
 }
