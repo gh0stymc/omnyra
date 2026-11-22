@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQueries, useQuery } from "@tanstack/react-query";
 import { open, save } from "@tauri-apps/plugin-dialog";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -320,11 +320,17 @@ export function PublishPage() {
     ]);
   };
 
+  // Scopes each destination still needs, asked to the backend (REVIEW C1).
+  const needed = useQueries({
+    queries: targets.map((tg) => ({
+      queryKey: ["uploadScopes", tg.accountId, false],
+      queryFn: () => commands.uploadScopes(tg.accountId, false),
+    })),
+  });
   const missingScopes = (accountId: string) => {
-    const a = accounts.data?.find((x) => x.id === accountId);
-    const p = a?.platform;
-    // The backend checks the exact scopes; this only decides whether to show the button.
-    return !!a && !!p && p !== "mock" && !a.grantedScopes.some((s) => /upload|publish/.test(s));
+    const i = targets.findIndex((x) => x.accountId === accountId);
+    const granted = accounts.data?.find((x) => x.id === accountId)?.grantedScopes ?? [];
+    return (needed[i]?.data ?? []).some((s) => !granted.includes(s));
   };
   const authorize = useMutation({
     mutationFn: (accountId: string) => commands.authorizeUpload(accountId, false),
@@ -377,7 +383,11 @@ export function PublishPage() {
   };
 
   const canPublish =
-    !!filePath && targets.length > 0 && targets.every(isComplete) && !publish.isPending;
+    !!filePath &&
+    targets.length > 0 &&
+    targets.every(isComplete) &&
+    !targets.some((tg) => missingScopes(tg.accountId)) &&
+    !publish.isPending;
 
   return (
     <div className="max-w-4xl space-y-6">

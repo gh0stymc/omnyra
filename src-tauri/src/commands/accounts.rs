@@ -1,3 +1,4 @@
+use super::lock_db;
 use crate::events::{AccountChanged, DeviceCodeIssued};
 use crate::state::AppState;
 use omnyra_core::{
@@ -16,12 +17,6 @@ use omnyra_core::{
 use tauri::{AppHandle, State};
 use tauri_specta::Event;
 use tokio::sync::oneshot;
-
-fn lock_db<'a>(
-    state: &'a State<'_, AppState>,
-) -> Result<std::sync::MutexGuard<'a, omnyra_core::rusqlite::Connection>, AppError> {
-    state.db.lock().map_err(|_| AppError::Internal)
-}
 
 fn notify(app: &AppHandle, account_id: &str, status: AccountStatus) {
     let _ = AccountChanged {

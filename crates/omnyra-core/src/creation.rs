@@ -95,6 +95,16 @@ pub fn import_asset(
     if meta.len() > MAX_ASSET_BYTES {
         return Err(validation("file"));
     }
+    // The extension is not enough: check the bytes really are an image (REVIEW S2).
+    let mut head = [0u8; 16];
+    {
+        use std::io::Read;
+        let mut f = std::fs::File::open(source).map_err(|_| AppError::FileUnavailable)?;
+        let n = f.read(&mut head).map_err(|_| AppError::FileUnavailable)?;
+        if crate::paths::image_kind(&head[..n]).is_none() {
+            return Err(validation("file"));
+        }
+    }
     let file_id = uuid::Uuid::now_v7().to_string();
     let dir = files_dir.join(&file_id[file_id.len() - 2..]);
     std::fs::create_dir_all(&dir).map_err(|_| AppError::FileUnavailable)?;
@@ -343,6 +353,11 @@ pub fn save_export(dir: &Path, data_url: &str, name: &str) -> Result<PathBuf> {
         return Err(validation("image"));
     }
     let bytes = STANDARD.decode(b64).map_err(|_| validation("image"))?;
+    // The content must be the image it claims to be (REVIEW S1).
+    let expected = if ext == "png" { "png" } else { "jpeg" };
+    if crate::paths::image_kind(&bytes) != Some(expected) {
+        return Err(validation("image"));
+    }
     let safe: String = name
         .chars()
         .map(|c| {
@@ -475,7 +490,7 @@ mod tests {
         let conn = open_in_memory().unwrap();
         let dir = tmp();
         let src = dir.join("skin navidad.png");
-        std::fs::write(&src, b"\x89PNG fake").unwrap();
+        std::fs::write(&src, b"\x89PNG\r\n\x1a\nfake").unwrap();
         let input = AssetInput {
             kind: "skin".into(),
             name: "gh0sty".into(),
@@ -518,6 +533,9 @@ mod tests {
         let dir = tmp();
         let txt = dir.join("a.txt");
         std::fs::write(&txt, b"x").unwrap();
+        // Right extension, wrong bytes.
+        let disguised = dir.join("b.png");
+        std::fs::write(&disguised, b"not an image").unwrap();
         let input = AssetInput {
             kind: "skin".into(),
             name: "x".into(),
@@ -526,6 +544,10 @@ mod tests {
         };
         assert!(matches!(
             import_asset(&conn, &dir, &txt, &input, "t"),
+            Err(AppError::Validation { .. })
+        ));
+        assert!(matches!(
+            import_asset(&conn, &dir, &disguised, &input, "t"),
             Err(AppError::Validation { .. })
         ));
         let bad = AssetInput {
@@ -596,16 +618,23 @@ mod tests {
     #[test]
     fn exports_decode_and_sanitize_names() {
         let dir = tmp();
-        let png = format!("data:image/png;base64,{}", STANDARD.encode(b"img"));
+        let img: &[u8] = b"\x89PNG\r\n\x1a\nimg";
+        let png = format!("data:image/png;base64,{}", STANDARD.encode(img));
         let p = save_export(&dir, &png, "../../etc/pass wd").unwrap();
         assert!(p.starts_with(&dir));
         assert_eq!(p.extension().unwrap(), "png");
-        assert_eq!(std::fs::read(&p).unwrap(), b"img");
-        let jpg = format!("data:image/jpeg;base64,{}", STANDARD.encode(b"j"));
+        assert_eq!(std::fs::read(&p).unwrap(), img);
+        let jpg = format!(
+            "data:image/jpeg;base64,{}",
+            STANDARD.encode([0xFF, 0xD8, 0xFF, 1])
+        );
         assert_eq!(
             save_export(&dir, &jpg, "").unwrap().extension().unwrap(),
             "jpg"
         );
+        // A script disguised as a PNG is refused.
+        let fake = format!("data:image/png;base64,{}", STANDARD.encode(b"#!/bin/sh"));
+        assert!(save_export(&dir, &fake, "x").is_err());
         assert!(save_export(&dir, "data:text/html;base64,AA==", "x").is_err());
         let _ = std::fs::remove_dir_all(dir);
     }

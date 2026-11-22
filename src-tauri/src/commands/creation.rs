@@ -1,3 +1,4 @@
+use super::lock_db;
 use crate::state::AppState;
 use omnyra_core::{
     creation::{
@@ -6,12 +7,6 @@ use omnyra_core::{
     AppError,
 };
 use tauri::State;
-
-fn lock_db<'a>(
-    state: &'a State<'_, AppState>,
-) -> Result<std::sync::MutexGuard<'a, omnyra_core::rusqlite::Connection>, AppError> {
-    state.db.lock().map_err(|_| AppError::Internal)
-}
 
 #[tauri::command]
 #[specta::specta]
@@ -97,13 +92,19 @@ pub fn save_thumbnail_export(
 /// Writes an exported thumbnail to a path the user chose in a save dialog.
 #[tauri::command]
 #[specta::specta]
-pub fn write_thumbnail_file(data_url: String, dest: String) -> Result<(), AppError> {
-    let dir = std::path::Path::new(&dest)
-        .parent()
-        .ok_or(AppError::FileUnavailable)?
-        .to_path_buf();
-    let tmp = creation::save_export(&dir, &data_url, "omnyra-tmp")?;
-    std::fs::rename(&tmp, &dest).map_err(|_| AppError::FileUnavailable)
+pub fn write_thumbnail_file(
+    state: State<'_, AppState>,
+    data_url: String,
+    dest: String,
+) -> Result<(), AppError> {
+    let dest = omnyra_core::paths::check_output(&dest, &["png", "jpg", "jpeg"], &state.data_dir)?;
+    let dir = dest.parent().ok_or(AppError::FileUnavailable)?;
+    // Decoded and checked (PNG/JPEG bytes) next to the destination, then moved in place.
+    let tmp = creation::save_export(dir, &data_url, ".omnyra-tmp")?;
+    std::fs::rename(&tmp, &dest).map_err(|_| {
+        let _ = std::fs::remove_file(&tmp);
+        AppError::FileUnavailable
+    })
 }
 
 #[tauri::command]

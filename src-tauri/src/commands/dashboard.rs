@@ -1,3 +1,4 @@
+use super::lock_db;
 use crate::state::AppState;
 use omnyra_core::{
     connectors::MetricPoint,
@@ -5,12 +6,6 @@ use omnyra_core::{
     AppError,
 };
 use tauri::State;
-
-fn lock_db<'a>(
-    state: &'a State<'_, AppState>,
-) -> Result<std::sync::MutexGuard<'a, omnyra_core::rusqlite::Connection>, AppError> {
-    state.db.lock().map_err(|_| AppError::Internal)
-}
 
 /// Per-account and global figures for the period starting at `from` (`None` = all time).
 #[tauri::command]

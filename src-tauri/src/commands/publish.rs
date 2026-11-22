@@ -122,6 +122,7 @@ pub async fn publish_batch(
 #[specta::specta]
 pub async fn export_rendition(
     app: tauri::AppHandle,
+    state: State<'_, AppState>,
     source: String,
     spec: RenditionSpec,
     dest: String,
@@ -131,6 +132,7 @@ pub async fn export_rendition(
     if !src.is_file() {
         return Err(AppError::FileUnavailable);
     }
+    let dest = omnyra_core::paths::check_output(&dest, &["mp4"], &state.data_dir)?;
     let info = media::probe(src).await.ok();
     let emitter = app.clone();
     ffmpeg::render(

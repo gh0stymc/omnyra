@@ -1,3 +1,4 @@
+use super::lock_db;
 use crate::state::AppState;
 use omnyra_core::{
     sponsors::{self, MediaKitConfig, MoneyTotals, Sponsorship, SponsorshipInput},
@@ -5,12 +6,6 @@ use omnyra_core::{
 };
 use serde::Serialize;
 use tauri::State;
-
-fn lock_db<'a>(
-    state: &'a State<'_, AppState>,
-) -> Result<std::sync::MutexGuard<'a, omnyra_core::rusqlite::Connection>, AppError> {
-    state.db.lock().map_err(|_| AppError::Internal)
-}
 
 #[derive(Debug, Clone, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
@@ -99,6 +94,7 @@ pub fn save_media_kit(
     config: MediaKitConfig,
     dest: String,
 ) -> Result<(), AppError> {
+    let dest = omnyra_core::paths::check_output(&dest, &["html", "htm"], &state.data_dir)?;
     let html = sponsors::media_kit_html(&*lock_db(&state)?, &config, &state.clock.now_iso())?;
     std::fs::write(dest, html).map_err(|_| AppError::FileUnavailable)
 }

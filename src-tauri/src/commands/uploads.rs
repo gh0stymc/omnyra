@@ -1,3 +1,4 @@
+use super::lock_db;
 use crate::state::AppState;
 use omnyra_core::{
     accounts as account_service,
@@ -9,12 +10,6 @@ use omnyra_core::{
 };
 use std::sync::Arc;
 use tauri::State;
-
-fn lock_db<'a>(
-    state: &'a State<'_, AppState>,
-) -> Result<std::sync::MutexGuard<'a, omnyra_core::rusqlite::Connection>, AppError> {
-    state.db.lock().map_err(|_| AppError::Internal)
-}
 
 fn connector_for(
     state: &State<'_, AppState>,

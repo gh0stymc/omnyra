@@ -1,3 +1,4 @@
+use super::lock_db;
 use crate::state::AppState;
 use omnyra_core::{
     accounts::account_ctx,
@@ -9,12 +10,6 @@ use omnyra_core::{
 };
 use std::sync::Arc;
 use tauri::State;
-
-fn lock_db<'a>(
-    state: &'a State<'_, AppState>,
-) -> Result<std::sync::MutexGuard<'a, omnyra_core::rusqlite::Connection>, AppError> {
-    state.db.lock().map_err(|_| AppError::Internal)
-}
 
 /// The first active YouTube account: public lookups go through its token and quota.
 pub(crate) fn youtube_ctx(state: &AppState) -> Result<(Arc<dyn Connector>, AccountCtx), AppError> {

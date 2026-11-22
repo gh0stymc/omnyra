@@ -1,34 +1,63 @@
+import { lazy, type ComponentType } from "react";
 import { createBrowserRouter } from "react-router";
 import { Layout } from "./layout/Layout";
 import { DashboardPage } from "../features/dashboard/DashboardPage";
-import { PlatformViewPage } from "../features/platform-view/PlatformViewPage";
-import { SettingsPage } from "../features/settings/SettingsPage";
-import { UploadsPage } from "../features/uploads/UploadsPage";
-import { CalendarPage } from "../features/calendar/CalendarPage";
-import { IdeasPage } from "../features/ideas/IdeasPage";
-import { PublishPage } from "../features/publish/PublishPage";
-import { CommunityPage } from "../features/community/CommunityPage";
-import { CreationPage } from "../features/creation/CreationPage";
-import { SponsorsPage } from "../features/sponsors/SponsorsPage";
-import { CompetitorsPage } from "../features/competitors/CompetitorsPage";
-import { SecurityPage } from "../features/security/SecurityPage";
+
+/** Code-split page (REVIEW P1): loaded the first time its route opens. */
+function page<K extends string>(load: () => Promise<Record<K, ComponentType>>, name: K) {
+  const C: ComponentType = lazy(() => load().then((m) => ({ default: m[name] as ComponentType })));
+  return <C />;
+}
 
 export const router = createBrowserRouter([
   {
     element: <Layout />,
     children: [
       { path: "/", element: <DashboardPage /> },
-      { path: "/platform/:platform/:accountId", element: <PlatformViewPage /> },
-      { path: "/settings", element: <SettingsPage /> },
-      { path: "/uploads", element: <UploadsPage /> },
-      { path: "/publish", element: <PublishPage /> },
-      { path: "/calendar", element: <CalendarPage /> },
-      { path: "/ideas", element: <IdeasPage /> },
-      { path: "/community", element: <CommunityPage /> },
-      { path: "/creation", element: <CreationPage /> },
-      { path: "/sponsors", element: <SponsorsPage /> },
-      { path: "/competitors", element: <CompetitorsPage /> },
-      { path: "/security", element: <SecurityPage /> },
+      {
+        path: "/platform/:platform/:accountId",
+        element: page(
+          () => import("../features/platform-view/PlatformViewPage"),
+          "PlatformViewPage",
+        ),
+      },
+      {
+        path: "/settings",
+        element: page(() => import("../features/settings/SettingsPage"), "SettingsPage"),
+      },
+      {
+        path: "/uploads",
+        element: page(() => import("../features/uploads/UploadsPage"), "UploadsPage"),
+      },
+      {
+        path: "/publish",
+        element: page(() => import("../features/publish/PublishPage"), "PublishPage"),
+      },
+      {
+        path: "/calendar",
+        element: page(() => import("../features/calendar/CalendarPage"), "CalendarPage"),
+      },
+      { path: "/ideas", element: page(() => import("../features/ideas/IdeasPage"), "IdeasPage") },
+      {
+        path: "/community",
+        element: page(() => import("../features/community/CommunityPage"), "CommunityPage"),
+      },
+      {
+        path: "/creation",
+        element: page(() => import("../features/creation/CreationPage"), "CreationPage"),
+      },
+      {
+        path: "/sponsors",
+        element: page(() => import("../features/sponsors/SponsorsPage"), "SponsorsPage"),
+      },
+      {
+        path: "/competitors",
+        element: page(() => import("../features/competitors/CompetitorsPage"), "CompetitorsPage"),
+      },
+      {
+        path: "/security",
+        element: page(() => import("../features/security/SecurityPage"), "SecurityPage"),
+      },
     ],
   },
 ]);

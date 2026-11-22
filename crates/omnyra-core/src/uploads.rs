@@ -744,7 +744,26 @@ pub async fn run(
                     now_iso
                 ],
             )?;
+            // The adapted version is not needed any more (REVIEW R1).
+            let rendition: Option<(String, String)> = tx
+                .query_row(
+                    "SELECT f.id, f.path FROM publications p JOIN files f ON f.id = p.rendition_file_id
+                     WHERE p.id = ?1 AND f.managed = 1",
+                    params![id],
+                    |r| Ok((r.get(0)?, r.get(1)?)),
+                )
+                .optional()?;
+            if let Some((file_id, _)) = &rendition {
+                tx.execute(
+                    "UPDATE publications SET rendition_file_id = NULL WHERE id = ?1",
+                    params![id],
+                )?;
+                tx.execute("DELETE FROM files WHERE id = ?1", params![file_id])?;
+            }
             tx.commit()?;
+            if let Some((_, path)) = rendition {
+                let _ = std::fs::remove_file(path);
+            }
             events.changed(id, "published");
             Ok(())
         }
@@ -1043,6 +1062,39 @@ mod tests {
         set_status(&conn, &e.id, "uploading", "t1").unwrap();
         assert_eq!(recover(&conn, "t2").unwrap(), 1);
         assert_eq!(next_due(&conn, "t9").unwrap().as_deref(), Some("pub-1"));
+    }
+
+    #[tokio::test]
+    async fn rendition_file_is_deleted_once_published() {
+        let e = env();
+        let out = std::env::temp_dir().join(format!("omnyra-rd-{}.mp4", uuid::Uuid::now_v7()));
+        std::fs::write(&out, b"0123456789").unwrap();
+        {
+            let mut conn = e.db.lock().unwrap();
+            conn.execute("UPDATE publications SET status = 'rendering', render_spec = '{}' WHERE id = 'pub-1'", [])
+                .unwrap();
+            assert!(finish_render(&mut conn, "pub-1", &out.to_string_lossy(), "t1").unwrap());
+        }
+        run(
+            &e.db,
+            &e.auth,
+            &e.clock,
+            &flaky(0, || AppError::Network),
+            &e.id,
+            &Events::default(),
+        )
+        .await
+        .unwrap();
+        assert_eq!(row(&e).status, "published");
+        assert!(!out.exists(), "rendition removed after publishing");
+        let n: i64 =
+            e.db.lock()
+                .unwrap()
+                .query_row("SELECT COUNT(*) FROM files WHERE managed = 1", [], |r| {
+                    r.get(0)
+                })
+                .unwrap();
+        assert_eq!(n, 0);
     }
 
     #[test]

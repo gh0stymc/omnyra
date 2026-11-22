@@ -16,6 +16,7 @@ pub mod error;
 pub mod live;
 pub mod media;
 pub mod moments;
+pub mod paths;
 pub mod planning;
 pub mod quota;
 pub mod security;

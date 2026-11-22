@@ -55,3 +55,14 @@ Prioridad: **A** = aplicar ya (seguridad o pérdida de datos/recursos), **M** = 
 ## Propuesta para el 7b
 
 Aplicar todas las **A** (S1, S2, R1, P1, C1) y las M baratas (C2). El resto queda anotado.
+
+## Aplicado en el 7b (2026-11-22)
+
+- **S1** `omnyra-core/src/paths.rs::check_output`: destino absoluto, extensión permitida, carpeta existente y fuera de `app_data_dir`; usado por `write_thumbnail_file` (`.png/.jpg`), `save_media_kit` (`.html`) y `export_rendition` (`.mp4`). Las miniaturas exportadas se validan por bytes mágicos (PNG/JPEG) antes de escribirse.
+- **S2** `import_asset` comprueba los bytes mágicos (PNG, JPEG, GIF, WebP) además de la extensión.
+- **R1** la versión renderizada se borra (archivo y fila) al publicarse con éxito; test nuevo.
+- **P1** rutas con `React.lazy` (cada pantalla en su propio chunk). El chunk inicial sigue en ~675 kB por `recharts` (lo usa el panel, que es la pantalla de inicio) y los bindings; aceptable para una app de escritorio que carga desde disco.
+- **C1** `PublishPage` pide al backend los permisos que necesita cada destino (`upload_scopes`) y no deja publicar mientras falte alguno.
+- **C2** `lock_db` único en `src-tauri/src/commands/mod.rs`.
+
+Pendiente (M/B): S3, S4, R2, R3, R4, R5, R6, P2, P3, C3, C4, C5.
