@@ -679,5 +679,29 @@
       "print": "Imprimir / PDF…",
       "printHint": "Para PDF, elige «Guardar como PDF» en el diálogo de impresión."
     }
+  },
+  "competitors": {
+    "intro": "Sigue canales públicos de YouTube (de momento solo YouTube: Instagram solo permite esto entre cuentas profesionales y TikTok no tiene API para ello). Omnyra guarda una foto diaria de sus cifras usando tu cuenta de YouTube y su cuota (≈3 unidades por canal).",
+    "placeholder": "@canal, ID UC… o enlace del canal",
+    "add": "Seguir canal",
+    "refresh": "Actualizar ahora",
+    "empty": "Aún no sigues ningún canal.",
+    "col": {
+      "channel": "Canal",
+      "followers": "Suscriptores",
+      "change": "Cambio 30 días",
+      "rhythm": "Ritmo",
+      "median": "Vistas medianas",
+      "videos": "Vídeos"
+    },
+    "you": "tú",
+    "perWeek": "{{n}}/semana",
+    "details": "Detalles",
+    "trends": "Tendencias por palabras clave",
+    "trendsHint": "Los vídeos más vistos de los últimos 7 días para cada búsqueda. Cada búsqueda cuesta unas 101 unidades de cuota de YouTube, así que se hace como mucho una vez al día por palabra.",
+    "keyword": "Palabra clave",
+    "addKeyword": "Añadir",
+    "searchNow": "Buscar ahora",
+    "notSearched": "sin buscar"
   }
 }

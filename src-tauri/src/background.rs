@@ -81,6 +81,17 @@ pub fn spawn_scheduler(app: AppHandle) {
             for id in sync::due_accounts(&app) {
                 let _ = sync::run(&app, &id).await;
             }
+            // Daily snapshot of the tracked channels (cheap: ~3 units each, once a day).
+            let state = app.state::<crate::state::AppState>();
+            if let Ok((c, ctx)) = crate::commands::competitors::youtube_ctx(&state) {
+                let now = state.clock.now_iso();
+                if let Err(e) =
+                    omnyra_core::competitors::refresh_all(&state.db, c.as_ref(), &ctx, &now, false)
+                        .await
+                {
+                    tracing::debug!(error = %e, "tracked channels not refreshed");
+                }
+            }
         }
     });
 }

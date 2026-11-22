@@ -111,6 +111,16 @@ fn specta_builder() -> Builder<tauri::Wry> {
             commands::sponsors::open_sponsorship_file,
             commands::sponsors::media_kit_html,
             commands::sponsors::save_media_kit,
+            commands::competitors::list_tracked,
+            commands::competitors::add_tracked,
+            commands::competitors::remove_tracked,
+            commands::competitors::refresh_tracked,
+            commands::competitors::tracked_followers,
+            commands::competitors::tracked_top,
+            commands::competitors::list_trends,
+            commands::competitors::add_trend_keyword,
+            commands::competitors::remove_trend_keyword,
+            commands::competitors::refresh_trends,
         ])
         .events(collect_events![
             events::AccountChanged,

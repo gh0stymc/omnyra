@@ -1,6 +1,7 @@
 pub mod accounts;
 pub mod alerts;
 pub mod community;
+pub mod competitors;
 pub mod creation;
 pub mod dashboard;
 pub mod live;

@@ -7,6 +7,7 @@ pub mod auth;
 pub mod best_time;
 pub mod clock;
 pub mod community;
+pub mod competitors;
 pub mod connectors;
 pub mod creation;
 pub mod dashboard;

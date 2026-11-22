@@ -5,6 +5,7 @@ mod analytics;
 mod api;
 mod comments;
 mod duration;
+mod public;
 mod shorts;
 mod upload;
 
@@ -204,6 +205,40 @@ impl Connector for YouTubeConnector {
         sink: &dyn UploadSink,
     ) -> Result<UploadOutcome> {
         upload::upload(ctx, &self.api_base, req, resume, sink, self.upload_chunk).await
+    }
+
+    async fn find_public_channel(&self, ctx: &AccountCtx, query: &str) -> Result<PublicChannel> {
+        public::find(ctx, &self.api_base, query).await
+    }
+
+    async fn public_channels(
+        &self,
+        ctx: &AccountCtx,
+        ids: &[String],
+    ) -> Result<Vec<PublicChannel>> {
+        public::channels(ctx, &self.api_base, ids).await
+    }
+
+    async fn public_recent_videos(
+        &self,
+        ctx: &AccountCtx,
+        channel_id: &str,
+        max: usize,
+    ) -> Result<Vec<PublicVideo>> {
+        public::recent(ctx, &self.api_base, channel_id, max).await
+    }
+
+    async fn search_videos(
+        &self,
+        ctx: &AccountCtx,
+        query: &str,
+        published_after: &str,
+    ) -> Result<Vec<PublicVideo>> {
+        public::search_videos(ctx, &self.api_base, query, published_after).await
+    }
+
+    async fn search_channels(&self, ctx: &AccountCtx, query: &str) -> Result<Vec<PublicChannel>> {
+        public::search_channels(ctx, &self.api_base, query).await
     }
 
     async fn retention_curve(&self, ctx: &AccountCtx, content: &str) -> Result<Vec<(f64, f64)>> {

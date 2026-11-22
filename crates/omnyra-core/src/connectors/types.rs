@@ -319,3 +319,32 @@ pub struct UploadOptions {
     pub categories: Vec<NamedOption>,
     pub playlists: Vec<NamedOption>,
 }
+
+/// A public channel/account of someone else (competitors, impersonation checks).
+#[derive(Debug, Clone, Serialize, Type, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct PublicChannel {
+    pub external_id: String,
+    pub handle: Option<String>,
+    pub display_name: String,
+    pub avatar_url: Option<String>,
+    pub followers: Option<f64>,
+    pub views_total: Option<f64>,
+    pub contents_total: Option<f64>,
+    pub created_at: Option<String>,
+}
+
+/// A public video with its current stats.
+#[derive(Debug, Clone, Serialize, Deserialize, Type, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct PublicVideo {
+    pub external_id: String,
+    pub channel_id: String,
+    pub channel_title: Option<String>,
+    pub title: Option<String>,
+    pub published_at: Option<String>,
+    pub views: Option<f64>,
+    pub likes: Option<f64>,
+    pub comments: Option<f64>,
+    pub url: Option<String>,
+}

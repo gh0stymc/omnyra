@@ -679,5 +679,29 @@
       "print": "Print / PDF…",
       "printHint": "For a PDF, choose “Save as PDF” in the print dialog."
     }
+  },
+  "competitors": {
+    "intro": "Follow public YouTube channels (YouTube only for now: Instagram allows this only between professional accounts and TikTok has no API for it). Omnyra takes a daily snapshot of their figures through your YouTube account and its quota (≈3 units per channel).",
+    "placeholder": "@channel, UC… ID or channel link",
+    "add": "Follow channel",
+    "refresh": "Refresh now",
+    "empty": "You are not following any channel yet.",
+    "col": {
+      "channel": "Channel",
+      "followers": "Subscribers",
+      "change": "30-day change",
+      "rhythm": "Rhythm",
+      "median": "Median views",
+      "videos": "Videos"
+    },
+    "you": "you",
+    "perWeek": "{{n}}/week",
+    "details": "Details",
+    "trends": "Keyword trends",
+    "trendsHint": "The most viewed videos of the last 7 days for each search. Each search costs about 101 YouTube quota units, so it runs at most once a day per keyword.",
+    "keyword": "Keyword",
+    "addKeyword": "Add",
+    "searchNow": "Search now",
+    "notSearched": "not searched"
   }
 }

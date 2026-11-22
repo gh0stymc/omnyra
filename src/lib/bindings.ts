@@ -162,6 +162,18 @@ export const commands = {
 	mediaKitHtml: (config: MediaKitConfig, options?: InvokeOptions) => __TAURI_INVOKE<string>("media_kit_html", { config }, options),
 	/**  Saves the media kit HTML where the user chose. */
 	saveMediaKit: (config: MediaKitConfig, dest: string, options?: InvokeOptions) => __TAURI_INVOKE<null>("save_media_kit", { config, dest }, options),
+	listTracked: (options?: InvokeOptions) => __TAURI_INVOKE<TrackedSummary_Serialize[]>("list_tracked", undefined, options),
+	/**  Adds a YouTube channel by handle, ID or URL. */
+	addTracked: (query: string, options?: InvokeOptions) => __TAURI_INVOKE<string>("add_tracked", { query }, options),
+	removeTracked: (id: string, options?: InvokeOptions) => __TAURI_INVOKE<null>("remove_tracked", { id }, options),
+	refreshTracked: (options?: InvokeOptions) => __TAURI_INVOKE<number>("refresh_tracked", undefined, options),
+	trackedFollowers: (id: string, options?: InvokeOptions) => __TAURI_INVOKE<DayValue[]>("tracked_followers", { id }, options),
+	trackedTop: (id: string, options?: InvokeOptions) => __TAURI_INVOKE<PublicVideo_Serialize[]>("tracked_top", { id }, options),
+	listTrends: (options?: InvokeOptions) => __TAURI_INVOKE<TrendKeyword_Serialize[]>("list_trends", undefined, options),
+	addTrendKeyword: (keyword: string, options?: InvokeOptions) => __TAURI_INVOKE<string>("add_trend_keyword", { keyword }, options),
+	removeTrendKeyword: (id: string, options?: InvokeOptions) => __TAURI_INVOKE<null>("remove_trend_keyword", { id }, options),
+	/**  Searches the keywords not searched today (about 101 quota units each). */
+	refreshTrends: (options?: InvokeOptions) => __TAURI_INVOKE<number>("refresh_trends", undefined, options),
 };
 
 /** Events */
@@ -687,6 +699,11 @@ export type ContentRow_Serialize = {
 	comments: number | null,
 };
 
+export type DayValue = {
+	day: string,
+	value: number | null,
+};
+
 export type Deliverable = Deliverable_Serialize | Deliverable_Deserialize;
 
 export type Deliverable_Deserialize = {
@@ -1023,6 +1040,35 @@ export type PlatformInfo_Serialize = {
 	auth: AuthKind,
 	/**  False when the platform needs a client ID that was not provided at build time. */
 	authConfigured: boolean,
+};
+
+/**  A public video with its current stats. */
+export type PublicVideo = PublicVideo_Serialize | PublicVideo_Deserialize;
+
+/**  A public video with its current stats. */
+export type PublicVideo_Deserialize = {
+	externalId: string,
+	channelId: string,
+	channelTitle?: string | null,
+	title?: string | null,
+	publishedAt?: string | null,
+	views?: number | null,
+	likes?: number | null,
+	comments?: number | null,
+	url?: string | null,
+};
+
+/**  A public video with its current stats. */
+export type PublicVideo_Serialize = {
+	externalId: string,
+	channelId: string,
+	channelTitle: string | null,
+	title: string | null,
+	publishedAt: string | null,
+	views: number | null,
+	likes: number | null,
+	comments: number | null,
+	url: string | null,
 };
 
 /**  One destination of a multi-network post. */
@@ -1400,6 +1446,70 @@ export type Totals_Serialize = {
 	views: number | null,
 	watchTimeS: number | null,
 	contentsPublished: number,
+};
+
+export type TrackedSummary = TrackedSummary_Serialize | TrackedSummary_Deserialize;
+
+export type TrackedSummary_Deserialize = {
+	id: string,
+	platform: string,
+	externalId: string,
+	handle?: string | null,
+	displayName?: string | null,
+	followers?: number | null,
+	/**  Change over the last 30 days of snapshots (needs a snapshot that old). */
+	followersChange30d?: number | null,
+	viewsTotal?: number | null,
+	contentsTotal?: number | null,
+	/**  Videos per week over the last 90 days (from the latest videos seen). */
+	uploadsPerWeek: number | null,
+	/**  Median views of the latest videos. */
+	medianViews?: number | null,
+	refreshedAt?: string | null,
+	/**  True for the user's own account (comparison baseline). */
+	own: boolean,
+};
+
+export type TrackedSummary_Serialize = {
+	id: string,
+	platform: string,
+	externalId: string,
+	handle: string | null,
+	displayName: string | null,
+	followers: number | null,
+	/**  Change over the last 30 days of snapshots (needs a snapshot that old). */
+	followersChange30d: number | null,
+	viewsTotal: number | null,
+	contentsTotal: number | null,
+	/**  Videos per week over the last 90 days (from the latest videos seen). */
+	uploadsPerWeek: number | null,
+	/**  Median views of the latest videos. */
+	medianViews: number | null,
+	refreshedAt: string | null,
+	/**  True for the user's own account (comparison baseline). */
+	own: boolean,
+};
+
+export type TrendKeyword = TrendKeyword_Serialize | TrendKeyword_Deserialize;
+
+export type TrendKeyword_Deserialize = {
+	id: string,
+	keyword: string,
+	lastDay?: string | null,
+	/**  Latest results, most viewed first. */
+	videos: PublicVideo_Deserialize[],
+	/**  Total views of the top results per day (trend line). */
+	history: DayValue[],
+};
+
+export type TrendKeyword_Serialize = {
+	id: string,
+	keyword: string,
+	lastDay: string | null,
+	/**  Latest results, most viewed first. */
+	videos: PublicVideo_Serialize[],
+	/**  Total views of the top results per day (trend line). */
+	history: DayValue[],
 };
 
 /**  An upload changed status (`queued`, `uploading`, `published`, `failed`, `cancelled`). */

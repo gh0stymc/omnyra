@@ -124,6 +124,41 @@ pub trait Connector: Send + Sync {
         Vec::new()
     }
 
+    /// Resolves a public channel from a handle (`@name`), channel ID or URL.
+    async fn find_public_channel(&self, _ctx: &AccountCtx, _query: &str) -> Result<PublicChannel> {
+        Err(AppError::NotSupported)
+    }
+    /// Current stats of public channels by ID.
+    async fn public_channels(
+        &self,
+        _ctx: &AccountCtx,
+        _ids: &[String],
+    ) -> Result<Vec<PublicChannel>> {
+        Err(AppError::NotSupported)
+    }
+    /// Latest public videos of a channel with their stats (newest first).
+    async fn public_recent_videos(
+        &self,
+        _ctx: &AccountCtx,
+        _channel_id: &str,
+        _max: usize,
+    ) -> Result<Vec<PublicVideo>> {
+        Err(AppError::NotSupported)
+    }
+    /// Most viewed videos for a search since `published_after` (RFC 3339). Expensive.
+    async fn search_videos(
+        &self,
+        _ctx: &AccountCtx,
+        _query: &str,
+        _published_after: &str,
+    ) -> Result<Vec<PublicVideo>> {
+        Err(AppError::NotSupported)
+    }
+    /// Channels matching a name (impersonation checks). Expensive.
+    async fn search_channels(&self, _ctx: &AccountCtx, _query: &str) -> Result<Vec<PublicChannel>> {
+        Err(AppError::NotSupported)
+    }
+
     /// Audience retention of a video: `(position 0..1, share of viewers 0..)` points.
     async fn retention_curve(&self, _ctx: &AccountCtx, _content: &str) -> Result<Vec<(f64, f64)>> {
         Err(AppError::NotSupported)
