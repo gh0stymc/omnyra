@@ -3,8 +3,11 @@
 //! the connector's [`OAuthConfig`].
 
 pub mod http;
+pub mod instagram;
 pub mod mock;
 pub mod registry;
+pub mod rules;
+pub mod tiktok;
 pub mod twitch;
 pub mod types;
 pub mod youtube;
@@ -148,6 +151,11 @@ pub trait Connector: Send + Sync {
     ) -> Result<UploadOutcome> {
         Err(AppError::NotSupported)
     }
+    /// OAuth scopes needed to read and answer comments (requested incrementally).
+    fn comment_scopes(&self) -> Vec<String> {
+        Vec::new()
+    }
+    /// One page of comments on `content` (top-level comments followed by their replies).
     async fn list_comments(
         &self,
         _ctx: &AccountCtx,

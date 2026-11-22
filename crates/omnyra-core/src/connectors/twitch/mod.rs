@@ -67,6 +67,7 @@ impl TwitchConnector {
                 extra_auth_params: Vec::new(),
                 device_url: Some(ep.device_url),
                 revoke_with_client_id: true,
+                ..Default::default()
             })
         });
         Self {

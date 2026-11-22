@@ -214,6 +214,35 @@ impl ApiClient {
     }
 }
 
+impl ApiClient {
+    /// Like [`ApiClient::send`], then parses a successful JSON body or maps the error.
+    pub async fn send_json<T: DeserializeOwned>(
+        &self,
+        build: impl Fn(&reqwest::Client) -> reqwest::RequestBuilder,
+    ) -> Result<T> {
+        let resp = self.send(build).await?;
+        if !resp.status().is_success() {
+            return Err(map_status(resp).await);
+        }
+        resp.json().await.map_err(|e| {
+            tracing::warn!(error = %e, "unexpected response body");
+            AppError::Internal
+        })
+    }
+
+    /// The current access token, for upload hosts that want it in another header
+    /// (Instagram's `rupload` uses `Authorization: OAuth <token>`). Never log it.
+    pub async fn access_token(&self) -> Result<String> {
+        self.tokens.token().await
+    }
+
+    /// The underlying client, for requests that must not carry the bearer token
+    /// (pre-signed upload URLs).
+    pub fn http(&self) -> &reqwest::Client {
+        &self.http
+    }
+}
+
 /// Maps an error response to an [`AppError`] without leaking its body.
 pub async fn error_from(resp: reqwest::Response) -> AppError {
     map_status(resp).await

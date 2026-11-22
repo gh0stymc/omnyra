@@ -131,7 +131,15 @@
     "ytAnalytics": "View YouTube analytics",
     "ytUpload": "Upload videos to YouTube",
     "ytForceSsl": "Manage your YouTube account (playlists and comments)",
-    "twitchFollowers": "See your Twitch follower list"
+    "twitchFollowers": "See your Twitch follower list",
+    "igBasic": "Instagram: profile and media",
+    "igInsights": "Instagram: insights",
+    "igPublish": "Instagram: publish",
+    "igComments": "Instagram: read and reply to comments",
+    "ttBasic": "TikTok: profile",
+    "ttStats": "TikTok: followers and likes",
+    "ttVideoList": "TikTok: video list",
+    "ttPublish": "TikTok: publish"
   },
   "bestTime": {
     "title": "Best time to publish",
@@ -174,7 +182,9 @@
     "visibilityOption": {
       "private": "Private",
       "unlisted": "Unlisted",
-      "public": "Public"
+      "public": "Public",
+      "friends": "Friends (mutual followers)",
+      "followers": "Followers"
     },
     "category": "Category",
     "playlist": "Playlist",
@@ -208,19 +218,23 @@
       "thumbnail_failed": "Thumbnail not set.",
       "playlist_scope": "Not added to the playlist: permission missing.",
       "playlist_quota": "Not added to the playlist: quota exhausted.",
-      "playlist_failed": "Could not add to the playlist."
+      "playlist_failed": "Could not add to the playlist.",
+      "thumbnail_ignored": "The thumbnail was ignored (not supported through the API).",
+      "posted_private": "Posted as private: TikTok only allows that for unaudited apps."
     },
     "issue": {
       "file": {
         "missing": "File not found.",
         "unreadable": "The file is not a valid video.",
-        "format": "Format not supported by YouTube.",
+        "format": "Format not supported by this network.",
         "empty": "The file is empty.",
         "too_big": "The file exceeds the {{limit}} maximum.",
         "no_video": "The file has no video track.",
         "too_long": "The video exceeds the maximum length of {{limit}}.",
         "needs_verification": "Longer than {{limit}}: your channel must be phone-verified.",
-        "probe_unavailable": "FFmpeg is not installed: the file's length and content cannot be checked."
+        "probe_unavailable": "FFmpeg is not installed: the file's length and content cannot be checked.",
+        "too_short": "The video is shorter than {{limit}}.",
+        "not_vertical": "The video is not vertical and will show with bars. Use the 9:16 version from multi-network publishing."
       },
       "title": {
         "required": "A title is required.",
@@ -230,7 +244,8 @@
       "description": {
         "too_long": "The description allows at most {{limit}} bytes.",
         "invalid_chars": "The description cannot contain < or >.",
-        "too_many_hashtags": "With more than {{limit}} hashtags, YouTube ignores all of them."
+        "too_many_hashtags": "With more than {{limit}} hashtags, YouTube ignores all of them.",
+        "caption_too_long": "The full caption is longer than {{limit}} characters."
       },
       "tags": {
         "too_long": "Tags add up to more than {{limit}} characters.",
@@ -238,17 +253,25 @@
       },
       "visibility": {
         "invalid": "Invalid visibility.",
-        "private_until_audit": "It will be uploaded as private (see the notice above)."
+        "private_until_audit": "It will be uploaded as private (see the notice above).",
+        "always_public": "Everything published on Instagram is public.",
+        "tiktok_private_until_audit": "Until the TikTok app is audited, posts are private (and your account must be private)."
       },
       "thumbnail": {
         "missing": "Thumbnail not found.",
         "format": "The thumbnail must be JPG or PNG.",
-        "too_big": "The thumbnail exceeds {{limit}}."
+        "too_big": "The thumbnail exceeds {{limit}}.",
+        "ignored": "This network does not accept a thumbnail through the API: ignored."
       },
       "platform": {
         "upload_not_supported": "This network does not support uploads from Omnyra."
+      },
+      "playlist": {
+        "ignored": "This network has no playlists: ignored."
       }
-    }
+    },
+    "captionTitle": "Text (first line)",
+    "captionHint": "This network has no title: text, description and tags (as hashtags) make up the caption."
   },
   "common": {
     "loading": "Loading…",
@@ -268,7 +291,10 @@
       "short": "Shorts",
       "stream": "Streams",
       "vod": "VODs",
-      "clip": "Clips"
+      "clip": "Clips",
+      "reel": "Reels",
+      "post": "Posts",
+      "story": "Stories"
     },
     "col": {
       "title": "Title",
@@ -381,5 +407,13 @@
     "overperforming": "“{{title}}” is outperforming your usual numbers",
     "underperforming": "“{{title}}” is below your usual numbers",
     "generic": "You have a new alert"
+  },
+  "shortform": {
+    "followers": "Followers",
+    "views": "Views of what you posted",
+    "likesComments": "Likes / comments",
+    "reach": "Daily reach",
+    "noteInstagram": "Instagram only serves 30 days of daily insights: history fills in while you use Omnyra. Views, likes and comments are those of the posts in the period.",
+    "noteTiktok": "TikTok has no history: followers are recorded daily since you connected the account. Figures are those of the videos published in the period."
   }
 }

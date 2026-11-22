@@ -31,6 +31,9 @@ fi
 step "Vitest"
 npm test
 
+step "Token broker tests"
+node --test broker/test/
+
 # Tauri's build script needs the frontend dist dir to exist.
 mkdir -p dist
 step "cargo test"

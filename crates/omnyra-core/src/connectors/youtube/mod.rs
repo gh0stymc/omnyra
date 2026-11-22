@@ -81,6 +81,7 @@ impl YouTubeConnector {
                 ],
                 device_url: None,
                 revoke_with_client_id: false,
+                ..Default::default()
             })
         });
         Self {

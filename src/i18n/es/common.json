@@ -131,7 +131,15 @@
     "ytAnalytics": "Ver las analíticas de YouTube",
     "ytUpload": "Subir vídeos a YouTube",
     "ytForceSsl": "Gestionar tu cuenta de YouTube (listas y comentarios)",
-    "twitchFollowers": "Ver la lista de tus seguidores de Twitch"
+    "twitchFollowers": "Ver la lista de tus seguidores de Twitch",
+    "igBasic": "Instagram: perfil y publicaciones",
+    "igInsights": "Instagram: estadísticas",
+    "igPublish": "Instagram: publicar",
+    "igComments": "Instagram: leer y responder comentarios",
+    "ttBasic": "TikTok: perfil",
+    "ttStats": "TikTok: seguidores y me gusta",
+    "ttVideoList": "TikTok: lista de vídeos",
+    "ttPublish": "TikTok: publicar"
   },
   "bestTime": {
     "title": "Mejor hora para publicar",
@@ -174,7 +182,9 @@
     "visibilityOption": {
       "private": "Privado",
       "unlisted": "Oculto (no listado)",
-      "public": "Público"
+      "public": "Público",
+      "friends": "Amigos (seguidores mutuos)",
+      "followers": "Seguidores"
     },
     "category": "Categoría",
     "playlist": "Lista de reproducción",
@@ -208,19 +218,23 @@
       "thumbnail_failed": "No se pudo poner la miniatura.",
       "playlist_scope": "No se añadió a la lista: falta el permiso.",
       "playlist_quota": "No se añadió a la lista: cuota agotada.",
-      "playlist_failed": "No se pudo añadir a la lista."
+      "playlist_failed": "No se pudo añadir a la lista.",
+      "thumbnail_ignored": "La miniatura se ignoró (la red no la admite por API).",
+      "posted_private": "Se publicó en privado: TikTok solo permite eso a apps sin auditar."
     },
     "issue": {
       "file": {
         "missing": "No se encuentra el archivo.",
         "unreadable": "El archivo no es un vídeo válido.",
-        "format": "Formato no admitido por YouTube.",
+        "format": "Formato no admitido por esta red.",
         "empty": "El archivo está vacío.",
         "too_big": "El archivo supera el máximo de {{limit}}.",
         "no_video": "El archivo no tiene pista de vídeo.",
         "too_long": "El vídeo supera la duración máxima de {{limit}}.",
         "needs_verification": "Dura más de {{limit}}: tu canal debe estar verificado por teléfono.",
-        "probe_unavailable": "FFmpeg no está instalado: no se puede comprobar la duración ni el contenido del archivo."
+        "probe_unavailable": "FFmpeg no está instalado: no se puede comprobar la duración ni el contenido del archivo.",
+        "too_short": "El vídeo dura menos de {{limit}}.",
+        "not_vertical": "El vídeo no es vertical: se verá con bandas. Usa la versión 9:16 de la publicación multi-red."
       },
       "title": {
         "required": "El título es obligatorio.",
@@ -230,7 +244,8 @@
       "description": {
         "too_long": "La descripción admite como máximo {{limit}} bytes.",
         "invalid_chars": "La descripción no puede contener < ni >.",
-        "too_many_hashtags": "Con más de {{limit}} hashtags, YouTube los ignora todos."
+        "too_many_hashtags": "Con más de {{limit}} hashtags, YouTube los ignora todos.",
+        "caption_too_long": "El texto completo supera {{limit}} caracteres."
       },
       "tags": {
         "too_long": "Las etiquetas suman más de {{limit}} caracteres.",
@@ -238,17 +253,25 @@
       },
       "visibility": {
         "invalid": "Visibilidad no válida.",
-        "private_until_audit": "Se subirá como privado (ver aviso de arriba)."
+        "private_until_audit": "Se subirá como privado (ver aviso de arriba).",
+        "always_public": "En Instagram todo lo que se publica es público.",
+        "tiktok_private_until_audit": "Mientras la app de TikTok no esté auditada, se publicará en privado (y tu cuenta debe ser privada)."
       },
       "thumbnail": {
         "missing": "No se encuentra la miniatura.",
         "format": "La miniatura debe ser JPG o PNG.",
-        "too_big": "La miniatura supera {{limit}}."
+        "too_big": "La miniatura supera {{limit}}.",
+        "ignored": "Esta red no admite miniatura desde la API: se ignora."
       },
       "platform": {
         "upload_not_supported": "Esta red no admite subidas desde Omnyra."
+      },
+      "playlist": {
+        "ignored": "Esta red no tiene listas de reproducción: se ignora."
       }
-    }
+    },
+    "captionTitle": "Texto (primera línea)",
+    "captionHint": "En esta red no hay título: el texto, la descripción y las etiquetas (como hashtags) forman el pie del vídeo."
   },
   "common": {
     "loading": "Cargando…",
@@ -268,7 +291,10 @@
       "short": "Shorts",
       "stream": "Directos",
       "vod": "VODs",
-      "clip": "Clips"
+      "clip": "Clips",
+      "reel": "Reels",
+      "post": "Posts",
+      "story": "Historias"
     },
     "col": {
       "title": "Título",
@@ -381,5 +407,13 @@
     "overperforming": "«{{title}}» rinde muy por encima de lo habitual",
     "underperforming": "«{{title}}» está por debajo de lo habitual",
     "generic": "Tienes una alerta nueva"
+  },
+  "shortform": {
+    "followers": "Seguidores",
+    "views": "Vistas de lo publicado",
+    "likesComments": "Me gusta / comentarios",
+    "reach": "Alcance diario",
+    "noteInstagram": "Instagram solo da 30 días de estadísticas diarias: el histórico se completa mientras uses Omnyra. Las cifras de vistas, me gusta y comentarios son de las publicaciones del periodo.",
+    "noteTiktok": "TikTok no ofrece histórico: los seguidores se apuntan cada día desde que conectaste la cuenta. Las cifras son de los vídeos publicados en el periodo."
   }
 }

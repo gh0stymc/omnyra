@@ -85,10 +85,21 @@ pub async fn connect(
             .map_err(|_| AppError::AuthTimeout)??
     } else {
         let server = LoopbackServer::bind().await?;
-        let redirect_uri = server.redirect_uri();
         let pkce = pkce::Pkce::new();
-        let state = pkce::random_token();
-        let url = oauth::authorization_url(&cfg, &redirect_uri, &scopes, &state, &pkce.challenge);
+        let (redirect_uri, state) = match &cfg.redirect_broker {
+            // The broker reads the port from `state` and redirects to the loopback.
+            Some(broker) => (
+                broker.clone(),
+                format!("{}.{}", server.port(), pkce::random_token()),
+            ),
+            None => (server.redirect_uri(), pkce::random_token()),
+        };
+        let challenge = if cfg.pkce_hex {
+            pkce.hex_challenge()
+        } else {
+            pkce.challenge.clone()
+        };
+        let url = oauth::authorization_url(&cfg, &redirect_uri, &scopes, &state, &challenge);
         prompt(AuthPrompt::OpenUrl(url))?;
         let code = server.wait_for_code(&state, timeout).await?;
         oauth::exchange_code(

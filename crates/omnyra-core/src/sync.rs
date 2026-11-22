@@ -115,12 +115,12 @@ fn write<T>(
 const DAY_FMT: &[time::format_description::FormatItem<'static>] =
     format_description!("[year]-[month]-[day]");
 
-fn parse_day(s: &str) -> Result<Date> {
+pub fn parse_day(s: &str) -> Result<Date> {
     // Accepts both `YYYY-MM-DD` and full ISO-8601 timestamps.
     Date::parse(s.get(..10).unwrap_or(s), DAY_FMT).map_err(|_| AppError::Internal)
 }
 
-fn fmt_day(d: Date) -> String {
+pub fn fmt_day(d: Date) -> String {
     d.format(DAY_FMT).expect("format date")
 }
 

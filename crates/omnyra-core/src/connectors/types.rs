@@ -142,6 +142,11 @@ pub mod kind {
     /// Recording of a past live stream (Twitch archive or highlight).
     pub const VOD: &str = "vod";
     pub const CLIP: &str = "clip";
+    /// Instagram Reel.
+    pub const REEL: &str = "reel";
+    /// Instagram feed post (image, carousel or non-Reel video).
+    pub const POST: &str = "post";
+    pub const STORY: &str = "story";
 }
 
 /// A live stream in progress, as the platform reports it right now.
@@ -191,8 +196,16 @@ pub struct Page<T> {
 #[serde(rename_all = "camelCase")]
 pub struct Comment {
     pub external_id: String,
+    /// Set on replies: the top-level comment they answer.
+    pub parent_external_id: Option<String>,
     pub author_name: Option<String>,
+    pub author_external_id: Option<String>,
     pub text: String,
+    /// RFC 3339.
+    pub published_at: Option<String>,
+    pub like_count: Option<u32>,
+    /// Written by the account owner.
+    pub is_own: bool,
 }
 
 /// What the user wants to publish, as entered in the upload form.

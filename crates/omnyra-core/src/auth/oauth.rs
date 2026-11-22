@@ -10,7 +10,7 @@ use serde::Deserialize;
 
 /// Static OAuth description of a platform. `client_secret` is only for providers that
 /// document it as non-confidential for installed apps (Google "Desktop app", R3).
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct OAuthConfig {
     pub auth_url: String,
     pub token_url: String,
@@ -27,6 +27,17 @@ pub struct OAuthConfig {
     pub device_url: Option<String>,
     /// Twitch wants `client_id` in revocation requests; Google does not.
     pub revoke_with_client_id: bool,
+    /// Name of the client ID parameter in the authorization URL (TikTok: `client_key`).
+    /// `None` = `client_id`.
+    pub client_id_param: Option<String>,
+    /// Scope separator in the authorization URL (Meta and TikTok use `,`). `None` = space.
+    pub scope_separator: Option<String>,
+    /// TikTok desktop wants the PKCE challenge as hex SHA-256 instead of base64url.
+    pub pkce_hex: bool,
+    /// HTTPS callback of the token broker (docs/AUTH_STRATEGY.md) used as `redirect_uri`
+    /// when the provider does not accept loopback URIs (Instagram). The broker forwards
+    /// the code to the loopback port carried in `state` (`<port>.<random>`).
+    pub redirect_broker: Option<String>,
 }
 
 impl std::fmt::Debug for OAuthConfig {
@@ -55,9 +66,15 @@ pub fn authorization_url(
     {
         let mut q = url.query_pairs_mut();
         q.append_pair("response_type", "code")
-            .append_pair("client_id", &cfg.client_id)
+            .append_pair(
+                cfg.client_id_param.as_deref().unwrap_or("client_id"),
+                &cfg.client_id,
+            )
             .append_pair("redirect_uri", redirect_uri)
-            .append_pair("scope", &scopes.join(" "))
+            .append_pair(
+                "scope",
+                &scopes.join(cfg.scope_separator.as_deref().unwrap_or(" ")),
+            )
             .append_pair("state", state)
             .append_pair("code_challenge", code_challenge)
             .append_pair("code_challenge_method", "S256");
@@ -405,6 +422,7 @@ pub(crate) fn test_config(server_url: &str) -> OAuthConfig {
         extra_auth_params: vec![("access_type".into(), "offline".into())],
         device_url: None,
         revoke_with_client_id: false,
+        ..Default::default()
     }
 }
 

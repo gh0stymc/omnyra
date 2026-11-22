@@ -31,6 +31,16 @@ impl Pkce {
     }
 }
 
+impl Pkce {
+    /// Challenge as lowercase hex SHA-256 (TikTok desktop, [VERIFICAR] in AUTH_STRATEGY.md).
+    pub fn hex_challenge(&self) -> String {
+        Sha256::digest(self.verifier.as_bytes())
+            .iter()
+            .map(|b| format!("{b:02x}"))
+            .collect()
+    }
+}
+
 impl Default for Pkce {
     fn default() -> Self {
         Self::new()
@@ -88,5 +98,19 @@ mod tests {
     fn debug_hides_verifier() {
         let p = Pkce::new();
         assert!(!format!("{p:?}").contains(&p.verifier));
+    }
+}
+
+#[cfg(test)]
+mod hex_tests {
+    use super::*;
+
+    #[test]
+    fn hex_challenge_is_sha256_in_lowercase_hex() {
+        let p = Pkce::from_verifier("abc".into());
+        assert_eq!(
+            p.hex_challenge(),
+            "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+        );
     }
 }

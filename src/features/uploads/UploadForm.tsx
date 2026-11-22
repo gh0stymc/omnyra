@@ -26,7 +26,14 @@ const VIDEO_EXTENSIONS = [
   "ts",
   "ogv",
 ];
-const VISIBILITIES = ["private", "unlisted", "public"] as const;
+/** Visibility choices per network (Instagram posts are always public). */
+const VISIBILITIES: Record<string, readonly string[]> = {
+  youtube: ["private", "unlisted", "public"],
+  tiktok: ["private", "friends", "followers", "public"],
+  instagram: [],
+};
+/** Networks with YouTube's extra fields (category, playlist, thumbnail, made for kids). */
+const youtubeLike = (platform?: string) => platform !== "instagram" && platform !== "tiktok";
 /** Gaming: the most likely default for this app's users; falls back to the first category. */
 const PREFERRED_CATEGORY = "20";
 
@@ -60,6 +67,8 @@ export function UploadForm({
   const [tagsText, setTagsText] = useState("");
   const account = accounts.find((a) => a.id === accountId);
   const platform = platforms.find((p) => p.id === account?.platform);
+  const yt = youtubeLike(platform?.id);
+  const visibilities = VISIBILITIES[platform?.id ?? "youtube"] ?? VISIBILITIES.youtube;
   const set = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
 
@@ -89,14 +98,17 @@ export function UploadForm({
   const draft: UploadDraft = useMemo(
     () => ({
       ...form,
-      categoryId,
+      categoryId: yt ? categoryId : null,
+      playlistId: yt ? form.playlistId : null,
+      thumbnailPath: yt ? form.thumbnailPath : null,
+      visibility: visibilities.length ? form.visibility : "public",
       tags: tagsText
         .split(",")
         .map((s) => s.trim())
         .filter(Boolean),
       madeForKids: form.madeForKids ?? false,
     }),
-    [form, tagsText, categoryId],
+    [form, tagsText, categoryId, yt, visibilities],
   );
   const debounced = useDebounced(draft, 400);
   const validation = useQuery({
@@ -148,7 +160,7 @@ export function UploadForm({
   const size = validation.data?.sizeBytes;
   const canSubmit =
     !!form.filePath &&
-    form.madeForKids !== null &&
+    (!yt || form.madeForKids !== null) &&
     !hasErrors &&
     missingScopes.length === 0 &&
     validation.isSuccess &&
@@ -215,8 +227,8 @@ export function UploadForm({
 
       <label className="block space-y-1 text-sm">
         <span className="flex justify-between">
-          {t("upload.title")}{" "}
-          <span className="text-[var(--muted)]">{[...form.title].length}/100</span>
+          {t(yt ? "upload.title" : "upload.captionTitle")}{" "}
+          {yt && <span className="text-[var(--muted)]">{[...form.title].length}/100</span>}
         </span>
         <input
           className={field}
@@ -229,7 +241,9 @@ export function UploadForm({
         <span className="flex justify-between">
           {t("upload.description")}
           <span className="text-[var(--muted)]">
-            {new TextEncoder().encode(form.description).length}/5000
+            {yt
+              ? `${new TextEncoder().encode(form.description).length}/5000`
+              : `${[...form.title, ...form.description].length}/2200`}
           </span>
         </span>
         <textarea
@@ -249,85 +263,97 @@ export function UploadForm({
         />
       </label>
 
+      {!yt && <p className="text-xs text-[var(--muted)]">{t("upload.captionHint")}</p>}
+
       <div className="grid gap-3 sm:grid-cols-3">
-        <label className="block space-y-1 text-sm">
-          <span>{t("upload.visibility")}</span>
-          <select
-            className={field}
-            value={form.visibility}
-            onChange={(e) => set("visibility", e.target.value)}
-          >
-            {VISIBILITIES.map((v) => (
-              <option key={v} value={v}>
-                {t(`upload.visibilityOption.${v}`)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="block space-y-1 text-sm">
-          <span>{t("upload.category")}</span>
-          <select
-            className={field}
-            value={categoryId ?? ""}
-            onChange={(e) => set("categoryId", e.target.value || null)}
-          >
-            {options.data?.categories.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.title}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="block space-y-1 text-sm">
-          <span>{t("upload.playlist")}</span>
-          <select
-            className={field}
-            value={form.playlistId ?? ""}
-            onChange={(e) => set("playlistId", e.target.value || null)}
-          >
-            <option value="">{t("upload.noPlaylist")}</option>
-            {options.data?.playlists.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.title}
-              </option>
-            ))}
-          </select>
-        </label>
+        {visibilities.length > 0 && (
+          <label className="block space-y-1 text-sm">
+            <span>{t("upload.visibility")}</span>
+            <select
+              className={field}
+              value={form.visibility}
+              onChange={(e) => set("visibility", e.target.value)}
+            >
+              {visibilities.map((v) => (
+                <option key={v} value={v}>
+                  {t(`upload.visibilityOption.${v}`)}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+        {yt && (
+          <label className="block space-y-1 text-sm">
+            <span>{t("upload.category")}</span>
+            <select
+              className={field}
+              value={categoryId ?? ""}
+              onChange={(e) => set("categoryId", e.target.value || null)}
+            >
+              {options.data?.categories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.title}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+        {yt && (
+          <label className="block space-y-1 text-sm">
+            <span>{t("upload.playlist")}</span>
+            <select
+              className={field}
+              value={form.playlistId ?? ""}
+              onChange={(e) => set("playlistId", e.target.value || null)}
+            >
+              <option value="">{t("upload.noPlaylist")}</option>
+              {options.data?.playlists.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.title}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
       </div>
       {options.isError && <p className="text-sm text-red-500">{errorMessage(options.error, t)}</p>}
 
-      <div className="flex flex-wrap items-center gap-2 text-sm">
-        <button className={btn} onClick={() => void pickThumb()}>
-          {t("upload.pickThumbnail")}
-        </button>
-        {form.thumbnailPath ? (
-          <>
-            <span className="break-all">{fileName(form.thumbnailPath)}</span>
-            <button className="text-xs underline" onClick={() => set("thumbnailPath", null)}>
-              {t("upload.removeThumbnail")}
-            </button>
-          </>
-        ) : (
-          <span className="text-[var(--muted)]">{t("upload.thumbnailOptional")}</span>
-        )}
-      </div>
-
-      <fieldset className="space-y-1 text-sm">
-        <legend>{t("upload.madeForKids")}</legend>
-        <div className="flex gap-4">
-          {[false, true].map((v) => (
-            <label key={String(v)} className="flex items-center gap-1">
-              <input
-                type="radio"
-                name="madeForKids"
-                checked={form.madeForKids === v}
-                onChange={() => set("madeForKids", v)}
-              />
-              {t(v ? "upload.kidsYes" : "upload.kidsNo")}
-            </label>
-          ))}
+      {yt && (
+        <div className="flex flex-wrap items-center gap-2 text-sm">
+          <button className={btn} onClick={() => void pickThumb()}>
+            {t("upload.pickThumbnail")}
+          </button>
+          {form.thumbnailPath ? (
+            <>
+              <span className="break-all">{fileName(form.thumbnailPath)}</span>
+              <button className="text-xs underline" onClick={() => set("thumbnailPath", null)}>
+                {t("upload.removeThumbnail")}
+              </button>
+            </>
+          ) : (
+            <span className="text-[var(--muted)]">{t("upload.thumbnailOptional")}</span>
+          )}
         </div>
-      </fieldset>
+      )}
+
+      {yt && (
+        <fieldset className="space-y-1 text-sm">
+          <legend>{t("upload.madeForKids")}</legend>
+          <div className="flex gap-4">
+            {[false, true].map((v) => (
+              <label key={String(v)} className="flex items-center gap-1">
+                <input
+                  type="radio"
+                  name="madeForKids"
+                  checked={form.madeForKids === v}
+                  onChange={() => set("madeForKids", v)}
+                />
+                {t(v ? "upload.kidsYes" : "upload.kidsNo")}
+              </label>
+            ))}
+          </div>
+        </fieldset>
+      )}
 
       {issues.length > 0 && (
         <ul className="space-y-1 text-sm">

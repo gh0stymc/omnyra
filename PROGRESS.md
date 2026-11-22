@@ -18,8 +18,8 @@
 - [x] 2a — Conector de Twitch
 - [x] 2b — Calendario y tablero de ideas
 - [x] 2c — Segundo plano y notificaciones
-- [ ] 3a — Estrategia de autenticación Meta y TikTok
-- [ ] 3b — Conectores de Instagram y TikTok
+- [x] 3a — Estrategia de autenticación Meta y TikTok
+- [x] 3b — Conectores de Instagram y TikTok
 - [ ] 3c — Publicación multi-red
 - [ ] 4a — Bandeja de comentarios unificada
 - [ ] 4b — Clasificación y preguntas repetidas
@@ -101,6 +101,9 @@
 - 2026-11-18 (2c): notificaciones (`tauri-plugin-notification`) disparadas desde Rust, no desde JS → mensajes localizados a mano en `src-tauri/src/notify.rs` (ES/EN) porque el OS las pinta fuera del webview; el frontend espeja su idioma con `set_locale` (en `setLang` y al arrancar). Permiso `notification:default` en capabilities.
 - 2026-11-18 (2c): alertas (`omnyra-core/src/alerts.rs`, probado): hitos de seguidores (`{1,5}·10^k`, k≥2) comparando los dos últimos días (una sola jornada → nada, para no disparar por la reconstrucción histórica) y **rendimiento** por z-score (|z|≥2, muestra ≥8) de `views_7d` (ya normalizado por antigüedad) frente a los contenidos del mismo tipo; solo para contenidos publicados en los últimos 21 días. Dedup: hito por (cuenta, umbral), rendimiento 1 por contenido. `evaluate_account` se llama tras cada sync (manual y en segundo plano) desde `sync::run`; emite `AlertsChanged` y notifica las nuevas. La caída de engagement (media móvil de 4 semanas) se aplaza: hacen falta semanas de datos diarios continuos que la app apenas empieza a recopilar.
 - 2026-11-18 (2c): recordatorios → notificación: bucle cada 60 s (`spawn_reminder_notifier`) que busca `reminders` con `at <= now` y `notified_at IS NULL`, notifica y marca. El planificador de snapshots corre cada 30 min pero solo sincroniza cuentas realmente obsoletas. La publicación programada automática real (A5) es del 3c; de momento solo se notifica el recordatorio.
+- 2026-11-22: el usuario pidió terminar todos los pasos restantes en una sola sesión con `claude-opus-5-5` (sin cambiar a Fable en 3a/7a ni parar entre fases). Cada paso lleva su commit; lo que depende de cuentas o credenciales del usuario queda en "Problemas pendientes" y en la checklist manual.
+- 2026-11-22 (3a): `docs/AUTH_STRATEGY.md`: **token broker** sin estado en Cloudflare Workers (`broker/`, con tests `node --test`) que guarda los secretos de Meta y TikTok, hace el intercambio y el refresco, y para Instagram sirve el `redirect_uri` HTTPS y reenvía al loopback (puerto dentro de `state`, siempre `127.0.0.1`). La app nunca lleva esos secretos.
+- 2026-11-22 (3b): `OAuthConfig` gana `client_id_param` (TikTok `client_key`), `scope_separator` (`,`), `pkce_hex` (TikTok desktop, [VERIFICAR]) y `redirect_broker`. Conectores `instagram` (perfil, `reach` y seguidores nuevos de los últimos 30 días, Reels/posts con vistas/likes/comentarios, publicación de Reels con `rupload`, comentarios) y `tiktok` (perfil y totales, vídeos con vistas/likes/comentarios/compartidos, Direct Post por trozos con caída a `SELF_ONLY`). Reglas comunes de vídeo corto en `connectors/rules.rs` (el pie = título + descripción + etiquetas como hashtags). Vista compartida `src/platforms/shortform/ShortFormView.tsx`. El formulario de subida oculta los campos de YouTube en estas redes. Sin probar contra las APIs reales (faltan las apps).
 - 2026-11-18 (2c): campana de alertas en una cabecera nueva del `Layout` (`src/features/alerts/AlertsBell.tsx`): contador de no leídas, panel con las últimas 30, marcar leída al pulsar y "marcar todo como leído".
 
 ## Problemas pendientes
@@ -122,6 +125,8 @@
 - 2026-11-18 (2c): autostart no reconciliado al arrancar (el SO mantiene su propio estado); si el usuario desactiva el autostart por fuera, el ajuste mostrado puede quedar desincronizado hasta que lo togglee. Aceptable.
 
 ## Checklist manual (pruebas reales por sistema)
+
+- [ ] 3b: desplegar el broker y conectar Instagram (cuenta profesional + tester) y TikTok (sandbox); sincronizar; publicar un Reel y un TikTok privado. Revisar los [VERIFICAR] de AUTH_STRATEGY.md (PKCE hex, versión de la Graph API, límites de Reels).
 
 - [x] Llavero (Secret Service) en Linux — `cargo test -p omnyra-core -- --ignored keyring` pasa con gnome-keyring (2026-11-16)
 - [x] Flujo OAuth real con Google en Linux (conectar gh0stymc, reiniciar la app, desconectar y comprobar que desaparece de myaccount.google.com/connections) (2026-11-17)

@@ -1,5 +1,6 @@
 import type { ComponentType } from "react";
 import { TwitchView } from "./twitch/TwitchView";
+import { ShortFormView } from "./shortform/ShortFormView";
 
 /** Frontend side of a connector. One line here per network (plus the Rust registry). */
 export interface PlatformUI {
@@ -18,6 +19,16 @@ export const platformUIs: Record<string, PlatformUI> = {
     id: "twitch",
     AnalyticsView: TwitchView,
     permissionsUrl: "https://www.twitch.tv/settings/connections",
+  },
+  instagram: {
+    id: "instagram",
+    AnalyticsView: ShortFormView,
+    permissionsUrl: "https://www.instagram.com/accounts/manage_access/",
+  },
+  tiktok: {
+    id: "tiktok",
+    AnalyticsView: ShortFormView,
+    permissionsUrl: "https://www.tiktok.com/setting/security",
   },
   mock: { id: "mock" },
 };

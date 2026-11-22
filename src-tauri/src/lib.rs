@@ -87,6 +87,13 @@ fn credentials() -> Credentials {
             option_env!("OMNYRA_GOOGLE_CLIENT_SECRET"),
         ),
         twitch: ClientCredentials::from_parts(option_env!("OMNYRA_TWITCH_CLIENT_ID"), None),
+        // Meta and TikTok secrets live in the token broker, never here (AUTH_STRATEGY.md).
+        instagram: ClientCredentials::from_parts(option_env!("OMNYRA_INSTAGRAM_CLIENT_ID"), None),
+        tiktok: ClientCredentials::from_parts(option_env!("OMNYRA_TIKTOK_CLIENT_KEY"), None),
+        broker_url: option_env!("OMNYRA_BROKER_URL")
+            .map(str::trim)
+            .filter(|s| !s.is_empty())
+            .map(str::to_owned),
     }
 }
 

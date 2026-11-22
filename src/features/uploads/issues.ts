@@ -8,7 +8,9 @@ function formatLimit(issue: Issue, lang: string): string {
   if (issue.code === "too_big") {
     return v >= 1024 ** 3 ? `${n(v / 1024 ** 3)} GB` : `${n(v / 1024 ** 2)} MB`;
   }
-  if (issue.code === "too_long" && issue.field === "file") return `${n(v / 3600)} h`;
+  if ((issue.code === "too_long" || issue.code === "too_short") && issue.field === "file") {
+    return v >= 3600 ? `${n(v / 3600)} h` : v >= 60 ? `${n(v / 60)} min` : `${n(v)} s`;
+  }
   if (issue.code === "needs_verification") return `${n(v / 60)} min`;
   return n(v);
 }
