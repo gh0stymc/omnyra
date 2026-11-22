@@ -1,0 +1,6 @@
+# Omnyra token broker (docs/AUTH_STRATEGY.md). Deploy: npx wrangler deploy
+# Secrets (never in this file): npx wrangler secret put INSTAGRAM_CLIENT_ID / INSTAGRAM_CLIENT_SECRET /
+#                               TIKTOK_CLIENT_KEY / TIKTOK_CLIENT_SECRET
+name = "omnyra-broker"
+main = "src/index.js"
+compatibility_date = "2026-11-01"
