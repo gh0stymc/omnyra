@@ -100,12 +100,22 @@ export const commands = {
 	 *  `RenderProgress { key }`.
 	 */
 	exportRendition: (source: string, spec: RenditionSpec_Deserialize, dest: string, key: string, options?: InvokeOptions) => __TAURI_INVOKE<null>("export_rendition", { source, spec, dest, key }, options),
+	syncComments: (accountId: string, options?: InvokeOptions) => __TAURI_INVOKE<CommentSyncReport>("sync_comments", { accountId }, options),
+	listInbox: (filter: CommentFilter_Deserialize, options?: InvokeOptions) => __TAURI_INVOKE<CommentRow_Serialize[]>("list_inbox", { filter }, options),
+	inboxCounts: (options?: InvokeOptions) => __TAURI_INVOKE<InboxCounts>("inbox_counts", undefined, options),
+	setCommentStatus: (id: string, status: string, options?: InvokeOptions) => __TAURI_INVOKE<null>("set_comment_status", { id, status }, options),
+	replyToComment: (id: string, text: string, options?: InvokeOptions) => __TAURI_INVOKE<null>("reply_to_comment", { id, text }, options),
+	/**  Scopes needed to answer comments on `account_id`'s network. */
+	commentScopes: (accountId: string, options?: InvokeOptions) => __TAURI_INVOKE<string[]>("comment_scopes", { accountId }, options),
+	/**  Incremental authorization for comments (YouTube `force-ssl`, Instagram comments). */
+	authorizeComments: (accountId: string, options?: InvokeOptions) => __TAURI_INVOKE<Account_Serialize>("authorize_comments", { accountId }, options),
 };
 
 /** Events */
 export const events = {
 	accountChanged: makeEvent<AccountChanged, AccountChanged>("account-changed"),
 	alertsChanged: makeEvent<AlertsChanged, AlertsChanged>("alerts-changed"),
+	commentsChanged: makeEvent<CommentsChanged, CommentsChanged>("comments-changed"),
 	deviceCodeIssued: makeEvent<DeviceCodeIssued, DeviceCodeIssued>("device-code-issued"),
 	renderProgress: makeEvent<RenderProgress, RenderProgress>("render-progress"),
 	syncStatus: makeEvent<SyncStatus_Serialize, SyncStatus_Deserialize>("sync-status"),
@@ -437,7 +447,91 @@ export type Cell = {
 	enoughData: boolean,
 };
 
+export type CommentFilter = CommentFilter_Serialize | CommentFilter_Deserialize;
+
+export type CommentFilter_Deserialize = {
+	platform?: string | null,
+	accountId?: string | null,
+	contentId?: string | null,
+	status?: string | null,
+	category?: string | null,
+	clusterId?: string | null,
+	/**  Case-insensitive substring of the text or the author. */
+	search?: string | null,
+	/**  Only comments flagged as possible phishing (6c). */
+	suspicious?: boolean | null,
+	limit?: number | null,
+};
+
+export type CommentFilter_Serialize = {
+	platform: string | null,
+	accountId: string | null,
+	contentId: string | null,
+	status: string | null,
+	category: string | null,
+	clusterId: string | null,
+	/**  Case-insensitive substring of the text or the author. */
+	search: string | null,
+	/**  Only comments flagged as possible phishing (6c). */
+	suspicious: boolean | null,
+	limit: number | null,
+};
+
+export type CommentRow = CommentRow_Serialize | CommentRow_Deserialize;
+
+export type CommentRow_Deserialize = {
+	id: string,
+	accountId: string,
+	platform: string,
+	contentId?: string | null,
+	contentTitle?: string | null,
+	contentUrl?: string | null,
+	authorName?: string | null,
+	authorExternalId?: string | null,
+	text: string,
+	publishedAt?: string | null,
+	likeCount?: number | null,
+	status: string,
+	category?: string | null,
+	categorySource?: string | null,
+	phishingScore?: number | null,
+	phishingReasons: string[],
+	clusterId?: string | null,
+	replies: ReplyRow_Deserialize[],
+};
+
+export type CommentRow_Serialize = {
+	id: string,
+	accountId: string,
+	platform: string,
+	contentId: string | null,
+	contentTitle: string | null,
+	contentUrl: string | null,
+	authorName: string | null,
+	authorExternalId: string | null,
+	text: string,
+	publishedAt: string | null,
+	likeCount: number | null,
+	status: string,
+	category: string | null,
+	categorySource: string | null,
+	phishingScore: number | null,
+	phishingReasons: string[],
+	clusterId: string | null,
+	replies: ReplyRow_Serialize[],
+};
+
 export type CommentSupport = "none" | "read" | "readReply";
+
+export type CommentSyncReport = {
+	fetched: number,
+	new: number,
+};
+
+/**  New comments were stored (after a sync) or one changed (reply, status). */
+export type CommentsChanged = {
+	accountId: string,
+};
 
 export type ContentRow = ContentRow_Serialize | ContentRow_Deserialize;
 
@@ -560,6 +654,12 @@ export type Idea_Serialize = {
 	files: IdeaFile[],
 	createdAt: string,
 	updatedAt: string,
+};
+
+export type InboxCounts = {
+	pending: number,
+	questions: number,
+	suspicious: number,
 };
 
 /**
@@ -817,6 +917,24 @@ export type RenditionSpec_Serialize = {
 	maxDurationS: number | null,
 	/**  Size limit: the video bitrate is capped so the file fits (with a 5 % margin). */
 	maxSizeMb: number | null,
+};
+
+export type ReplyRow = ReplyRow_Serialize | ReplyRow_Deserialize;
+
+export type ReplyRow_Deserialize = {
+	id: string,
+	authorName?: string | null,
+	text: string,
+	publishedAt?: string | null,
+	isOwn: boolean,
+};
+
+export type ReplyRow_Serialize = {
+	id: string,
+	authorName: string | null,
+	text: string,
+	publishedAt: string | null,
+	isOwn: boolean,
 };
 
 export type ScheduleSupport = "none" | "native" | "localOnly";

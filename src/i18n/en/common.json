@@ -452,5 +452,40 @@
     "exported": "File saved.",
     "copyCaption": "Copy text",
     "copied": "Copied"
+  },
+  "community": {
+    "pageTitle": "Community",
+    "sync": "Fetch new comments",
+    "syncing": "Fetching…",
+    "counts": "{{pending}} pending · {{questions}} questions · {{suspicious}} suspicious",
+    "noAccounts": "No connected account supports comments (YouTube and Instagram do; Twitch and TikTok do not allow it through the API).",
+    "search": "Search text or author",
+    "allAccounts": "All accounts",
+    "allStatuses": "All statuses",
+    "allCategories": "All categories",
+    "onlySuspicious": "Suspicious only",
+    "clearCluster": "Clear question filter",
+    "empty": "No comments match these filters.",
+    "status": {
+      "pending": "Pending",
+      "replied": "Replied",
+      "archived": "Archived"
+    },
+    "category": {
+      "question": "Question",
+      "positive": "Positive",
+      "negative": "Negative",
+      "spam": "Spam",
+      "neutral": "Neutral"
+    },
+    "suspicious": "Possible scam",
+    "you": "You",
+    "reply": "Reply",
+    "archive": "Archive",
+    "unarchive": "Unarchive",
+    "markReplied": "Mark replied",
+    "needsScope": "Replying needs one more permission.",
+    "replyPlaceholder": "Write your reply…",
+    "send": "Send reply"
   }
 }

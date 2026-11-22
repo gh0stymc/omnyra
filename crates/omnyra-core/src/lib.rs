@@ -5,6 +5,7 @@ pub mod alerts;
 pub mod auth;
 pub mod best_time;
 pub mod clock;
+pub mod community;
 pub mod connectors;
 pub mod dashboard;
 pub mod db;
@@ -13,6 +14,7 @@ pub mod live;
 pub mod media;
 pub mod planning;
 pub mod quota;
+pub mod security;
 pub mod sync;
 pub mod uploads;
 

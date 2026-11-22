@@ -237,6 +237,7 @@ fn to_comment(c: IgComment, own_id: &str) -> Comment {
         is_own: c.from.and_then(|f| f.id).as_deref() == Some(own_id),
         external_id: c.id,
         parent_external_id: None,
+        content_external_id: None,
         author_name: c.username,
         author_external_id: None,
         text: c.text.unwrap_or_default(),
@@ -613,10 +614,13 @@ impl Connector for InstagramConnector {
         for mut c in r.data {
             let replies = c.replies.take().map(|r| r.data).unwrap_or_default();
             let parent = c.id.clone();
-            items.push(to_comment(c, &ctx.external_id));
+            let mut top = to_comment(c, &ctx.external_id);
+            top.content_external_id = Some(content.to_owned());
+            items.push(top);
             for r in replies {
                 let mut reply = to_comment(r, &ctx.external_id);
                 reply.parent_external_id = Some(parent.clone());
+                reply.content_external_id = Some(content.to_owned());
                 items.push(reply);
             }
         }
@@ -638,6 +642,7 @@ impl Connector for InstagramConnector {
         Ok(Comment {
             external_id: r.id,
             parent_external_id: Some(parent.into()),
+            content_external_id: None,
             author_name: None,
             author_external_id: None,
             text: text.into(),

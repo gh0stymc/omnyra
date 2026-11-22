@@ -37,6 +37,11 @@ function useBackendEvents() {
           void queryClient.invalidateQueries({ queryKey: ["top"] });
         }
       }),
+      events.commentsChanged.listen(() => {
+        void queryClient.invalidateQueries({ queryKey: ["inbox"] });
+        void queryClient.invalidateQueries({ queryKey: queryKeys.inboxCounts });
+        void queryClient.invalidateQueries({ queryKey: queryKeys.clusters });
+      }),
       events.alertsChanged.listen(() => {
         void queryClient.invalidateQueries({ queryKey: queryKeys.alerts });
         void queryClient.invalidateQueries({ queryKey: queryKeys.alertsUnread });

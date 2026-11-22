@@ -452,5 +452,40 @@
     "exported": "Archivo guardado.",
     "copyCaption": "Copiar texto",
     "copied": "Copiado"
+  },
+  "community": {
+    "pageTitle": "Comunidad",
+    "sync": "Buscar comentarios nuevos",
+    "syncing": "Buscando…",
+    "counts": "{{pending}} pendientes · {{questions}} preguntas · {{suspicious}} sospechosos",
+    "noAccounts": "Ninguna cuenta conectada admite comentarios (YouTube e Instagram sí; Twitch y TikTok no lo permiten por API).",
+    "search": "Buscar texto o autor",
+    "allAccounts": "Todas las cuentas",
+    "allStatuses": "Todos los estados",
+    "allCategories": "Todas las categorías",
+    "onlySuspicious": "Solo sospechosos",
+    "clearCluster": "Quitar filtro de pregunta",
+    "empty": "No hay comentarios con estos filtros.",
+    "status": {
+      "pending": "Pendiente",
+      "replied": "Respondido",
+      "archived": "Archivado"
+    },
+    "category": {
+      "question": "Pregunta",
+      "positive": "Positivo",
+      "negative": "Negativo",
+      "spam": "Spam",
+      "neutral": "Neutro"
+    },
+    "suspicious": "Posible estafa",
+    "you": "Tú",
+    "reply": "Responder",
+    "archive": "Archivar",
+    "unarchive": "Desarchivar",
+    "markReplied": "Marcar respondido",
+    "needsScope": "Para responder hace falta un permiso más.",
+    "replyPlaceholder": "Escribe tu respuesta…",
+    "send": "Enviar respuesta"
   }
 }

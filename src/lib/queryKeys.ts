@@ -16,4 +16,6 @@ export const queryKeys = {
   settings: ["settings"] as const,
   alerts: ["alerts"] as const,
   alertsUnread: ["alertsUnread"] as const,
+  inboxCounts: ["inboxCounts"] as const,
+  clusters: ["clusters"] as const,
 };

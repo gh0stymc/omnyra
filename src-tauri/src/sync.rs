@@ -62,6 +62,29 @@ pub async fn run(app: &AppHandle, account_id: &str) -> Result<SyncReport, AppErr
             emit(app, account_id, SyncState::Done, None);
             // Compute performance/milestone alerts and notify (manual and background syncs).
             crate::background::after_sync(app, account_id);
+            // Comments too, best effort (missing scope, quota...: the inbox can retry).
+            if connector.info().capabilities.comments
+                != omnyra_core::connectors::CommentSupport::None
+            {
+                match omnyra_core::community::sync(
+                    &state.db,
+                    &state.auth,
+                    &state.clock,
+                    connector.as_ref(),
+                    account_id,
+                )
+                .await
+                {
+                    Ok(r) if r.new > 0 => {
+                        let _ = crate::events::CommentsChanged {
+                            account_id: account_id.to_owned(),
+                        }
+                        .emit(app);
+                    }
+                    Ok(_) => {}
+                    Err(e) => tracing::debug!(error = %e, "comment sync skipped"),
+                }
+            }
         }
         Err(e) => {
             tracing::warn!(error = %e, "sync failed");

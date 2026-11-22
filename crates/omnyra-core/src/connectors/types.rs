@@ -198,6 +198,8 @@ pub struct Comment {
     pub external_id: String,
     /// Set on replies: the top-level comment they answer.
     pub parent_external_id: Option<String>,
+    /// The content it was written on (platform ID).
+    pub content_external_id: Option<String>,
     pub author_name: Option<String>,
     pub author_external_id: Option<String>,
     pub text: String,

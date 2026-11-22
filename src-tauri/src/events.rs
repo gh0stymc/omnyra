@@ -69,3 +69,10 @@ pub struct RenderProgress {
     pub key: String,
     pub progress: f64,
 }
+
+/// New comments were stored (after a sync) or one changed (reply, status).
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type, tauri_specta::Event)]
+#[serde(rename_all = "camelCase")]
+pub struct CommentsChanged {
+    pub account_id: String,
+}

@@ -95,7 +95,7 @@ pub async fn authorize_upload(
     Ok(connected)
 }
 
-async fn run_connect(
+pub(crate) async fn run_connect(
     app: &AppHandle,
     state: &State<'_, AppState>,
     platform: &str,

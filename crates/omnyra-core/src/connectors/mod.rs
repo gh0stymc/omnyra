@@ -155,6 +155,16 @@ pub trait Connector: Send + Sync {
     fn comment_scopes(&self) -> Vec<String> {
         Vec::new()
     }
+    /// One page of the comments on all the account's contents, newest first, when the
+    /// platform can list them in one go (YouTube). `NotSupported` otherwise: the caller
+    /// then reads [`Connector::list_comments`] per recent content.
+    async fn list_account_comments(
+        &self,
+        _ctx: &AccountCtx,
+        _page: Option<String>,
+    ) -> Result<Page<Comment>> {
+        Err(AppError::NotSupported)
+    }
     /// One page of comments on `content` (top-level comments followed by their replies).
     async fn list_comments(
         &self,

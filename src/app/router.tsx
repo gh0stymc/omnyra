@@ -7,6 +7,7 @@ import { UploadsPage } from "../features/uploads/UploadsPage";
 import { CalendarPage } from "../features/calendar/CalendarPage";
 import { IdeasPage } from "../features/ideas/IdeasPage";
 import { PublishPage } from "../features/publish/PublishPage";
+import { CommunityPage } from "../features/community/CommunityPage";
 import { PlaceholderPage } from "../features/placeholder/PlaceholderPage";
 
 export const router = createBrowserRouter([
@@ -20,7 +21,7 @@ export const router = createBrowserRouter([
       { path: "/publish", element: <PublishPage /> },
       { path: "/calendar", element: <CalendarPage /> },
       { path: "/ideas", element: <IdeasPage /> },
-      { path: "/community", element: <PlaceholderPage section="community" /> },
+      { path: "/community", element: <CommunityPage /> },
       { path: "/creation", element: <PlaceholderPage section="creation" /> },
       { path: "/sponsors", element: <PlaceholderPage section="sponsors" /> },
       { path: "/competitors", element: <PlaceholderPage section="competitors" /> },

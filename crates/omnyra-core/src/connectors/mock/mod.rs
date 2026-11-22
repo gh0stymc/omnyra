@@ -21,7 +21,7 @@ impl MockConnector {
                     upload: UploadSupport::Direct,
                     resumable_upload: false,
                     schedule: ScheduleSupport::LocalOnly,
-                    comments: CommentSupport::None,
+                    comments: CommentSupport::ReadReply,
                     live: false,
                     public_lookup: false,
                     limits: MediaLimits {
@@ -168,6 +168,73 @@ impl Connector for MockConnector {
                 })
             })
             .collect())
+    }
+
+    async fn list_account_comments(
+        &self,
+        ctx: &AccountCtx,
+        page: Option<String>,
+    ) -> Result<Page<Comment>> {
+        if page.is_some() {
+            return Ok(Page {
+                items: Vec::new(),
+                next: None,
+            });
+        }
+        const SAMPLES: &[(&str, &str)] = &[
+            ("Ana", "¿Qué mod usas para las sombras?"),
+            ("Luis", "que mod de sombras es ese??"),
+            (
+                "Bot123",
+                "Gana dinero desde casa 💰 escríbeme por telegram t.me/premios_ya",
+            ),
+            ("Marta", "¡Me encanta este vídeo, sigue así!"),
+            ("Troll", "Esto es una basura, qué aburrido"),
+            ("Pepe", "What shader pack is that?"),
+            ("Sofía", "¿Cuándo sale la segunda parte?"),
+            ("Free", "Free robux at robl0x-gift.com click now"),
+        ];
+        let items = SAMPLES
+            .iter()
+            .enumerate()
+            .map(|(i, (author, text))| Comment {
+                external_id: format!("mock-comment-{i}"),
+                parent_external_id: None,
+                content_external_id: Some(format!("mock-video-{}", i % 3)),
+                author_name: Some((*author).into()),
+                author_external_id: Some(format!("mock-user-{author}")),
+                text: (*text).into(),
+                published_at: Some(format!("2026-11-{:02}T12:00:00Z", 10 + i)),
+                like_count: Some(i as u32),
+                is_own: false,
+            })
+            .chain(std::iter::once(Comment {
+                external_id: "mock-comment-reply".into(),
+                parent_external_id: Some("mock-comment-3".into()),
+                content_external_id: Some("mock-video-0".into()),
+                author_name: Some("Mock".into()),
+                author_external_id: Some(ctx.external_id.clone()),
+                text: "¡Gracias!".into(),
+                published_at: Some("2026-11-20T12:00:00Z".into()),
+                like_count: Some(0),
+                is_own: true,
+            }))
+            .collect();
+        Ok(Page { items, next: None })
+    }
+
+    async fn reply_comment(&self, ctx: &AccountCtx, parent: &str, text: &str) -> Result<Comment> {
+        Ok(Comment {
+            external_id: format!("mock-reply-{}", uuid::Uuid::now_v7()),
+            parent_external_id: Some(parent.into()),
+            content_external_id: None,
+            author_name: Some("Mock".into()),
+            author_external_id: Some(ctx.external_id.clone()),
+            text: text.into(),
+            published_at: None,
+            like_count: Some(0),
+            is_own: true,
+        })
     }
 
     async fn fetch_early_views(

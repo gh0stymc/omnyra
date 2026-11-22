@@ -3,6 +3,7 @@
 
 mod analytics;
 mod api;
+mod comments;
 mod duration;
 mod shorts;
 mod upload;
@@ -203,6 +204,22 @@ impl Connector for YouTubeConnector {
         sink: &dyn UploadSink,
     ) -> Result<UploadOutcome> {
         upload::upload(ctx, &self.api_base, req, resume, sink, self.upload_chunk).await
+    }
+
+    fn comment_scopes(&self) -> Vec<String> {
+        vec![SCOPE_FORCE_SSL.into()]
+    }
+
+    async fn list_account_comments(
+        &self,
+        ctx: &AccountCtx,
+        page: Option<String>,
+    ) -> Result<Page<Comment>> {
+        comments::list_channel(ctx, &self.api_base, page).await
+    }
+
+    async fn reply_comment(&self, ctx: &AccountCtx, parent: &str, text: &str) -> Result<Comment> {
+        comments::reply(ctx, &self.api_base, parent, text).await
     }
 
     async fn classify(&self, _ctx: &AccountCtx, ids: &[String]) -> Vec<(String, String)> {

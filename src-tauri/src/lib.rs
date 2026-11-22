@@ -73,6 +73,13 @@ fn specta_builder() -> Builder<tauri::Wry> {
             commands::publish::validate_target,
             commands::publish::publish_batch,
             commands::publish::export_rendition,
+            commands::community::sync_comments,
+            commands::community::list_inbox,
+            commands::community::inbox_counts,
+            commands::community::set_comment_status,
+            commands::community::reply_to_comment,
+            commands::community::comment_scopes,
+            commands::community::authorize_comments,
         ])
         .events(collect_events![
             events::AccountChanged,
@@ -81,7 +88,8 @@ fn specta_builder() -> Builder<tauri::Wry> {
             events::UploadChanged,
             events::DeviceCodeIssued,
             events::AlertsChanged,
-            events::RenderProgress
+            events::RenderProgress,
+            events::CommentsChanged
         ])
 }
 
