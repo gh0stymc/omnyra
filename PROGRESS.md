@@ -32,7 +32,7 @@
 - [x] 7a — Revisión global
 - [x] 7b — Aplicar mejoras
 - [x] 7c — Distribución
-- [ ] 7d — Documentación final
+- [x] 7d — Documentación final
 
 ## Decisiones
 
