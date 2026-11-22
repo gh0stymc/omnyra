@@ -29,10 +29,11 @@ export function UploadsPage() {
       {accounts.data && platforms.data && (
         <UploadForm
           // Remount when arriving from another account's "Upload video" button.
-          key={params.get("account") ?? ""}
+          key={`${params.get("account") ?? ""}|${params.get("thumbnail") ?? ""}`}
           accounts={usable}
           platforms={platforms.data}
           initialAccountId={params.get("account") ?? undefined}
+          initialThumbnail={params.get("thumbnail") ?? undefined}
         />
       )}
       <section className="space-y-2">

@@ -23,7 +23,7 @@
 - [x] 3c — Publicación multi-red
 - [x] 4a — Bandeja de comentarios unificada
 - [x] 4b — Clasificación y preguntas repetidas
-- [ ] 5a — Editor de miniaturas
+- [x] 5a — Editor de miniaturas
 - [ ] 5b — Asistente de textos
 - [ ] 5c — Detector de momentos para shorts
 - [ ] 6a — Patrocinios y media kit
@@ -107,6 +107,7 @@
 - 2026-11-22 (3c): pipeline FFmpeg en `omnyra-core/src/media/ffmpeg.rs` (argumentos puros y probados + `render` con progreso `-progress pipe:1`; test real con FFmpeg marcado `#[ignore]`): 16:9 / 9:16 / 1:1 con recorte, bandas o fondo difuminado, sin escalar por encima de 1080 en el lado corto; recorte de inicio/fin y duración máxima de la red; tope de bitrate para caber en el límite de tamaño (si no, CRF 23). Presets: Instagram y TikTok en vertical. Migración 0005: `publications.render_spec`; estado `rendering` → trabajador FFmpeg (`src-tauri/src/renders.rs`, de uno en uno) → archivo gestionado en `app_data_dir/renders/` → `queued`. La subida usa la versión si existe. Programación local real (A5): `scheduled_at` en la cola, el trabajador de subidas espera a esa hora. Asistente en `/publish` (texto común o propio por red, formato, recorte, programación) y "Preparar y descargar" (exporta a la ruta elegida y copia el texto). Los tests del adaptador los escribí en la sesión principal (no se delegó a `test-writer`).
 - 2026-11-22 (4a): migración 0006 (`comments`, `question_clusters` con `idea_id`; sin FTS: el buscador usa `LIKE` escapado, suficiente para el volumen de un creador). `Comment` unificado (padre, contenido, autor, propio, likes). Lógica en `omnyra-core/src/community/`: YouTube lee todo el canal con `commentThreads.list?allThreadsRelatedToChannelId` (1 unidad/100 hilos, basta `youtube.readonly`; responder = `comments.insert`, 50 unidades, `youtube.force-ssl` pedido al responder por primera vez); Instagram, la primera página de los 20 contenidos más recientes (`instagram_business_manage_comments`). Twitch y TikTok no tienen comentarios por API. Las respuestas propias marcan el hilo como `replied`; cada respuesta va al `audit_log` (`reply`). Los comentarios se sincronizan tras cada sync de cuenta (sin bloquearla si falta el permiso). Bandeja en `/community` con filtros por red, cuenta, estado, categoría y texto.
 - 2026-11-22 (4b): clasificación por reglas ES/EN en `community/classify.rs` (trait `Classifier` para un modelo futuro): orden spam > pregunta > negativo > positivo > neutro; texto normalizado (minúsculas, sin acentos, letras repetidas acortadas); spam = 2 señales o 1 señal + enlace; palabras completas para términos sueltos. La categoría manual (`category_source = 'manual'`) nunca se sobrescribe. Preguntas repetidas en `community/cluster.rs`: palabras de contenido (sin palabras vacías ni plural) → 3-shingles de caracteres → Jaccard ≥ 0,4, agrupación de enlace simple, exacta O(n²) sobre las 2.000 preguntas abiertas más recientes (sin MinHash/LSH: no hace falta a este volumen). Los IDs de grupo se conservan entre reconstrucciones para que el vínculo con la idea no se pierda. "Enviar al tablero de ideas" crea una idea con las preguntas en las notas (`ideas.source_cluster_id`).
+- 2026-11-22 (5a): editor de miniaturas con Canvas 2D a mano (sin `konva`: no hacía falta otra dependencia para capas, arrastrar y exportar). Escena JSON (`src/features/creation/thumbnails/scene.ts`, probada): fondo (color o imagen), imágenes de la biblioteca (voltear), texto con contorno y sombra, rectángulos/elipses, stickers emoji; capas con orden, visibilidad, duplicar; cambio de tamaño de lienzo conservando posiciones; exportación "cover" a YouTube 1280×720 (JPEG, <2 MB), vertical 1080×1920, cuadrado 1080×1080 y 1920×1080. Migración 0007 (`assets`, `thumbnail_templates`, `text_templates`). Biblioteca: las imágenes se **copian** a `app_data_dir/files/` (archivo gestionado) y llegan al webview como data URL (la CSP no cambia). "Usar en una subida" guarda en `app_data_dir/thumbnails/` y abre `/uploads?thumbnail=…`.
 - 2026-11-18 (2c): campana de alertas en una cabecera nueva del `Layout` (`src/features/alerts/AlertsBell.tsx`): contador de no leídas, panel con las últimas 30, marcar leída al pulsar y "marcar todo como leído".
 
 ## Problemas pendientes
@@ -129,6 +130,7 @@
 
 ## Checklist manual (pruebas reales por sistema)
 
+- [ ] 5a: importar las 3 skins de gh0stymc (normal, Halloween, Navidad) en Creación → Biblioteca, montar una miniatura, guardarla como plantilla y usarla en una subida
 - [ ] 3b: desplegar el broker y conectar Instagram (cuenta profesional + tester) y TikTok (sandbox); sincronizar; publicar un Reel y un TikTok privado. Revisar los [VERIFICAR] de AUTH_STRATEGY.md (PKCE hex, versión de la Graph API, límites de Reels).
 
 - [x] Llavero (Secret Service) en Linux — `cargo test -p omnyra-core -- --ignored keyring` pasa con gnome-keyring (2026-11-16)

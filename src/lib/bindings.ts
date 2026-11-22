@@ -115,6 +115,25 @@ export const commands = {
 	clusterToIdea: (clusterId: string, options?: InvokeOptions) => __TAURI_INVOKE<string>("cluster_to_idea", { clusterId }, options),
 	/**  Manual category; it sticks across syncs. Clusters are rebuilt (questions may change). */
 	setCommentCategory: (id: string, category: string, options?: InvokeOptions) => __TAURI_INVOKE<null>("set_comment_category", { id, category }, options),
+	listAssets: (options?: InvokeOptions) => __TAURI_INVOKE<Asset_Serialize[]>("list_assets", undefined, options),
+	/**  Copies an image chosen by the user into the library. */
+	importAsset: (path: string, input: AssetInput_Deserialize, options?: InvokeOptions) => __TAURI_INVOKE<Asset_Serialize>("import_asset", { path, input }, options),
+	updateAsset: (id: string, input: AssetInput_Deserialize, options?: InvokeOptions) => __TAURI_INVOKE<Asset_Serialize>("update_asset", { id, input }, options),
+	deleteAsset: (id: string, options?: InvokeOptions) => __TAURI_INVOKE<null>("delete_asset", { id }, options),
+	assetDataUrl: (id: string, options?: InvokeOptions) => __TAURI_INVOKE<string>("asset_data_url", { id }, options),
+	listThumbnailTemplates: (options?: InvokeOptions) => __TAURI_INVOKE<ThumbnailTemplate[]>("list_thumbnail_templates", undefined, options),
+	saveThumbnailTemplate: (input: TemplateInput_Deserialize, options?: InvokeOptions) => __TAURI_INVOKE<ThumbnailTemplate>("save_thumbnail_template", { input }, options),
+	deleteThumbnailTemplate: (id: string, options?: InvokeOptions) => __TAURI_INVOKE<null>("delete_thumbnail_template", { id }, options),
+	/**
+	 *  Saves an exported thumbnail (data URL) in `app_data_dir/thumbnails` and returns its
+	 *  path, ready to be used as an upload's thumbnail.
+	 */
+	saveThumbnailExport: (dataUrl: string, name: string, options?: InvokeOptions) => __TAURI_INVOKE<string>("save_thumbnail_export", { dataUrl, name }, options),
+	/**  Writes an exported thumbnail to a path the user chose in a save dialog. */
+	writeThumbnailFile: (dataUrl: string, dest: string, options?: InvokeOptions) => __TAURI_INVOKE<null>("write_thumbnail_file", { dataUrl, dest }, options),
+	listTextTemplates: (options?: InvokeOptions) => __TAURI_INVOKE<TextTemplate_Serialize[]>("list_text_templates", undefined, options),
+	saveTextTemplate: (input: TextTemplateInput_Deserialize, options?: InvokeOptions) => __TAURI_INVOKE<TextTemplate_Serialize>("save_text_template", { input }, options),
+	deleteTextTemplate: (id: string, options?: InvokeOptions) => __TAURI_INVOKE<null>("delete_text_template", { id }, options),
 };
 
 /** Events */
@@ -346,6 +365,48 @@ export type AppSettings = {
 export type Aspect = 
 /**  Keep the source frame (only trim/compress). */
 "original" | "landscape" | "vertical" | "square";
+
+export type Asset = Asset_Serialize | Asset_Deserialize;
+
+export type AssetInput = AssetInput_Serialize | AssetInput_Deserialize;
+
+export type AssetInput_Deserialize = {
+	kind: string,
+	name: string,
+	/**  "normal", "halloween", "navidad"... */
+	variant?: string | null,
+	tags: string[],
+};
+
+export type AssetInput_Serialize = {
+	kind: string,
+	name: string,
+	/**  "normal", "halloween", "navidad"... */
+	variant: string | null,
+	tags: string[],
+};
+
+export type Asset_Deserialize = {
+	id: string,
+	kind: string,
+	name: string,
+	variant?: string | null,
+	tags: string[],
+	mime: string,
+	sizeBytes: number | null,
+	createdAt: string,
+};
+
+export type Asset_Serialize = {
+	id: string,
+	kind: string,
+	name: string,
+	variant: string | null,
+	tags: string[],
+	mime: string,
+	sizeBytes: number | null,
+	createdAt: string,
+};
 
 export type AuthKind = 
 /**  No login (mock). */
@@ -1020,6 +1081,72 @@ export type SyncStatus_Serialize = {
 	lastSyncAt: string | null,
 	/**  `AppError` code when `state` is `error`. */
 	errorCode: string | null,
+};
+
+export type TemplateInput = TemplateInput_Serialize | TemplateInput_Deserialize;
+
+export type TemplateInput_Deserialize = {
+	/**  Existing template to overwrite; `None` creates one. */
+	id?: string | null,
+	name: string,
+	width: number,
+	height: number,
+	scene: string,
+};
+
+export type TemplateInput_Serialize = {
+	/**  Existing template to overwrite; `None` creates one. */
+	id: string | null,
+	name: string,
+	width: number,
+	height: number,
+	scene: string,
+};
+
+export type TextTemplate = TextTemplate_Serialize | TextTemplate_Deserialize;
+
+export type TextTemplateInput = TextTemplateInput_Serialize | TextTemplateInput_Deserialize;
+
+export type TextTemplateInput_Deserialize = {
+	id?: string | null,
+	platform?: string | null,
+	field: string,
+	name: string,
+	body: string,
+};
+
+export type TextTemplateInput_Serialize = {
+	id: string | null,
+	platform: string | null,
+	field: string,
+	name: string,
+	body: string,
+};
+
+export type TextTemplate_Deserialize = {
+	id: string,
+	platform?: string | null,
+	field: string,
+	name: string,
+	body: string,
+};
+
+export type TextTemplate_Serialize = {
+	id: string,
+	platform: string | null,
+	field: string,
+	name: string,
+	body: string,
+};
+
+export type ThumbnailTemplate = {
+	id: string,
+	name: string,
+	width: number,
+	height: number,
+	/**  Editor scene (layers) as JSON; the frontend owns its shape. */
+	scene: string,
+	updatedAt: string,
 };
 
 export type TopContent = TopContent_Serialize | TopContent_Deserialize;

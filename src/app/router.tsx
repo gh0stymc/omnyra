@@ -8,6 +8,7 @@ import { CalendarPage } from "../features/calendar/CalendarPage";
 import { IdeasPage } from "../features/ideas/IdeasPage";
 import { PublishPage } from "../features/publish/PublishPage";
 import { CommunityPage } from "../features/community/CommunityPage";
+import { CreationPage } from "../features/creation/CreationPage";
 import { PlaceholderPage } from "../features/placeholder/PlaceholderPage";
 
 export const router = createBrowserRouter([
@@ -22,7 +23,7 @@ export const router = createBrowserRouter([
       { path: "/calendar", element: <CalendarPage /> },
       { path: "/ideas", element: <IdeasPage /> },
       { path: "/community", element: <CommunityPage /> },
-      { path: "/creation", element: <PlaceholderPage section="creation" /> },
+      { path: "/creation", element: <CreationPage /> },
       { path: "/sponsors", element: <PlaceholderPage section="sponsors" /> },
       { path: "/competitors", element: <PlaceholderPage section="competitors" /> },
       { path: "/security", element: <PlaceholderPage section="security" /> },

@@ -494,5 +494,81 @@
     "toIdea": "Send to the idea board",
     "openIdea": "Open idea",
     "changeCategory": "Change category"
+  },
+  "creation": {
+    "tab": {
+      "thumbnails": "Thumbnails",
+      "library": "Library",
+      "texts": "Texts",
+      "moments": "Moments for shorts"
+    }
+  },
+  "library": {
+    "hint": "Images are copied into Omnyra: you can move or delete the originals. Use the variant to tell apart, for example, the normal, Halloween and Christmas skins.",
+    "kind": {
+      "skin": "Skin",
+      "avatar": "Avatar",
+      "sticker": "Sticker",
+      "background": "Background",
+      "image": "Image"
+    },
+    "variant": "Variant",
+    "variantPlaceholder": "Variant (normal, halloween, christmas…)",
+    "import": "Import images…",
+    "all": "All",
+    "empty": "The library is empty."
+  },
+  "thumbs": {
+    "text": "Text",
+    "rect": "Rectangle",
+    "ellipse": "Ellipse",
+    "image": "Library image",
+    "sticker": "Sticker",
+    "canvasSize": "Canvas size",
+    "background": "Background",
+    "noBackgroundImage": "No background image",
+    "layers": "Layers",
+    "noLayers": "Add text, shapes or images.",
+    "toggle": "Show or hide",
+    "up": "Up",
+    "down": "Down",
+    "duplicate": "Duplicate",
+    "delete": "Delete",
+    "width": "Width",
+    "height": "Height",
+    "rotation": "Rotation (°)",
+    "opacity": "Opacity",
+    "font": "Font",
+    "size": "Size",
+    "bold": "Bold",
+    "align": {
+      "left": "Left",
+      "center": "Centre",
+      "right": "Right"
+    },
+    "fill": "Fill",
+    "stroke": "Outline",
+    "strokeWidth": "Width",
+    "radius": "Corners",
+    "flip": "Flip",
+    "shadow": "Shadow",
+    "blur": "Blur",
+    "templates": "Templates",
+    "templateName": "Template name",
+    "untitled": "Untitled",
+    "save": "Save",
+    "saveAs": "Save as new",
+    "deleteTemplate": "Delete template",
+    "loadTemplate": "Open template…",
+    "export": "Export",
+    "saveFile": "Save file…",
+    "useForUpload": "Use in an upload",
+    "saved": "Saved.",
+    "preset": {
+      "youtube": "YouTube",
+      "vertical": "Vertical (Shorts, Reels, TikTok)",
+      "square": "Square (Instagram)",
+      "twitch": "Twitch / 1080p"
+    }
   }
 }

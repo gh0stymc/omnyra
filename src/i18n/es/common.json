@@ -494,5 +494,81 @@
     "toIdea": "Enviar al tablero de ideas",
     "openIdea": "Abrir idea",
     "changeCategory": "Cambiar categoría"
+  },
+  "creation": {
+    "tab": {
+      "thumbnails": "Miniaturas",
+      "library": "Biblioteca",
+      "texts": "Textos",
+      "moments": "Momentos para shorts"
+    }
+  },
+  "library": {
+    "hint": "Las imágenes se copian a Omnyra: puedes mover o borrar los originales. Usa la variante para distinguir, por ejemplo, la skin normal, la de Halloween y la de Navidad.",
+    "kind": {
+      "skin": "Skin",
+      "avatar": "Avatar",
+      "sticker": "Sticker",
+      "background": "Fondo",
+      "image": "Imagen"
+    },
+    "variant": "Variante",
+    "variantPlaceholder": "Variante (normal, halloween, navidad…)",
+    "import": "Importar imágenes…",
+    "all": "Todo",
+    "empty": "La biblioteca está vacía."
+  },
+  "thumbs": {
+    "text": "Texto",
+    "rect": "Rectángulo",
+    "ellipse": "Elipse",
+    "image": "Imagen de la biblioteca",
+    "sticker": "Sticker",
+    "canvasSize": "Tamaño del lienzo",
+    "background": "Fondo",
+    "noBackgroundImage": "Sin imagen de fondo",
+    "layers": "Capas",
+    "noLayers": "Añade texto, formas o imágenes.",
+    "toggle": "Mostrar u ocultar",
+    "up": "Subir",
+    "down": "Bajar",
+    "duplicate": "Duplicar",
+    "delete": "Eliminar",
+    "width": "Ancho",
+    "height": "Alto",
+    "rotation": "Giro (°)",
+    "opacity": "Opacidad",
+    "font": "Fuente",
+    "size": "Tamaño",
+    "bold": "Negrita",
+    "align": {
+      "left": "Izquierda",
+      "center": "Centro",
+      "right": "Derecha"
+    },
+    "fill": "Relleno",
+    "stroke": "Contorno",
+    "strokeWidth": "Grosor",
+    "radius": "Esquinas",
+    "flip": "Voltear",
+    "shadow": "Sombra",
+    "blur": "Difuminado",
+    "templates": "Plantillas",
+    "templateName": "Nombre de la plantilla",
+    "untitled": "Sin título",
+    "save": "Guardar",
+    "saveAs": "Guardar como nueva",
+    "deleteTemplate": "Borrar plantilla",
+    "loadTemplate": "Abrir plantilla…",
+    "export": "Exportar",
+    "saveFile": "Guardar archivo…",
+    "useForUpload": "Usar en una subida",
+    "saved": "Guardado.",
+    "preset": {
+      "youtube": "YouTube",
+      "vertical": "Vertical (Shorts, Reels, TikTok)",
+      "square": "Cuadrado (Instagram)",
+      "twitch": "Twitch / 1080p"
+    }
   }
 }

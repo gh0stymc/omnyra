@@ -55,15 +55,21 @@ export function UploadForm({
   accounts,
   platforms,
   initialAccountId,
+  initialThumbnail,
 }: {
   accounts: Account[];
   platforms: PlatformInfo[];
   initialAccountId?: string;
+  /** From the thumbnail editor's "Use in an upload". */
+  initialThumbnail?: string;
 }) {
   const { t, i18n } = useTranslation();
   const qc = useQueryClient();
   const [accountId, setAccountId] = useState(initialAccountId ?? accounts[0]?.id ?? "");
-  const [form, setForm] = useState(empty);
+  const [form, setForm] = useState<ReturnType<typeof empty>>(() => ({
+    ...empty(),
+    thumbnailPath: initialThumbnail ?? null,
+  }));
   const [tagsText, setTagsText] = useState("");
   const account = accounts.find((a) => a.id === accountId);
   const platform = platforms.find((p) => p.id === account?.platform);
