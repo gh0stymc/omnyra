@@ -2,7 +2,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { open, save } from "@tauri-apps/plugin-dialog";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import {
   commands,
   events,
@@ -273,7 +273,9 @@ function TargetCard({
 export function PublishPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [filePath, setFilePath] = useState("");
+  const [params] = useSearchParams();
+  // From the moments tool: a clip that was just cut.
+  const [filePath, setFilePath] = useState(params.get("file") ?? "");
   const [common, setCommon] = useState<CommonText>({ title: "", description: "", tags: "" });
   const [targets, setTargets] = useState<TargetState[]>([]);
   const [exportSpec, setExportSpec] = useState<RenditionSpec>({

@@ -3,8 +3,9 @@ import { useSearchParams } from "react-router";
 import { AssetLibrary } from "./AssetLibrary";
 import { ThumbnailEditor } from "./thumbnails/ThumbnailEditor";
 import { TextAssistant } from "./texts/TextAssistant";
+import { MomentsTool } from "./moments/MomentsTool";
 
-const TABS = ["thumbnails", "library", "texts"] as const;
+const TABS = ["thumbnails", "library", "texts", "moments"] as const;
 type Tab = (typeof TABS)[number];
 
 /** Creation tools: thumbnail editor, asset library, text assistant and moments. */
@@ -33,6 +34,7 @@ export function CreationPage() {
       {tab === "thumbnails" && <ThumbnailEditor />}
       {tab === "library" && <AssetLibrary />}
       {tab === "texts" && <TextAssistant />}
+      {tab === "moments" && <MomentsTool />}
     </div>
   );
 }

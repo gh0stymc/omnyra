@@ -141,6 +141,16 @@ export const commands = {
 	clearLlmKey: (options?: InvokeOptions) => __TAURI_INVOKE<null>("clear_llm_key", undefined, options),
 	/**  Suggestions from the LLM. Only the fields of `req` are sent. */
 	llmGenerate: (req: AssistRequest, options?: InvokeOptions) => __TAURI_INVOKE<AssistResult>("llm_generate", { req }, options),
+	/**
+	 *  Proposed fragments of a content: YouTube retention, or the chat Omnyra recorded during
+	 *  a Twitch stream (for its VOD).
+	 */
+	getMoments: (contentId: string, options?: InvokeOptions) => __TAURI_INVOKE<MomentsReport_Serialize>("get_moments", { contentId }, options),
+	/**
+	 *  Cuts `[start_s, end_s)` of a local file in vertical (9:16) into
+	 *  `app_data_dir/clips/` and returns the path (then handed to multi-network publishing).
+	 */
+	cutMoment: (source: string, startS: number | null, endS: number | null, fit: Fit, options?: InvokeOptions) => __TAURI_INVOKE<string>("cut_moment", { source, startS, endS, fit }, options),
 };
 
 /** Events */
@@ -903,6 +913,34 @@ export type MetricPoint = {
 	day: string,
 	metric: string,
 	value: number | null,
+};
+
+export type Moment = {
+	startS: number | null,
+	endS: number | null,
+	score: number | null,
+	/**  `retention` | `chat` */
+	source: string,
+};
+
+export type MomentsReport = MomentsReport_Serialize | MomentsReport_Deserialize;
+
+export type MomentsReport_Deserialize = {
+	/**  `retention` | `chat` | `None` when there is nothing to analyse. */
+	source?: string | null,
+	durationS?: number | null,
+	/**  The analysed series: (seconds, value). */
+	series: ([number | null, number | null])[],
+	moments: Moment[],
+};
+
+export type MomentsReport_Serialize = {
+	/**  `retention` | `chat` | `None` when there is nothing to analyse. */
+	source: string | null,
+	durationS: number | null,
+	/**  The analysed series: (seconds, value). */
+	series: ([number | null, number | null])[],
+	moments: Moment[],
 };
 
 export type NamedOption = {

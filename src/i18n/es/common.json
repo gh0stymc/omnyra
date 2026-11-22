@@ -611,5 +611,21 @@
     "generating": "Generando…",
     "saveKey": "Guardar clave",
     "removeKey": "Borrar clave"
+  },
+  "moments": {
+    "intro": "Busca los mejores momentos de un vídeo largo (por la retención de YouTube) o de un directo de Twitch (por la actividad del chat que Omnyra grabó mientras lo veía). Elige el archivo de vídeo local, ajusta cada fragmento y recórtalo en vertical.",
+    "pickAccount": "Elige una cuenta",
+    "pickContent": "Elige un vídeo o directo",
+    "noData": "No hay datos para este contenido: YouTube aún no da retención (o el vídeo es muy corto), o Omnyra no estaba abierta durante ese directo.",
+    "source": {
+      "retention": "Según la curva de retención de YouTube (zonas que la gente vuelve a ver).",
+      "chat": "Según los mensajes del chat por cada 10 s, desplazados un poco hacia atrás (el chat reacciona tarde)."
+    },
+    "pickFile": "Elegir archivo de vídeo…",
+    "fileHint": "Hace falta el archivo original: las plataformas no permiten descargarlo por API.",
+    "none": "No se han encontrado picos claros.",
+    "score": "intensidad {{score}}",
+    "cut": "Recortar en vertical y publicar",
+    "cutting": "Recortando con FFmpeg…"
   }
 }

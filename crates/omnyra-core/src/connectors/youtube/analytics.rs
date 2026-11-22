@@ -124,6 +124,38 @@ pub async fn early_views(
         .and_then(|v| v.as_f64()))
 }
 
+/// Audience retention (`audienceWatchRatio` by `elapsedVideoTimeRatio`, 100 points) of
+/// one video over its whole life.
+pub async fn retention(
+    ctx: &AccountCtx,
+    base: &str,
+    video_id: &str,
+    from: &str,
+    to: &str,
+) -> Result<Vec<(f64, f64)>> {
+    let filter = format!("video=={video_id};audienceType==ORGANIC");
+    let report: Totals = ctx
+        .api
+        .get_json(
+            &format!("{base}/v2/reports"),
+            &[
+                ("ids", "channel==MINE"),
+                ("startDate", from),
+                ("endDate", to),
+                ("metrics", "audienceWatchRatio"),
+                ("dimensions", "elapsedVideoTimeRatio"),
+                ("filters", &filter),
+                ("sort", "elapsedVideoTimeRatio"),
+            ],
+        )
+        .await?;
+    Ok(report
+        .rows
+        .iter()
+        .filter_map(|r| Some((r.first()?.as_f64()?, r.get(1)?.as_f64()?)))
+        .collect())
+}
+
 /// Columns are matched by name, so their order in the response does not matter.
 fn parse_report(report: Report) -> Vec<MetricPoint> {
     let names: Vec<&str> = report

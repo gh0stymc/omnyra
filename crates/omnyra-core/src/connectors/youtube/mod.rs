@@ -206,6 +206,11 @@ impl Connector for YouTubeConnector {
         upload::upload(ctx, &self.api_base, req, resume, sink, self.upload_chunk).await
     }
 
+    async fn retention_curve(&self, ctx: &AccountCtx, content: &str) -> Result<Vec<(f64, f64)>> {
+        let today = crate::format_day(time::OffsetDateTime::now_utc());
+        analytics::retention(ctx, &self.analytics_base, content, "2005-04-23", &today).await
+    }
+
     fn comment_scopes(&self) -> Vec<String> {
         vec![SCOPE_FORCE_SSL.into()]
     }

@@ -100,6 +100,8 @@ fn specta_builder() -> Builder<tauri::Wry> {
             commands::creation::set_llm_key,
             commands::creation::clear_llm_key,
             commands::creation::llm_generate,
+            commands::moments::get_moments,
+            commands::moments::cut_moment,
         ])
         .events(collect_events![
             events::AccountChanged,

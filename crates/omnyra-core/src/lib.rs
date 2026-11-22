@@ -14,6 +14,7 @@ pub mod db;
 pub mod error;
 pub mod live;
 pub mod media;
+pub mod moments;
 pub mod planning;
 pub mod quota;
 pub mod security;

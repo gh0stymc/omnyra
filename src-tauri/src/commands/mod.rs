@@ -4,6 +4,7 @@ pub mod community;
 pub mod creation;
 pub mod dashboard;
 pub mod live;
+pub mod moments;
 pub mod planning;
 pub mod platforms;
 pub mod publish;

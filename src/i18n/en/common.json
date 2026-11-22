@@ -611,5 +611,21 @@
     "generating": "Generating…",
     "saveKey": "Save key",
     "removeKey": "Remove key"
+  },
+  "moments": {
+    "intro": "Find the best moments of a long video (from YouTube retention) or of a Twitch stream (from the chat activity Omnyra recorded while watching it). Pick the local video file, adjust each fragment and cut it vertically.",
+    "pickAccount": "Pick an account",
+    "pickContent": "Pick a video or stream",
+    "noData": "No data for this content: YouTube has no retention for it yet (or it is too short), or Omnyra was not open during that stream.",
+    "source": {
+      "retention": "From the YouTube retention curve (parts people re-watch).",
+      "chat": "From chat messages per 10 s, shifted slightly back (chat reacts late)."
+    },
+    "pickFile": "Pick video file…",
+    "fileHint": "The original file is needed: platforms do not allow downloading it through the API.",
+    "none": "No clear peaks were found.",
+    "score": "intensity {{score}}",
+    "cut": "Cut vertical and publish",
+    "cutting": "Cutting with FFmpeg…"
   }
 }

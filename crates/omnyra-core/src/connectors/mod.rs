@@ -124,6 +124,11 @@ pub trait Connector: Send + Sync {
         Vec::new()
     }
 
+    /// Audience retention of a video: `(position 0..1, share of viewers 0..)` points.
+    async fn retention_curve(&self, _ctx: &AccountCtx, _content: &str) -> Result<Vec<(f64, f64)>> {
+        Err(AppError::NotSupported)
+    }
+
     // Optional capabilities: default is NotSupported.
     /// OAuth scopes an upload needs (requested incrementally the first time).
     fn upload_scopes(&self, _with_playlist: bool) -> Vec<String> {

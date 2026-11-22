@@ -20,6 +20,7 @@ fn migrations() -> &'static Migrations<'static> {
             M::up(include_str!("migrations/0005_publish.sql")),
             M::up(include_str!("migrations/0006_community.sql")),
             M::up(include_str!("migrations/0007_creation.sql")),
+            M::up(include_str!("migrations/0008_moments.sql")),
         ])
     })
 }
