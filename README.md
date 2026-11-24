@@ -1,157 +1,99 @@
 # Omnyra
 
-Desktop app for content creators (Windows and Linux): every network in one place — analytics, best time to post, calendar and idea board, multi-network publishing with automatic 16:9 / 9:16 / 1:1 versions, a unified comment inbox, a thumbnail editor, a text assistant, moments for shorts, sponsorships and media kit, competitor tracking and a security module.
+Omnyra is a desktop app for people who post on more than one platform and are tired of keeping a browser tab open for each one. It brings YouTube, Twitch, Instagram and TikTok together in a single window — your stats, your comments, your uploads and your planning, all in one place. It runs on Windows and Linux, and everything stays on your own machine.
 
-| Network                  | Analytics                                                                   | Publish                                | Comments       |
-| ------------------------ | --------------------------------------------------------------------------- | -------------------------------------- | -------------- |
-| YouTube                  | Full history (Analytics API), best time, retention                          | Yes (private until Google's API audit) | Read and reply |
-| Twitch                   | Followers, VODs, clips, live viewers and chat recorded while Omnyra is open | —                                      | —              |
-| Instagram (professional) | Followers, reach (last 30 days), Reels and posts                            | Reels                                  | Read and reply |
-| TikTok                   | Followers, likes, videos                                                    | Yes (private until TikTok's audit)     | — (no API)     |
+I built it for my own channel, so it leans towards what a solo creator actually needs from day to day rather than a big agency dashboard.
 
-- User guide: [`docs/USER_GUIDE.md`](docs/USER_GUIDE.md) (Spanish)
-- Architecture: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) · Instagram/TikTok auth: [`docs/AUTH_STRATEGY.md`](docs/AUTH_STRATEGY.md) · Releases: [`docs/DISTRIBUTION.md`](docs/DISTRIBUTION.md) · Review: [`docs/REVIEW.md`](docs/REVIEW.md)
-- Changelog: [`CHANGELOG.md`](CHANGELOG.md)
+## What you can do with it
 
-> Screenshots: pending (to be taken from the first signed release).
+- **See all your numbers in one dashboard** — followers, views, watch time and how each post is doing, across every account, with the full history rather than just the last 28 days.
+- **Know when to post.** Omnyra works out your best posting times from your own audience data.
+- **Publish once, everywhere.** Upload a video and it makes the 16:9 / 9:16 / 1:1 versions automatically and sends each one to the right platform.
+- **Handle comments from one inbox** — read and reply across YouTube and Instagram, with questions grouped together and spam and phishing flagged.
+- **Plan your content** with a calendar and an idea board (you can turn recurring questions from your comments straight into ideas).
+- **Make thumbnails** in a built-in editor, and reuse them as templates.
+- **Keep an eye on the competition** — track other channels and trending topics on YouTube.
+- **Manage sponsorships** — deals, deliverables, payments and a media kit you can export.
+- **Lock it down.** Optional PIN lock and a security module for your accounts.
 
-## Install
+There's also an optional AI writing assistant for captions and replies — you plug in your own Anthropic API key and it's kept in your system keyring.
 
-Download the files from the latest release.
+## Platform support
 
-**Windows 10/11** — run `Omnyra_<version>_x64-setup.exe` (per-user install, Spanish or English; updates itself). An `.msi` is also provided for managed installs. Install [FFmpeg](https://ffmpeg.org/download.html) and put it on the `PATH` (or set `OMNYRA_FFMPEG` / `OMNYRA_FFPROBE`) to use multi-network versions, clips and file checks.
+| Platform                 | Stats                                                                        | Publishing                                | Comments       |
+| ------------------------ | ---------------------------------------------------------------------------- | ----------------------------------------- | -------------- |
+| YouTube                  | Full history (Analytics API), best time to post, retention                   | Yes (private until Google's API review)   | Read and reply |
+| Twitch                   | Followers, VODs, clips, live viewers and chat recorded while Omnyra is open   | —                                         | —              |
+| Instagram (professional) | Followers, reach (last 30 days), Reels and posts                             | Reels                                     | Read and reply |
+| TikTok                   | Followers, likes, videos                                                     | Yes (private until TikTok's review)       | — (no API)     |
+
+> Screenshots are coming once there's a first signed release to grab them from.
+
+## Installing
+
+Grab the files from the [latest release](../../releases/latest).
+
+**Windows 10/11** — run `Omnyra_<version>_x64-setup.exe`. It installs per-user (Spanish or English) and updates itself. There's also an `.msi` for managed setups. For the multi-format versions, clips and file checks you'll need [FFmpeg](https://ffmpeg.org/download.html) on your `PATH` (or point `OMNYRA_FFMPEG` / `OMNYRA_FFPROBE` at it).
 
 **Debian / Ubuntu (22.04+)**
 
 ```sh
-sudo apt install ./Omnyra_<version>_amd64.deb   # pulls ffmpeg and the tray library
+sudo apt install ./Omnyra_<version>_amd64.deb   # pulls in ffmpeg and the tray library
 ```
 
-Or use the AppImage (`chmod +x Omnyra_*.AppImage`; it updates itself and uses the system FFmpeg).
+Or use the AppImage (`chmod +x Omnyra_*.AppImage`) — it updates itself and uses your system FFmpeg.
 
-**Arch Linux** — from AUR (`yay -S omnyra`) or from this repository: `cd packaging/arch && makepkg -si`.
+**Arch Linux** — from the AUR (`yay -S omnyra`) or from this repo: `cd packaging/arch && makepkg -si`.
 
-A system keyring is required to connect accounts (Windows Credential Manager; on Linux GNOME Keyring, KWallet or KeePassXC through Secret Service). For the tray icon on Linux the desktop needs a StatusNotifierItem host.
+To connect accounts you need a system keyring (Windows Credential Manager, or GNOME Keyring / KWallet / KeePassXC through Secret Service on Linux). On Linux the tray icon needs a StatusNotifierItem host.
 
-## Development
+## Building from source
 
-### Requirements
+You'll need **Node.js** (the version in `.nvmrc`), a **stable Rust toolchain** and **FFmpeg**.
 
-- Node.js (version in `.nvmrc`)
-- Rust stable toolchain
-- FFmpeg (see below)
+System dependencies:
 
-Platform dependencies:
-
-**Windows**
-
-- Microsoft C++ Build Tools (MSVC)
-- WebView2 runtime (preinstalled on Windows 11)
-- Git for Windows, for Git Bash (used to run the `scripts/ci` scripts)
-
-**Debian / Ubuntu**
+<details>
+<summary>Debian / Ubuntu</summary>
 
 ```sh
 sudo apt install libwebkit2gtk-4.1-dev build-essential libssl-dev libayatana-appindicator3-dev librsvg2-dev libsecret-1-dev patchelf file
 ```
+</details>
 
-**Arch Linux**
+<details>
+<summary>Arch Linux</summary>
 
 ```sh
 sudo pacman -S webkit2gtk-4.1 base-devel openssl libayatana-appindicator librsvg libsecret
 ```
+</details>
 
-FFmpeg:
+<details>
+<summary>Windows</summary>
 
-- Linux: install `ffmpeg` from your package manager. The `.deb` and the Arch package both depend on it.
-- Windows: FFmpeg is not bundled (licence, H9): install it and put it on the `PATH`, or point `OMNYRA_FFMPEG` / `OMNYRA_FFPROBE` at the binaries.
+Microsoft C++ Build Tools (MSVC), the WebView2 runtime (already there on Windows 11) and Git for Windows (the `scripts/ci` scripts run in Git Bash).
+</details>
 
-### OAuth client IDs
-
-Copy `.env.example` to `.env` and fill in the IDs. `src-tauri/build.rs` reads `.env` at build time. If a variable is already set in the environment (for example, a CI secret), that value is used instead. Without a client ID, the network shows as "not configured".
-
-- Google (YouTube): in Google Cloud Console, enable the YouTube Data API v3 and the YouTube Analytics API. Then create an OAuth client of type **Desktop app**. Google documents the client secret of a Desktop app as non-confidential, so it is embedded in the build (`docs/ARCHITECTURE.md`, R3).
-- Twitch: register the app as a **Public** client (device code flow, no secret).
-- Instagram and TikTok: their secrets are confidential, so they live in the token broker (`broker/`, a Cloudflare Worker); only the public IDs and the broker URL go in `.env`. Setup in `docs/AUTH_STRATEGY.md`.
-- Optional AI text assistant: each user enters their own Anthropic API key in the app; it is kept in the keyring.
-
-Tokens are stored only in the OS keyring (Windows Credential Manager, or Secret Service on Linux via GNOME Keyring, KWallet or KeePassXC). If no keyring is available, accounts cannot be connected.
-
-### Running
+Then:
 
 ```sh
 npm install
 npm run tauri dev      # run the app
 npm test               # frontend tests (Vitest)
-cargo test --workspace # Rust tests (also regenerates src/lib/bindings.ts)
-cargo test -p omnyra-core -- --ignored keyring  # real OS keyring round-trip (opt-in)
-npm run lint && npm run typecheck
+cargo test --workspace # Rust tests
 ```
 
-`src/lib/bindings.ts` is generated by `tauri-specta`; do not edit it by hand.
+Before connecting real accounts, copy `.env.example` to `.env` and fill in your own OAuth client IDs — `src-tauri/build.rs` reads them at build time, and any platform without an ID just shows as "not configured". The details for each platform are in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) and [`docs/AUTH_STRATEGY.md`](docs/AUTH_STRATEGY.md). Access tokens are only ever stored in your OS keyring, never on disk in plain text.
 
-### Checks
+`scripts/ci/check.sh` runs the full set of checks (formatting, linting, typecheck and tests) — the same ones CI runs.
 
-`scripts/ci/check.sh` runs the same checks as CI:
+## How it's built
 
-- Prettier, ESLint and the TypeScript typecheck
-- rustfmt and Clippy (with `-D warnings`)
-- Vitest and `cargo test`
-- verifies that `src/lib/bindings.ts` is committed and up to date
+Tauri 2 with a Rust core and a React (TypeScript) front end. The heavy lifting lives in the `omnyra-core` crate; the UI talks to it through generated bindings. More detail — and the reasoning behind the bigger decisions — is in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
-```sh
-scripts/ci/check.sh          # all checks
-scripts/ci/check.sh --tests  # tests only (Vitest and cargo test)
-```
+## Docs
 
-### Installing from source for the current user (Linux)
-
-```sh
-scripts/install-local.sh              # build + install to ~/.local (app menu entry)
-scripts/install-local.sh --skip-build # reinstall the last build
-scripts/install-local.sh --uninstall  # remove it (app data is kept)
-```
-
-### Building installers
-
-```sh
-scripts/ci/bundle.sh deb,appimage   # Linux
-scripts/ci/bundle.sh msi,nsis       # Windows (run in Git Bash)
-```
-
-The bundles are copied to `artifacts/` together with a `SHA256SUMS` file. Each run replaces the previous `artifacts/` directory. The `.deb` depends on `ffmpeg`.
-
-### Arch Linux (PKGBUILD)
-
-`packaging/arch/PKGBUILD` builds from a release tarball. Before a release exists, build from the current commit:
-
-```sh
-git archive --format=tar.gz --prefix=omnyra-1.0.0/ -o packaging/arch/omnyra-1.0.0.tar.gz HEAD
-cd packaging/arch && makepkg -si
-```
-
-When the tarball sits next to the PKGBUILD, makepkg uses it instead of downloading.
-
-After editing the PKGBUILD, regenerate `.SRCINFO`. CI fails if it is stale:
-
-```sh
-cd packaging/arch && makepkg --printsrcinfo > .SRCINFO
-```
-
-The `_owner` placeholder and the `sha256sums` entry (currently `SKIP`) are filled in at release time (`docs/DISTRIBUTION.md`).
-
-### CI
-
-`.github/workflows/ci.yml` runs on pushes to `main`, on pull requests and on manual dispatch:
-
-- `check`: runs `scripts/ci/check.sh` on Linux (full checks) and on Windows (`--tests`).
-- `bundle`: builds the `.deb` and AppImage on Ubuntu 22.04, so they run on more distributions, and the `.msi` and NSIS `.exe` on Windows.
-- `arch`: builds the package with `makepkg` in an `archlinux` container, then lints it with namcap and checks its shared libraries.
-- `install-debian`: installs the `.deb` on Debian stable.
-- `install-windows`: silently installs the MSI, then the NSIS installer.
-
-The `omnyra-linux`, `omnyra-windows` and `omnyra-arch` artifacts are kept for 14 days.
-
-`.github/workflows/release.yml` runs on `v*` tags: signed bundles for Linux and Windows, the updater manifest `latest.json` and a GitHub release with the CHANGELOG notes (`docs/DISTRIBUTION.md`).
-
-The logic lives in `scripts/ci/`, so the pipeline can be ported to another CI provider by calling the same scripts.
+- [User guide](docs/USER_GUIDE.md) (Spanish)
+- [Architecture](docs/ARCHITECTURE.md) · [Instagram/TikTok auth](docs/AUTH_STRATEGY.md) · [Releases & packaging](docs/DISTRIBUTION.md)
+- [Changelog](CHANGELOG.md)
