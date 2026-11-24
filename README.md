@@ -104,6 +104,14 @@ scripts/ci/check.sh          # all checks
 scripts/ci/check.sh --tests  # tests only (Vitest and cargo test)
 ```
 
+### Installing from source for the current user (Linux)
+
+```sh
+scripts/install-local.sh              # build + install to ~/.local (app menu entry)
+scripts/install-local.sh --skip-build # reinstall the last build
+scripts/install-local.sh --uninstall  # remove it (app data is kept)
+```
+
 ### Building installers
 
 ```sh

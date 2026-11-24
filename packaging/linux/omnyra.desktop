@@ -6,5 +6,5 @@ Comment[es]=Todas tus redes sociales en un solo sitio
 Exec=omnyra
 Icon=omnyra
 Terminal=false
-Categories=Network;AudioVideo;Video;
+Categories=AudioVideo;Video;
 StartupWMClass=omnyra
