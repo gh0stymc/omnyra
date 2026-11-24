@@ -27,6 +27,8 @@ There's also an optional AI writing assistant for captions and replies — you p
 | Instagram (professional) | Followers, reach (last 30 days), Reels and posts                            | Reels                                   | Read and reply |
 | TikTok                   | Followers, likes, videos                                                    | Yes (private until TikTok's review)     | — (no API)     |
 
+> **Instagram and TikTok are still a work in progress.** The connectors are written, but they aren't hooked up to the live APIs yet (that needs the auth broker and the developer apps set up), so for now YouTube and Twitch are the ones you can actually use.
+
 > Screenshots are coming once there's a first signed release to grab them from.
 
 ## Installing
