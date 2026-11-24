@@ -63,11 +63,12 @@ jobs:
       - uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
         with:
           toolchain: stable
-      - name: Build signed bundles
+      - name: Build bundles
         shell: bash
         env:
-          # Produce the .sig files the updater needs.
-          OMNYRA_UPDATER_ARTIFACTS: "1"
+          # Sign for the auto-updater only when a signing key is configured; otherwise
+          # build plain installers (downloadable, but without self-update).
+          OMNYRA_UPDATER_ARTIFACTS: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY != '' && '1' || '' }}
         run: scripts/ci/bundle.sh ${{ matrix.bundles }}
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
@@ -90,9 +91,14 @@ jobs:
           merge-multiple: true
       - name: Updater manifest and checksums
         run: |
-          node scripts/release/latest-json.mjs dist-release "$GITHUB_REF_NAME" \
-            "https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}" > dist-release/latest.json
-          cd dist-release && rm -f SHA256SUMS && sha256sum -- *.deb *.AppImage *.msi *.exe > SHA256SUMS
+          # The updater manifest only makes sense for a signed build (.sig files present).
+          if ls dist-release/*.sig >/dev/null 2>&1; then
+            node scripts/release/latest-json.mjs dist-release "$GITHUB_REF_NAME" \
+              "https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}" > dist-release/latest.json
+          else
+            echo "Unsigned release: skipping latest.json (auto-update disabled)."
+          fi
+          cd dist-release && rm -f SHA256SUMS && sha256sum -- $(ls | grep -vE '\.sig$') > SHA256SUMS
       - name: Create the GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
