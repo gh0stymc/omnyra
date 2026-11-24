@@ -20,12 +20,12 @@ There's also an optional AI writing assistant for captions and replies — you p
 
 ## Platform support
 
-| Platform                 | Stats                                                                        | Publishing                                | Comments       |
-| ------------------------ | ---------------------------------------------------------------------------- | ----------------------------------------- | -------------- |
-| YouTube                  | Full history (Analytics API), best time to post, retention                   | Yes (private until Google's API review)   | Read and reply |
-| Twitch                   | Followers, VODs, clips, live viewers and chat recorded while Omnyra is open   | —                                         | —              |
-| Instagram (professional) | Followers, reach (last 30 days), Reels and posts                             | Reels                                     | Read and reply |
-| TikTok                   | Followers, likes, videos                                                     | Yes (private until TikTok's review)       | — (no API)     |
+| Platform                 | Stats                                                                       | Publishing                              | Comments       |
+| ------------------------ | --------------------------------------------------------------------------- | --------------------------------------- | -------------- |
+| YouTube                  | Full history (Analytics API), best time to post, retention                  | Yes (private until Google's API review) | Read and reply |
+| Twitch                   | Followers, VODs, clips, live viewers and chat recorded while Omnyra is open | —                                       | —              |
+| Instagram (professional) | Followers, reach (last 30 days), Reels and posts                            | Reels                                   | Read and reply |
+| TikTok                   | Followers, likes, videos                                                    | Yes (private until TikTok's review)     | — (no API)     |
 
 > Screenshots are coming once there's a first signed release to grab them from.
 
@@ -59,6 +59,7 @@ System dependencies:
 ```sh
 sudo apt install libwebkit2gtk-4.1-dev build-essential libssl-dev libayatana-appindicator3-dev librsvg2-dev libsecret-1-dev patchelf file
 ```
+
 </details>
 
 <details>
@@ -67,6 +68,7 @@ sudo apt install libwebkit2gtk-4.1-dev build-essential libssl-dev libayatana-app
 ```sh
 sudo pacman -S webkit2gtk-4.1 base-devel openssl libayatana-appindicator librsvg libsecret
 ```
+
 </details>
 
 <details>
